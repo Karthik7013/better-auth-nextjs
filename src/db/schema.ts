@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, uniqueIndex, integer, serial, varchar, date, primaryKey } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, uniqueIndex, integer, serial, varchar, date, primaryKey, index } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -84,7 +84,10 @@ export const movieTags = pgTable("movie_tags", {
   tagId: integer("tag_id")
     .notNull()
     .references(() => tags.id, { onDelete: "cascade" }),
-}, (t) => [primaryKey({ columns: [t.movieId, t.tagId] })]);
+}, (t) => [
+  primaryKey({ columns: [t.movieId, t.tagId] }),
+  index("idx_movie_tags_tag_id").on(t.tagId),
+]);
 
 export const featuredMovies = pgTable("featured_movies", {
   id: serial("id").primaryKey(),
@@ -107,7 +110,10 @@ export const watchHistory = pgTable("watch_history", {
   progressSeconds: integer("progress_seconds").default(0).notNull(),
   isCompleted: boolean("is_completed").default(false).notNull(),
   watchedAt: timestamp("watched_at").defaultNow().notNull(),
-}, (t) => [uniqueIndex("unique_user_movie").on(t.userId, t.movieId)]);
+}, (t) => [
+  uniqueIndex("unique_user_movie").on(t.userId, t.movieId),
+  index("idx_watch_history_user_recent").on(t.userId, t.watchedAt),
+]);
 
 export const favorites = pgTable("favorites", {
   userId: text("user_id")
@@ -119,5 +125,4 @@ export const favorites = pgTable("favorites", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => [primaryKey({ columns: [t.userId, t.movieId] })]);
 
-export const movieTagsTagIdIndex = uniqueIndex("idx_movie_tags_tag_id").on(movieTags.tagId);
-export const watchHistoryUserRecentIndex = uniqueIndex("idx_watch_history_user_recent").on(watchHistory.userId, watchHistory.watchedAt);
+
