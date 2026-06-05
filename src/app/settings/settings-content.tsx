@@ -20,9 +20,9 @@ export function SettingsContent() {
   const [deleting, setDeleting] = useState(false);
   const [alertOpen, setAlertOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
+  const [clearAlertOpen, setClearAlertOpen] = useState(false);
 
   const handleClearHistory = async () => {
-    if (!confirm("Clear all watch history?")) return;
     setClearing(true);
     try {
       await fetch("/api/users/history", { method: "DELETE" });
@@ -67,7 +67,7 @@ export function SettingsContent() {
         <CardContent>
           <Button
             variant="outline"
-            onClick={handleClearHistory}
+            onClick={() => setClearAlertOpen(true)}
             disabled={clearing}
           >
             <Trash2 className="size-4 mr-2" />
@@ -75,6 +75,29 @@ export function SettingsContent() {
           </Button>
         </CardContent>
       </Card>
+
+      <AlertDialog open={clearAlertOpen} onOpenChange={setClearAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogTitle>Clear Watch History</AlertDialogTitle>
+          <AlertDialogDescription>
+            This will permanently remove all your watch history. This action
+            cannot be undone.
+          </AlertDialogDescription>
+          <div className="mt-6 flex justify-end gap-3">
+            <AlertDialogClose>
+              <span className="inline-flex h-9 w-full cursor-default items-center justify-center rounded-md border border-border bg-background px-4 text-sm font-medium shadow-sm hover:bg-muted transition-colors">
+                Cancel
+              </span>
+            </AlertDialogClose>
+            <Button
+              variant="destructive"
+              onClick={handleClearHistory}
+            >
+              Clear
+            </Button>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Card>
         <CardHeader>

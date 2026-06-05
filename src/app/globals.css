@@ -129,3 +129,17 @@
     @apply font-sans;
   }
 }
+
+@keyframes scroll-bg {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-33.33%);
+  }
+}
+
+.animate-scroll-bg {
+  animation: scroll-bg 35s linear infinite;
+  will-change: transform;
+}
