@@ -3,7 +3,8 @@
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 function GoogleIcon() {
   return (
@@ -17,8 +18,20 @@ function GoogleIcon() {
 }
 
 export default function LoginPage() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { data: session, isPending } = authClient.useSession();
+
+  useEffect(() => {
+    if (session && !isPending) {
+      router.replace("/home");
+    }
+  }, [session, isPending, router]);
+
+  if (isPending) return null;
+  if (session) return null;
 
   const handleGoogleLogin = async () => {
     try {
