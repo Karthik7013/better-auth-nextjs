@@ -1,8 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { MovieCard } from "@/components/movie-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Heart, Search } from "lucide-react";
 
 async function fetchFavorites() {
   const res = await fetch("/api/favorites");
@@ -37,9 +40,21 @@ export function FavoritesContent() {
 
   if (movies.length === 0) {
     return (
-      <p className="text-muted-foreground text-center py-12">
-        No favorites yet. Browse movies and add some!
-      </p>
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted">
+          <Heart className="size-8 text-muted-foreground" />
+        </div>
+        <h3 className="mb-1 text-lg font-semibold">No favorites yet</h3>
+        <p className="mb-6 max-w-xs text-sm text-muted-foreground">
+          Start exploring and add movies to your favorites to see them here.
+        </p>
+        <Link href="/explore">
+          <Button>
+            <Search className="size-4 mr-2" />
+            Browse Movies
+          </Button>
+        </Link>
+      </div>
     );
   }
 

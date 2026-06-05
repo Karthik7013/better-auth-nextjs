@@ -2,7 +2,6 @@
 
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import { useState } from "react";
 
@@ -27,7 +26,7 @@ export default function LoginPage() {
       setIsLoading(true);
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard",
+        callbackURL: "/home",
       });
     } catch {
       setError("Failed to sign in. Please try again.");
@@ -37,37 +36,35 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle>Welcome Back</CardTitle>
-          <CardDescription>Sign in to access your dashboard infrastructure</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {error && (
-            <div className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              <AlertCircle className="size-4 shrink-0" />
-              {error}
+    <div className="flex min-h-screen flex-col items-center justify-center px-4">
+      <div className="w-full max-w-sm text-center">
+        <h1 className="mb-1 text-2xl font-semibold tracking-tight">Sign in</h1>
+        <p className="mb-8 text-sm text-muted-foreground">
+          to continue to StreamFlix
+        </p>
+
+        {error && (
+          <div className="mb-4 flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <AlertCircle className="size-4 shrink-0" />
+            {error}
+          </div>
+        )}
+
+        <Button
+          onClick={handleGoogleLogin}
+          disabled={isLoading}
+          variant="outline"
+          className="relative flex w-full items-center justify-center gap-3 rounded-full px-6 py-2.5 h-auto text-sm font-medium shadow-sm hover:shadow-md"
+        >
+          <GoogleIcon />
+          Continue with Google
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-background/80">
+              <div className="size-5 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
             </div>
           )}
-          <div className="relative">
-            <Button
-              onClick={handleGoogleLogin}
-              disabled={isLoading}
-              variant="outline"
-              className="flex w-full items-center justify-center gap-3 rounded-full px-6 py-2.5 shadow-sm hover:shadow-md active:translate-y-0 active:shadow-sm h-auto text-sm font-medium text-zinc-700 dark:text-zinc-200"
-            >
-              <GoogleIcon />
-              Continue with Google
-            </Button>
-            {isLoading && (
-              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-white/80 dark:bg-zinc-800/80">
-                <div className="size-5 animate-spin rounded-full border-2 border-zinc-400 border-t-transparent" />
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+        </Button>
+      </div>
     </div>
   );
 }

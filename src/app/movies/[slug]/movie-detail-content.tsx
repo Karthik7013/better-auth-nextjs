@@ -24,11 +24,11 @@ async function toggleFavorite(movieId: number) {
 }
 
 async function saveProgress(
-  movieId: number,
+  slug: string,
   progressSeconds: number,
   isCompleted: boolean
 ) {
-  await fetch(`/api/movies/${movieId}/progress`, {
+  await fetch(`/api/movies/${slug}/progress`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ progressSeconds, isCompleted }),
@@ -37,6 +37,7 @@ async function saveProgress(
 
 export function MovieDetailContent() {
   const params = useParams<{ slug: string }>();
+  const slug = params.slug;
   const queryClient = useQueryClient();
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressRef = useRef<number>(0);
@@ -67,7 +68,7 @@ export function MovieDetailContent() {
 
     const handlePause = () => {
       const isEnded = video.ended;
-      saveProgress(movie.id, progressRef.current, isEnded);
+      saveProgress(slug, progressRef.current, isEnded);
     };
 
     video.addEventListener("timeupdate", handleTimeUpdate);
@@ -75,7 +76,7 @@ export function MovieDetailContent() {
 
     const interval = setInterval(() => {
       if (progressRef.current > 0) {
-        saveProgress(movie.id, progressRef.current, false);
+        saveProgress(slug, progressRef.current, false);
       }
     }, 30000);
 
@@ -84,7 +85,7 @@ export function MovieDetailContent() {
       video.removeEventListener("pause", handlePause);
       clearInterval(interval);
       if (progressRef.current > 0) {
-        saveProgress(movie.id, progressRef.current, false);
+        saveProgress(slug, progressRef.current, false);
       }
     };
   }, [movie]);

@@ -1,24 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { watchHistory } from "@/db/schema";
+import { movies, watchHistory } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id } = await params;
-  const movieId = parseInt(id);
-  if (isNaN(movieId)) {
-    return NextResponse.json({ error: "Invalid movie ID" }, { status: 400 });
+  const { slug } = await params;
+
+  const movie = await db
+    .select({ id: movies.id })
+    .from(movies)
+    .where(eq(movies.slug, slug))
+    .limit(1);
+
+  if (movie.length === 0) {
+    return NextResponse.json({ error: "Movie not found" }, { status: 404 });
   }
 
+  const movieId = movie[0].id;
   const body = await request.json();
   const progressSeconds = body.progressSeconds as number;
   const isCompleted = body.isCompleted as boolean;

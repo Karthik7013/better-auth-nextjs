@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { authClient } from "@/lib/auth-client";
 import { Trash2, UserX, LogOut } from "lucide-react";
+import { ModeToggle } from "@/components/mode-toggle";
 
 export function SettingsContent() {
-  const router = useRouter();
   const [clearing, setClearing] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -31,48 +31,68 @@ export function SettingsContent() {
     setDeleting(true);
     try {
       await fetch("/api/users/account", { method: "DELETE" });
-      authClient.signOut();
-      router.push("/login");
+      await authClient.signOut();
+      window.location.replace("/login");
     } catch {
       setDeleting(false);
     }
   };
 
-  const handleSignOut = () => {
-    router.push("/login");
-    authClient.signOut();
+  const handleSignOut = async () => {
+    await authClient.signOut();
+    window.location.replace("/login");
   };
 
   return (
-    <div className="space-y-6 max-w-md">
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Watch History</h2>
-        <Button
-          variant="outline"
-          onClick={handleClearHistory}
-          disabled={clearing}
-        >
-          <Trash2 className="size-4 mr-2" />
-          {clearing ? "Clearing..." : "Clear Watch History"}
-        </Button>
-      </div>
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Account</h2>
-        <Button variant="outline" onClick={handleSignOut}>
-          <LogOut className="size-4 mr-2" />
-          Sign Out
-        </Button>
-        <div>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Appearance</CardTitle>
+          <CardDescription>Choose your preferred theme.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ModeToggle />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Watch History</CardTitle>
+          <CardDescription>Remove all your watched history at once.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="outline"
+            onClick={handleClearHistory}
+            disabled={clearing}
+          >
+            <Trash2 className="size-4 mr-2" />
+            {clearing ? "Clearing..." : "Clear Watch History"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Account</CardTitle>
+          <CardDescription>Sign out or permanently delete your account.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Button variant="outline" onClick={handleSignOut} className="w-full">
+            <LogOut className="size-4 mr-2" />
+            Sign Out
+          </Button>
           <Button
             variant="destructive"
             onClick={handleDeleteAccount}
             disabled={deleting}
+            className="w-full"
           >
             <UserX className="size-4 mr-2" />
             {deleting ? "Deleting..." : "Delete Account"}
           </Button>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
