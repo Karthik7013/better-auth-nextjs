@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { MovieCard } from "@/components/movie-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Search } from "lucide-react";
 
 async function fetchTags() {
   const res = await fetch("/api/tags");
@@ -106,15 +107,14 @@ export function ExploreContent() {
       />
       {tags && (
         <div className="flex gap-2 flex-wrap">
-          {tags.map((tag: any) => (
+          {tags.map((tag: any, _: number) => (
             <button
-              key={tag.id}
+              key={_}
               onClick={() => toggleTag(tag.id)}
-              className={`rounded-full px-3 py-1 text-sm border transition-colors ${
-                selectedTags.includes(tag.id)
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-background text-muted-foreground border-border hover:bg-muted"
-              }`}
+              className={`rounded-full px-3 py-1 text-sm border transition-colors ${selectedTags.includes(tag.id)
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-background text-muted-foreground border-border hover:bg-muted"
+                }`}
             >
               {tag.name}
             </button>
@@ -123,14 +123,24 @@ export function ExploreContent() {
       )}
       {!loading && error && movies.length === 0 ? (
         <p className="text-muted-foreground text-center py-12">Failed to load movies. Try again.</p>
+      ) : !loading && !error && movies.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted">
+            <Search className="size-8 text-muted-foreground" />
+          </div>
+          <h3 className="mb-1 text-lg font-semibold">No movies found</h3>
+          <p className="max-w-xs text-sm text-muted-foreground">
+            Try adjusting your search or filter to find what you&apos;re looking for.
+          </p>
+        </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {movies.map((m) => (
-            <MovieCard key={m.id} {...m} />
+          {movies.map((m, _) => (
+            <MovieCard key={_} {...m} />
           ))}
           {loading &&
             Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="space-y-2">
+              <div key={"skel-" + i} className="space-y-2">
                 <Skeleton className="aspect-video rounded-lg" />
                 <Skeleton className="h-4 w-24" />
               </div>

@@ -63,7 +63,7 @@ export function HomeContent() {
         <h2 className="text-xl font-semibold mb-4">Recently Added</h2>
         <div className="flex gap-4 overflow-x-auto pb-2">
           {data.recentlyAdded.map((m: any) => (
-            <div key={m.id} className="shrink-0 w-48">
+            <div key={"ra-" + m.id} className="shrink-0 w-48">
               <MovieCard {...m} />
             </div>
           ))}
