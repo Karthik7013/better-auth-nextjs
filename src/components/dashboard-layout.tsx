@@ -24,14 +24,17 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-0.5 px-3 py-2 text-xs font-medium transition-colors ${
+              className={`relative flex flex-col items-center gap-0.5 px-3 py-2 text-xs font-medium transition-colors ${
                 active
-                  ? "text-foreground"
+                  ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <item.icon className="size-5" />
               {item.label}
+              {active && (
+                <span className="absolute -bottom-1 left-1/2 h-1 w-10 -translate-x-1/2 rounded-full bg-primary" />
+              )}
             </Link>
           );
         })}
