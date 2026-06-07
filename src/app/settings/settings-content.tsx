@@ -11,10 +11,11 @@ import {
   AlertDialogClose,
 } from "@/components/ui/alert-dialog";
 import { authClient } from "@/lib/auth-client";
-import { Trash2, UserX, LogOut, Upload, Loader2 } from "lucide-react";
+import { Trash2, UserX, LogOut, Upload, Loader2, Shield } from "lucide-react";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Link from "next/link";
 
 export function SettingsContent() {
   const [clearing, setClearing] = useState(false);
@@ -162,6 +163,23 @@ export function SettingsContent() {
           </div>
         </AlertDialogContent>
       </AlertDialog>
+
+      {user?.role === "admin" && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Admin</CardTitle>
+            <CardDescription>Access the admin panel to manage users and settings.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/admin">
+              <Button variant="outline" className="w-full">
+                <Shield className="size-4 mr-2" />
+                Admin Panel
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
