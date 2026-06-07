@@ -15,6 +15,13 @@
       "when": 1780804863469,
       "tag": "0001_fancy_hannibal_king",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780813978580,
+      "tag": "0002_burly_gunslinger",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { admin } from "better-auth/plugins/admin";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { sendEmail } from "./email";
@@ -15,6 +16,12 @@ export const auth = betterAuth({
     provider: "pg",
     schema: schema,
   }),
+  plugins: [
+    admin({
+      defaultRole: "user",
+      adminRoles: ["admin"],
+    }),
+  ],
   secret: requireEnv("BETTER_AUTH_SECRET"),
   baseURL: requireEnv("BETTER_AUTH_URL"),
   trustedOrigins: [requireEnv("BETTER_AUTH_URL")],
