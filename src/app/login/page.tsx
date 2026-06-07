@@ -20,7 +20,7 @@ function getLastMethod(): AuthMethod {
 
 function setLastMethod(method: AuthMethod) {
   if (typeof window === "undefined") return;
-  localStorage.setItem("lastAuthMethod", method);
+  if (method) localStorage.setItem("lastAuthMethod", method);
 }
 
 export default function LoginPage() {
