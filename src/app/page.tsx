@@ -2,252 +2,74 @@
 import Image from "next/image";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
-import { Loader2 } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
+import { Plus_Jakarta_Sans } from "next/font/google";
 
-type CardConfig = {
-  variant: "gradient" | "skeleton" | "empty";
-  className?: string;
-  content?: React.ReactNode;
-};
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ['400', '500', '600', '700', '800']
+});
 
-const rows: CardConfig[][] = [
-  [
-    {
-      variant: "gradient",
-      className: "bg-linear-to-br from-indigo-500 to-purple-600 border-white/10",
-      content: (
-        <>
-          <h3 className="text-xl font-bold tracking-tight text-white">New Releases</h3>
-          <div className="h-4 w-2/3 bg-white/20 rounded-md" />
-        </>
-      ),
-    },
-    {
-      variant: "skeleton",
-      content: (
-        <>
-          <div className="space-y-3">
-            <div className="h-4 w-1/3 bg-muted-foreground/20 rounded-md" />
-            <div className="h-4 w-full bg-muted rounded-md" />
-            <div className="h-4 w-5/6 bg-muted rounded-md" />
-          </div>
-          <div className="h-8 w-24 bg-muted rounded-lg" />
-        </>
-      ),
-    },
-    {
-      variant: "gradient",
-      className: "bg-linear-to-tr from-emerald-500 to-teal-600 border-white/10",
-      content: (
-        <>
-          <h3 className="text-xl font-bold tracking-tight text-white">Trending</h3>
-          <div className="h-12 w-12 bg-white/20 rounded-full" />
-        </>
-      ),
-    },
-    {
-      variant: "skeleton",
-      content: (
-        <div className="h-full w-full bg-muted/50 rounded-md animate-pulse" />
-      ),
-    },
-    {
-      variant: "empty",
-    },
-    {
-      variant: "gradient",
-      className: "bg-linear-to-br from-blue-600 to-cyan-500 border-white/10",
-      content: <div className="h-4 w-1/2 bg-white/20 rounded-md" />,
-    },
-  ],
-  [
-    {
-      variant: "skeleton",
-      content: (
-        <>
-          <div className="h-4 w-3/4 bg-muted rounded-md" />
-          <div className="h-20 w-full bg-muted/40 border border-border rounded-lg" />
-        </>
-      ),
-    },
-    {
-      variant: "gradient",
-      className: "bg-linear-to-br from-pink-500 to-rose-600 border-white/10",
-      content: (
-        <>
-          <p className="text-sm font-medium opacity-90">Watch Anywhere</p>
-          <div className="h-4 w-1/2 bg-white/20 rounded-md" />
-        </>
-      ),
-    },
-    {
-      variant: "empty",
-    },
-    {
-      variant: "skeleton",
-      content: (
-        <div className="space-y-2">
-          <div className="h-4 w-full bg-muted rounded-md" />
-          <div className="h-4 w-2/3 bg-muted rounded-md" />
-        </div>
-      ),
-    },
-    {
-      variant: "gradient",
-      className: "bg-linear-to-tr from-purple-600 to-indigo-600 border-white/10",
-      content: <h3 className="text-lg font-bold text-white">Originals</h3>,
-    },
-    {
-      variant: "skeleton",
-      content: (
-        <div className="h-12 w-12 bg-muted rounded-full mx-auto" />
-      ),
-    },
-  ],
-  [
-    {
-      variant: "skeleton",
-      content: (
-        <>
-          <div className="h-10 w-10 bg-muted rounded-lg" />
-          <div className="space-y-2">
-            <div className="h-3 w-full bg-muted rounded-md" />
-            <div className="h-3 w-4/5 bg-muted rounded-md" />
-          </div>
-        </>
-      ),
-    },
-    {
-      variant: "gradient",
-      className: "bg-linear-to-br from-amber-500 to-orange-600 border-white/10",
-      content: (
-        <>
-          <h3 className="text-xl font-bold tracking-tight text-white">Award Winning</h3>
-          <div className="h-4 w-1/3 bg-white/20 rounded-md" />
-        </>
-      ),
-    },
-    {
-      variant: "skeleton",
-      content: (
-        <>
-          <div className="h-4 w-full bg-muted rounded-md" />
-          <div className="h-8 w-full bg-muted rounded-md" />
-        </>
-      ),
-    },
-    {
-      variant: "empty",
-    },
-    {
-      variant: "skeleton",
-      content: <div className="h-full w-full bg-muted rounded-md" />,
-    },
-    {
-      variant: "gradient",
-      className: "bg-linear-to-br from-lime-500 to-emerald-600 border-white/10",
-      content: <div className="h-4 w-full bg-white/20 rounded-md" />,
-    },
-  ],
-  [
-    {
-      variant: "skeleton",
-      content: (
-        <>
-          <div className="h-4 w-3/4 bg-muted rounded-md" />
-          <div className="h-20 w-full bg-muted/40 border border-border rounded-lg" />
-        </>
-      ),
-    },
-    {
-      variant: "gradient",
-      className: "bg-linear-to-br from-violet-500 to-fuchsia-600 border-white/10",
-      content: (
-        <>
-          <h3 className="text-xl font-bold tracking-tight text-white">Top Rated</h3>
-          <div className="h-4 w-1/3 bg-white/20 rounded-md" />
-        </>
-      ),
-    },
-    {
-      variant: "skeleton",
-      content: (
-        <>
-          <div className="space-y-3">
-            <div className="h-4 w-1/3 bg-muted-foreground/20 rounded-md" />
-            <div className="h-4 w-full bg-muted rounded-md" />
-            <div className="h-4 w-5/6 bg-muted rounded-md" />
-          </div>
-          <div className="h-8 w-24 bg-muted rounded-lg" />
-        </>
-      ),
-    },
-    {
-      variant: "empty",
-    },
-    {
-      variant: "gradient",
-      className: "bg-linear-to-br from-red-600 to-orange-600 border-white/10",
-      content: <h3 className="text-lg font-bold text-white">Action</h3>,
-    },
-    {
-      variant: "skeleton",
-      content: (
-        <div className="h-4 w-full bg-muted rounded-md" />
-      ),
-    },
-  ],
-];
+const MOVIE_POSTERS = [
+  "https://media-cache.cinematerial.com/p/500x/ctpnz4mq/interstellar-movie-poster.jpg",
+  "https://media-cache.cinematerial.com/p/500x/hua9fu5l/supergirl-latvian-movie-poster.jpg",
+  "https://media-cache.cinematerial.com/p/500x/sikn4o3p/peddi-indian-movie-poster.jpg",
+  "https://cdn.cinematerial.com/p/297x/wrilasnm/black-widow-movie-poster-md.jpg",
+  "https://media-cache.cinematerial.com/p/500x/a9nltnsr/lucy-french-movie-poster.jpg",
+  "https://media-cache.cinematerial.com/p/500x/fvj5k53e/ray-gunn-movie-poster.jpg",
+  "https://media-cache.cinematerial.com/p/500x/nwu21mgo/evil-dead-burn-movie-poster.jpg",
+  "https://media-cache.cinematerial.com/p/500x/gc4ijscp/street-fighter-movie-poster.jpg",
+  "https://media-cache.cinematerial.com/p/500x/qmxnqgqr/the-paradise-indian-movie-poster.jpg",
+  "https://media-cache.cinematerial.com/p/500x/ccvoqor3/the-odyssey-movie-poster.jpg",
+  "https://media-cache.cinematerial.com/p/500x/jcs0iccd/ramayana-part-1-indian-movie-poster.jpg",
+  "https://media-cache.cinematerial.com/p/500x/bsqml1pb/couple-friendly-indian-movie-poster.jpg",
+  "https://media-cache.cinematerial.com/p/500x/hgvfrmfu/the-odyssey-movie-poster.jpg"
+]
 
-function renderCard(card: CardConfig, i: number) {
-  const base = "aspect-[2/3] w-full rounded-xl p-4 shadow-2xl flex flex-col justify-between border transition-transform duration-500";
-
-  if (card.variant === "empty") {
-    return (
-      <div key={i} className="aspect-[2/3] w-full rounded-xl bg-card p-4 shadow-2xl border border-border flex items-center justify-center">
-        <div className="w-full h-full border-2 border-dashed border-border rounded-lg flex items-center justify-center text-muted-foreground font-mono text-sm">
-          Empty Slot
-        </div>
-      </div>
-    );
-  }
-
-  if (card.variant === "skeleton") {
-    return (
-      <div key={i} className={`${base} bg-card border-border`}>
-        {card.content}
-      </div>
-    );
-  }
-
-  return (
-    <div key={i} className={`${base} ${card.className}`}>
-      {card.content}
-    </div>
-  );
-}
-
-function renderRow(row: CardConfig[], i: number) {
-  return (
-    <div key={i} className="grid grid-cols-4 sm:grid-cols-6 gap-4 sm:gap-6">
-      {row.map((card, j) => renderCard(card, j))}
-    </div>
-  );
-}
+const PosterCard = ({ url, i, priority }: { url: string; i: number; priority?: boolean }) => (
+  <div key={i} className="relative aspect-2/3 w-full rounded-xl overflow-hidden border border-white/5 shadow-2xl transition-transform duration-500 bg-muted/20">
+    <Image
+      src={url}
+      alt="Movie Poster"
+      fill
+      priority={priority}
+      sizes="(max-width: 768px) 20vw, 10vw"
+      className="object-cover opacity-80"
+    />
+    <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent" />
+  </div>
+);
 
 export default function Home() {
   const { data: session, isPending } = authClient.useSession();
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-background text-foreground flex items-center justify-center">
+    <div className={`${plusJakartaSans.className} relative min-h-screen w-full overflow-hidden bg-background text-foreground flex items-center justify-center`}>
+      <style jsx global>{`
+        @keyframes seamless-scroll {
+          from { transform: translateY(0); }
+          to { transform: translateY(-50%); }
+        }
+        .animate-infinite-scroll {
+          animation: seamless-scroll 60s linear infinite;
+        }
+      `}</style>
 
-      <div className="absolute inset-0 pointer-events-none overflow-hidden select-none opacity-30 sm:opacity-40 perspective-[1200px]">
-
-        <div className="absolute -top-1/4 -left-1/4 w-[150%] h-[150%] origin-center transform rotate-x-[35deg] rotate-z-[20deg] skew-x-[-10deg]">
-
-          <div className="flex flex-col gap-8 p-4 animate-scroll-bg">
-            {[...Array(3)].map((_, setIdx) =>
-              rows.map((row, rowIdx) => renderRow(row, setIdx * rows.length + rowIdx))
-            )}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden select-none opacity-10 sm:opacity-90 perspective-distant">
+        <div className="absolute -top-1/4 -left-1/4 w-[150%] h-[150%] origin-center transform rotate-x-35 rotate-z-20 skew-x-[-10deg]">
+          {/* 
+              We render 120 items (12 rows of 10). 
+              The animation moves -50% (6 rows). 
+              Since row 7 looks exactly like row 1, the reset is invisible.
+          */}
+          <div className="grid grid-cols-6 sm:grid-cols-10 gap-2 sm:gap-3 p-4 animate-infinite-scroll">
+            {[...Array(120)].map((_, i) => (
+              <PosterCard
+                key={i}
+                url={MOVIE_POSTERS[i % MOVIE_POSTERS.length]}
+                i={i}
+                priority={i < 20} // Preload the first two rows to prevent flicker
+              />
+            ))}
           </div>
         </div>
 
@@ -256,7 +78,7 @@ export default function Home() {
       </div>
 
       <div className="relative z-10 w-full max-w-5xl px-6 py-12">
-        <div className="flex flex-col items-center sm:items-start font-sans">
+        <div className="flex flex-col items-center sm:items-start">
           <main className="flex flex-col gap-10 w-full max-w-2xl items-center sm:items-start">
             <Image
               className="dark:invert"
@@ -267,10 +89,10 @@ export default function Home() {
               priority
             />
             <div className="flex flex-col items-center gap-4 text-center sm:items-start sm:text-left">
-              <h1 className="text-4xl md:text-6xl font-bold leading-tight tracking-tighter text-foreground">
+              <h1 className="text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-[-0.04em] text-foreground text-balance">
                 Welcome to StreamFlix, your cinematic journey starts here.
               </h1>
-              <p className="max-w-lg text-lg md:text-xl text-muted-foreground leading-relaxed">
+              <p className="max-w-xl text-lg md:text-xl text-muted-foreground font-medium leading-relaxed text-balance">
                 Dive into a vast library of films and series. Discover new releases, binge-watch classics, and find your next obsession.
               </p>
             </div>
@@ -280,7 +102,8 @@ export default function Home() {
                 className="rounded-full transition-all flex items-center justify-center bg-primary text-primary-foreground font-semibold gap-2 hover:brightness-110 text-sm sm:text-base h-12 px-8 shadow-lg active:scale-95"
               >
                 {isPending && <Loader2 className="size-4 animate-spin" />}
-                {session ? " Continue to Dashboard" : "Get Started"}
+                {session ? " Continue" : "Get Started"}
+                <ArrowRight className="size-4" />
               </Link>
             </div>
           </main>
