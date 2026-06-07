@@ -22,5 +22,9 @@ export const auth = betterAuth({
       clientId: requireEnv("GOOGLE_CLIENT_ID"),
       clientSecret: requireEnv("GOOGLE_CLIENT_SECRET"),
     },
+    github: {
+      clientId: requireEnv("GITHUB_CLIENT_ID"),
+      clientSecret: requireEnv("GITHUB_CLIENT_SECRET"),
+    },
   },
 });
