@@ -19,7 +19,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 overflow-y-auto">{children}</main>
       <nav className="sticky bottom-0 z-10 flex items-center justify-around border-t bg-background px-2 py-1">
         {navItems.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(item.href + "/");
+          const active = pathname === item.href;
           return (
             <Link
               key={item.href}

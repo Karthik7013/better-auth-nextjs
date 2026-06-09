@@ -143,3 +143,16 @@
   animation: scroll-bg 35s linear infinite;
   will-change: transform;
 }
+
+@keyframes seamless-scroll {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+.animate-infinite-scroll {
+  animation: seamless-scroll 60s linear infinite;
+}

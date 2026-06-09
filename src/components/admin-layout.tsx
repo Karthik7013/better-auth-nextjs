@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, Film, Tags, Users, ChevronLeft,
+  LayoutDashboard, Film, Tags, Users, ChevronLeft, Star,
 } from "lucide-react";
+import { ModeToggle } from "@/components/mode-toggle";
 import {
   Sidebar,
   SidebarContent,
@@ -24,6 +25,7 @@ import {
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/admin" },
   { label: "Movies", icon: Film, href: "/admin/movies" },
+  { label: "Featured", icon: Star, href: "/admin/featured" },
   { label: "Tags", icon: Tags, href: "/admin/tags" },
   { label: "Users", icon: Users, href: "/admin/users" },
 ];
@@ -52,8 +54,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             <SidebarMenu>
               {navItems.map((item) => {
                 const active =
-                  pathname === item.href ||
-                  pathname.startsWith(item.href + "/");
+                  item.href === "/admin"
+                    ? pathname === "/admin"
+                    : pathname === item.href ||
+                      pathname.startsWith(item.href + "/");
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
@@ -85,6 +89,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       <SidebarInset>
         <header className="flex h-12 items-center gap-2 border-b px-4">
           <SidebarTrigger />
+          <div className="ml-auto">
+            <ModeToggle />
+          </div>
         </header>
         <div className="flex-1 overflow-auto p-6">{children}</div>
       </SidebarInset>

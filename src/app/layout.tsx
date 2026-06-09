@@ -14,13 +14,32 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "StreamFlix | Watch Movies & TV Shows Online",
+  title: {
+    default: "StreamFlix | Watch Movies & TV Shows Online",
+    template: "%s | StreamFlix",
+  },
   description: "Stream the latest blockbusters, exclusive originals, and your favorite TV shows on StreamFlix. Start watching today.",
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },
       { url: "/favicon.ico", sizes: "any" },
     ],
+  },
+  openGraph: {
+    title: "StreamFlix | Watch Movies & TV Shows Online",
+    description: "Stream the latest blockbusters, exclusive originals, and your favorite TV shows on StreamFlix.",
+    siteName: "StreamFlix",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "StreamFlix",
+    description: "Stream the latest blockbusters, exclusive originals, and your favorite TV shows on StreamFlix.",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

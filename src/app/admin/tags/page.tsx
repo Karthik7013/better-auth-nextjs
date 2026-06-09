@@ -42,16 +42,14 @@ export default function AdminTagsPage() {
 
   const [creating, setCreating] = useState(false)
   const [newTagName, setNewTagName] = useState("")
-  const [savingNew, setSavingNew] = useState(false)
   const newInputRef = useRef<HTMLInputElement>(null)
 
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editingName, setEditingName] = useState("")
-  const [savingEdit, setSavingEdit] = useState(false)
   const editInputRef = useRef<HTMLInputElement>(null)
 
   const [deleteTarget, setDeleteTarget] = useState<Tag | null>(null)
-  const [deleting, setDeleting] = useState(false)
+  const snapshotRef = useRef<Tag[] | null>(null)
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300)
@@ -93,7 +91,11 @@ export default function AdminTagsPage() {
   async function handleCreate() {
     const name = newTagName.trim()
     if (!name) return
-    setSavingNew(true)
+    snapshotRef.current = [...tags]
+    const optimistic: Tag = { id: -Date.now(), name, createdAt: new Date().toISOString(), movieCount: 0 }
+    setTags((prev) => [...prev, optimistic])
+    setCreating(false)
+    setNewTagName("")
     try {
       const res = await fetch("/api/admin/tags", {
         method: "POST",
@@ -101,13 +103,9 @@ export default function AdminTagsPage() {
         body: JSON.stringify({ name }),
       })
       if (!res.ok) throw new Error("Create failed")
-      setCreating(false)
-      setNewTagName("")
       fetchTags()
     } catch {
-      // silent
-    } finally {
-      setSavingNew(false)
+      if (snapshotRef.current) setTags(snapshotRef.current)
     }
   }
 
@@ -125,7 +123,10 @@ export default function AdminTagsPage() {
   async function handleSaveEdit() {
     const name = editingName.trim()
     if (!name || editingId === null) return
-    setSavingEdit(true)
+    snapshotRef.current = [...tags]
+    setTags((prev) => prev.map((t) => (t.id === editingId ? { ...t, name } : t)))
+    setEditingId(null)
+    setEditingName("")
     try {
       const res = await fetch(`/api/admin/tags/${editingId}`, {
         method: "PUT",
@@ -133,13 +134,9 @@ export default function AdminTagsPage() {
         body: JSON.stringify({ name }),
       })
       if (!res.ok) throw new Error("Update failed")
-      setEditingId(null)
-      setEditingName("")
       fetchTags()
     } catch {
-      // silent
-    } finally {
-      setSavingEdit(false)
+      if (snapshotRef.current) setTags(snapshotRef.current)
     }
   }
 
@@ -150,18 +147,18 @@ export default function AdminTagsPage() {
 
   async function handleDelete() {
     if (!deleteTarget) return
-    setDeleting(true)
+    const targetId = deleteTarget.id
+    snapshotRef.current = [...tags]
+    setTags((prev) => prev.filter((t) => t.id !== targetId))
+    setDeleteTarget(null)
     try {
-      const res = await fetch(`/api/admin/tags/${deleteTarget.id}`, {
+      const res = await fetch(`/api/admin/tags/${targetId}`, {
         method: "DELETE",
       })
       if (!res.ok) throw new Error("Delete failed")
-      setDeleteTarget(null)
       fetchTags()
     } catch {
-      // silent
-    } finally {
-      setDeleting(false)
+      if (snapshotRef.current) setTags(snapshotRef.current)
     }
   }
 
@@ -238,20 +235,15 @@ export default function AdminTagsPage() {
                             variant="ghost"
                             size="icon-sm"
                             onClick={handleCreate}
-                            disabled={savingNew || !newTagName.trim()}
+                            disabled={!newTagName.trim()}
                           >
-                            {savingNew ? (
-                              <Loader2Icon className="size-3.5 animate-spin text-primary" />
-                            ) : (
-                              <CheckIcon className="size-3.5" />
-                            )}
+                            <CheckIcon className="size-3.5" />
                             <span className="sr-only">Save</span>
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon-sm"
                             onClick={cancelCreate}
-                            disabled={savingNew}
                           >
                             <XIcon className="size-3.5" />
                             <span className="sr-only">Cancel</span>
@@ -283,20 +275,15 @@ export default function AdminTagsPage() {
                               variant="ghost"
                               size="icon-sm"
                               onClick={handleSaveEdit}
-                              disabled={savingEdit || !editingName.trim()}
+                              disabled={!editingName.trim()}
                             >
-                              {savingEdit ? (
-                                <Loader2Icon className="size-3.5 animate-spin text-primary" />
-                              ) : (
-                                <CheckIcon className="size-3.5" />
-                              )}
+                              <CheckIcon className="size-3.5" />
                               <span className="sr-only">Save</span>
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon-sm"
                               onClick={cancelEdit}
-                              disabled={savingEdit}
                             >
                               <XIcon className="size-3.5" />
                               <span className="sr-only">Cancel</span>
@@ -339,9 +326,7 @@ export default function AdminTagsPage() {
                                 <Button
                                   variant="destructive"
                                   onClick={handleDelete}
-                                  disabled={deleting}
                                 >
-                                  {deleting && <Loader2Icon className="size-4 animate-spin text-primary" />}
                                   Delete
                                 </Button>
                               </div>
