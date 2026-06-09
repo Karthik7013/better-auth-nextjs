@@ -131,4 +131,17 @@ export const favorites = pgTable("favorites", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => [primaryKey({ columns: [t.userId, t.movieId] })]);
 
+export const movieRequests = pgTable("movie_requests", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  externalLink: text("external_link"),
+  status: varchar("status", { length: 20 }).default("pending").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 
