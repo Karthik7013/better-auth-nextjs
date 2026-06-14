@@ -26,71 +26,85 @@ export function ExploreContent({ isAdmin }: { isAdmin?: boolean }) {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
-  const [movies, setMovies] = useState<any[]>([]);
-  const [total, setTotal] = useState(0);
-  const [cursor, setCursor] = useState<number | null>(null);
-  const [hasMore, setHasMore] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
+  const [appendedMovies, setAppendedMovies] = useState<any[]>([]);
+  const [appendCursor, setAppendCursor] = useState<number | null>(null);
+  const [appendHasMore, setAppendHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [appendError, setAppendError] = useState(false);
   const observerRef = useRef<HTMLDivElement>(null);
 
-  const { data: tags } = useQuery({ queryKey: ["tags"], queryFn: fetchTags });
+  const { data: tags } = useQuery({
+    queryKey: ["tags"],
+    queryFn: fetchTags,
+    refetchOnMount: false,
+  });
 
-  const buildParams = useCallback(
-    (c: number | null) => {
-      const params = new URLSearchParams();
-      if (debouncedSearch) params.set("q", debouncedSearch);
-      if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
-      if (c) params.set("cursor", String(c));
-      return params.toString();
-    },
-    [debouncedSearch, selectedTags]
-  );
+  const params = new URLSearchParams();
+  if (debouncedSearch) params.set("q", debouncedSearch);
+  if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
+  const paramsStr = params.toString();
 
-  const loadMovies = useCallback(
-    async (c: number | null, append: boolean) => {
-      setLoading(true);
-      setError(false);
-      try {
-        const data = await fetchMovies(buildParams(c));
-        if (append) {
-          setMovies((prev) => [...prev, ...data.movies]);
-        } else {
-          setMovies(data.movies);
-        }
-        setTotal(data.total);
-        setCursor(data.nextCursor);
-        setHasMore(data.hasMore);
-      } catch {
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [buildParams]
-  );
+  const moviesQuery = useQuery({
+    queryKey: ["movies", debouncedSearch, selectedTags],
+    queryFn: () => fetchMovies(paramsStr),
+    refetchOnMount: false,
+  });
+
+  const movies = [...(moviesQuery.data?.movies || []), ...appendedMovies];
+  const total = moviesQuery.data?.total ?? 0;
+  const initialHasMore = moviesQuery.data?.hasMore ?? false;
+  const hasMore = appendHasMore || initialHasMore;
+  const initialLoading = moviesQuery.isLoading;
+  const loading = initialLoading || loadingMore;
+  const error = !initialLoading && moviesQuery.isError && appendedMovies.length === 0;
+
+  // Sync appendHasMore from initial query and reset on filter change
+  useEffect(() => {
+    if (moviesQuery.data) {
+      setAppendHasMore(moviesQuery.data.hasMore);
+    }
+  }, [moviesQuery.data]);
 
   useEffect(() => {
-    setMovies([]);
-    setCursor(null);
-    setHasMore(true);
-    setError(false);
-    loadMovies(null, false);
-  }, [buildParams, loadMovies]);
+    setAppendedMovies([]);
+    setAppendCursor(null);
+    setAppendHasMore(false);
+    setAppendError(false);
+  }, [debouncedSearch, selectedTags]);
+
+  const loadMore = useCallback(async () => {
+    if (!hasMore || loadingMore) return;
+    setLoadingMore(true);
+    setAppendError(false);
+    try {
+      const p = new URLSearchParams();
+      if (debouncedSearch) p.set("q", debouncedSearch);
+      if (selectedTags.length > 0) p.set("tags", selectedTags.join(","));
+      if (appendCursor) p.set("cursor", String(appendCursor));
+      const data = await fetchMovies(p.toString());
+      setAppendedMovies((prev) => [...prev, ...data.movies]);
+      setAppendCursor(data.nextCursor);
+      setAppendHasMore(data.hasMore);
+    } catch {
+      setAppendError(true);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [debouncedSearch, selectedTags, appendCursor, hasMore, loadingMore]);
 
   useEffect(() => {
-    if (!observerRef.current || !hasMore || loading) return;
+    if (!observerRef.current || !hasMore || loadingMore || initialLoading) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
-          loadMovies(cursor, true);
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          loadMore();
         }
       },
       { threshold: 0.1 }
     );
     observer.observe(observerRef.current);
     return () => observer.disconnect();
-  }, [cursor, hasMore, loading, loadMovies]);
+  }, [appendCursor, hasMore, loadingMore, loadMore, initialLoading]);
 
   const toggleTag = (tagId: number) => {
     setSelectedTags((prev) =>

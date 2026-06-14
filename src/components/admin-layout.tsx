@@ -78,7 +78,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         <SidebarFooter>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton render={<Link href="/" />}>
+              <SidebarMenuButton render={<Link href="/home" />}>
                 <ChevronLeft className="size-4" />
                 <span>Back to app</span>
               </SidebarMenuButton>

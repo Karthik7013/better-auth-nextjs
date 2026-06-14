@@ -15,6 +15,7 @@ export function HomeContent() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["home"],
     queryFn: fetchHome,
+    refetchOnMount: false,
   });
 
   if (isError) {
