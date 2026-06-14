@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronLeft, Loader2, Mail, Lock, User, Clock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -34,6 +34,20 @@ export default function LoginPage() {
   const [lastMethod] = useState<AuthMethod>(getLastMethod);
 
   const { data: session, isPending } = authClient.useSession();
+
+  const bgGrid = useMemo(() => (
+    <div className="absolute -top-1/4 -left-1/4 w-[150%] h-[150%] origin-center transform rotate-x-[35deg] rotate-z-[20deg] skew-x-[-10deg] blur-sm">
+      <div className="flex flex-col gap-8 p-4 animate-scroll-bg opacity-50">
+        {[...Array(12)].map((_, rowIdx) => (
+          <div key={rowIdx} className="grid grid-cols-4 sm:grid-cols-8 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="aspect-[2/3] w-full rounded-xl bg-card/50 border border-border" />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  ), []);
 
   useEffect(() => {
     if (session && !isPending) {
@@ -162,17 +176,7 @@ export default function LoginPage() {
       </Link>
 
       <div className="absolute inset-0 pointer-events-none overflow-hidden select-none opacity-20 perspective-[1200px]">
-        <div className="absolute -top-1/4 -left-1/4 w-[150%] h-[150%] origin-center transform rotate-x-[35deg] rotate-z-[20deg] skew-x-[-10deg] blur-sm">
-          <div className="flex flex-col gap-8 p-4 animate-scroll-bg opacity-50">
-            {[...Array(12)].map((_, rowIdx) => (
-              <div key={rowIdx} className="grid grid-cols-4 sm:grid-cols-8 gap-6">
-                {[...Array(8)].map((_, i) => (
-                  <div key={i} className="aspect-[2/3] w-full rounded-xl bg-card/50 border border-border" />
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
+        {bgGrid}
         <div className="absolute inset-0 bg-radial-at-c from-transparent to-background" />
       </div>
 
