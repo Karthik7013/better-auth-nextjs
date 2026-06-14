@@ -75,7 +75,7 @@ export default async function AdminDashboard() {
           const Icon = config.icon;
           return (
             <Card key={i} className={`border-l-4 ${config.border} overflow-hidden`}>
-              <CardContent className="p-6">
+              <CardContent className="p-4 md:p-6">
                 <div className="flex items-center justify-between">
                   <div className={`rounded-xl p-3 ${config.color}`}>
                     <Icon className="size-6" />
@@ -90,14 +90,14 @@ export default async function AdminDashboard() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div>
+        <div className="min-w-0">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <UserPlus className="size-5 text-blue-500" />
             Recent Signups
           </h2>
           <Card className="overflow-hidden">
-            <CardContent className="p-0">
-              <table className="w-full">
+            <CardContent className="p-0 overflow-x-auto">
+              <table className="w-full min-w-[500px]">
                 <thead>
                   <tr className="border-b bg-muted/50 text-left text-sm text-muted-foreground">
                     <th className="px-4 py-3 font-medium">User</th>
@@ -111,13 +111,13 @@ export default async function AdminDashboard() {
                       <td className="px-4 py-2.5">
                         <div className="flex items-center gap-3">
                           {u.image ? (
-                            <img src={u.image} alt={`${u.name}'s avatar`} className="size-8 rounded-full object-cover" />
+                            <img src={u.image} alt={`${u.name}'s avatar`} className="size-8 shrink-0 rounded-full object-cover" />
                           ) : (
-                            <div className="size-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground">
+                            <div className="size-8 shrink-0 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground">
                               {(u.name?.charAt(0) || "?").toUpperCase()}
                             </div>
                           )}
-                          <span className="font-medium truncate">{u.name}</span>
+                          <span className="font-medium truncate max-w-[120px]">{u.name}</span>
                         </div>
                       </td>
                       <td className="px-4 py-2.5 text-sm text-muted-foreground truncate max-w-40">
@@ -145,14 +145,14 @@ export default async function AdminDashboard() {
           </Card>
         </div>
 
-        <div>
+        <div className="min-w-0">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <Heart className="size-5 text-rose-500" />
             Most Favorited
           </h2>
           <Card className="overflow-hidden">
-            <CardContent className="p-0">
-              <table className="w-full">
+            <CardContent className="p-0 overflow-x-auto">
+              <table className="w-full min-w-[400px]">
                 <thead>
                   <tr className="border-b bg-muted/50 text-left text-sm text-muted-foreground">
                     <th className="px-4 py-3 font-medium">Movie</th>

@@ -177,7 +177,7 @@ export default function AdminTagsPage() {
         </Button>
       </div>
 
-      <Card>
+      <Card className="overflow-visible">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>All Tags</CardTitle>
@@ -192,17 +192,17 @@ export default function AdminTagsPage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2Icon className="size-6 animate-spin text-primary" />
             </div>
-          ) : tags.length === 0 && !creating ? (
+          ) : tags.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground">
               No tags found.
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div>
               <table className="w-full">
                 <thead>
                   <tr className="border-b text-left text-sm text-muted-foreground">

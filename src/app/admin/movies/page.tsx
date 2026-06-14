@@ -62,6 +62,7 @@ export default function AdminMoviesPage() {
   const [editingMovie, setEditingMovie] = useState<Movie | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Movie | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   useEffect(() => {
     setPage(1)
@@ -108,6 +109,7 @@ export default function AdminMoviesPage() {
       })
       if (!res.ok) throw new Error("Delete failed")
       setDeleteTarget(null)
+      setDeleteDialogOpen(false)
       fetchMovies()
     } catch {
       // silent
@@ -121,15 +123,15 @@ export default function AdminMoviesPage() {
   const endItem = Math.min(page * limit, total)
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 w-full max-w-full min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Movies</h1>
           <p className="text-muted-foreground mt-1">
             Manage your movie catalog.
           </p>
         </div>
-        <Button onClick={openCreateDialog}>
+        <Button onClick={openCreateDialog} className="w-full sm:w-auto">
           <PlusIcon className="size-4" />
           Add Movie
         </Button>
@@ -152,47 +154,76 @@ export default function AdminMoviesPage() {
         onSuccess={fetchMovies}
       />
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>All Movies</CardTitle>
-            <div className="relative w-64">
-              <SearchIcon className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by title..."
-                className="pl-8"
-              />
-            </div>
+      <Dialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open)
+          if (!open) setDeleteTarget(null)
+        }}
+      >
+        <DialogContent>
+          <DialogTitle>Delete Movie</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete <strong>{deleteTarget?.title}</strong>?
+            This action cannot be undone.
+          </DialogDescription>
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting && <Loader2Icon className="size-4 animate-spin text-primary" />}
+              Delete
+            </Button>
           </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2Icon className="size-6 animate-spin text-primary" />
+        </DialogContent>
+      </Dialog>
+
+      <div className="min-w-0 w-full">
+        <Card className="overflow-hidden">
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 sm:justify-between">
+              <CardTitle>All Movies</CardTitle>
+              <div className="relative w-full sm:w-64">
+                <SearchIcon className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search by title..."
+                  className="pl-8"
+                />
+              </div>
             </div>
-          ) : movies.length === 0 ? (
-            <div className="py-12 text-center text-muted-foreground">
-              No movies found.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
+          </CardHeader>
+          <CardContent className="p-0 overflow-x-auto">
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2Icon className="size-6 animate-spin text-primary" />
+              </div>
+            ) : movies.length === 0 ? (
+              <div className="py-12 text-center text-muted-foreground">
+                No movies found.
+              </div>
+            ) : (
+              <table className="w-full min-w-[800px]">
                 <thead>
-                  <tr className="border-b text-left text-sm text-muted-foreground">
-                    <th className="px-4 py-3 font-medium">Title</th>
-                    <th className="px-4 py-3 font-medium">Year / Release</th>
-                    <th className="px-4 py-3 font-medium">Duration</th>
-                    <th className="px-4 py-3 font-medium">Tags</th>
-                    <th className="px-4 py-3 font-medium text-right">Actions</th>
+                  <tr className="border-b text-left text-sm text-muted-foreground bg-muted/30">
+                    <th className="px-4 py-3 font-medium whitespace-nowrap">Title</th>
+                    <th className="px-4 py-3 font-medium whitespace-nowrap">Year / Release</th>
+                    <th className="px-4 py-3 font-medium whitespace-nowrap">Duration</th>
+                    <th className="px-4 py-3 font-medium whitespace-nowrap">Tags</th>
+                    <th className="px-4 py-3 font-medium text-right whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {movies.map((movie) => (
                     <tr key={movie.id} className="border-b last:border-0 hover:bg-muted/50">
                       <td className="px-4 py-3">
-                        <Link href={`/movies/${movie.slug}`} className="flex items-center gap-3 group">
+                        <Link href={`/movies/${movie.slug}`} className="flex items-center gap-3 group min-w-0">
                           {movie.thumbnailUrl && (
                             <img
                               src={movie.thumbnailUrl}
@@ -200,20 +231,20 @@ export default function AdminMoviesPage() {
                               className="size-10 rounded object-cover"
                             />
                           )}
-                          <div>
+                          <div className="min-w-0">
                             <p className="font-medium group-hover:text-primary transition-colors">{movie.title}</p>
-                            <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                            <p className="text-xs text-muted-foreground truncate max-w-[120px] md:max-w-[200px]">
                               {movie.description}
                             </p>
                           </div>
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-sm">
+                      <td className="px-4 py-3 text-sm whitespace-nowrap">
                         {movie.releaseDate
                           ? new Date(movie.releaseDate).getFullYear()
                           : "—"}
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                      <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
                         {formatDuration(movie.durationSeconds)}
                       </td>
                       <td className="px-4 py-3">
@@ -233,52 +264,38 @@ export default function AdminMoviesPage() {
                         <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"
-                            size="icon-sm"
+                            size="icon"
+                            className="size-8"
                             onClick={() => openEditDialog(movie)}
                           >
                             <PencilIcon className="size-3.5" />
                             <span className="sr-only">Edit</span>
                           </Button>
-                          <Dialog>
-                            <DialogTrigger onClick={() => setDeleteTarget(movie)}>
-                              <Trash2Icon className="size-3.5" />
-                              <span className="sr-only">Delete</span>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogTitle>Delete Movie</DialogTitle>
-                              <DialogDescription>
-                                Are you sure you want to delete <strong>{deleteTarget?.title}</strong>?
-                                This action cannot be undone.
-                              </DialogDescription>
-                              <div className="flex justify-end gap-2 mt-6">
-                                <DialogClose
-                                  render={<Button variant="outline">Cancel</Button>}
-                                  onClick={() => setDeleteTarget(null)}
-                                />
-                                <Button
-                                  variant="destructive"
-                                  onClick={handleDelete}
-                                  disabled={deleting}
-                                >
-                                  {deleting && <Loader2Icon className="size-4 animate-spin text-primary" />}
-                                  Delete
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50"
+                            onClick={() => {
+                              setDeleteTarget(movie)
+                              setDeleteDialogOpen(true)
+                            }}
+                          >
+                            <Trash2Icon className="size-3.5" />
+                            <span className="sr-only">Delete</span>
+                          </Button>
                         </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <div className="flex items-center justify-between text-sm text-muted-foreground min-w-0 w-full">
           <span>
             Showing {startItem}–{endItem} of {total} movies
           </span>

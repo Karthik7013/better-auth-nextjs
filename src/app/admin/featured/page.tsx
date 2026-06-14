@@ -212,8 +212,8 @@ export default function FeaturedMoviesPage() {
         </Dialog>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
+      <Card className="overflow-visible">
+        <CardContent className="p-0 overflow-x-auto">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2Icon className="size-6 animate-spin text-primary" />
@@ -225,13 +225,14 @@ export default function FeaturedMoviesPage() {
               <p className="text-sm mt-1">Click &quot;Add Movie&quot; to feature movies on the home page.</p>
             </div>
           ) : (
-            <table className="w-full">
-              <thead>
-                <tr className="border-b bg-muted/50 text-left text-sm text-muted-foreground">
-                  <th className="px-4 py-3 font-medium w-[50%]">Movie</th>
-                  <th className="px-4 py-3 font-medium">Order</th>
-                  <th className="px-4 py-3 font-medium text-right">Actions</th>
-                </tr>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-muted/50 text-left text-sm text-muted-foreground">
+                    <th className="px-4 py-3 font-medium w-[50%]">Movie</th>
+                    <th className="px-4 py-3 font-medium">Order</th>
+                    <th className="px-4 py-3 font-medium text-right">Actions</th>
+                  </tr>
               </thead>
               <tbody>
                 {featured.map((item, index) => (
@@ -285,6 +286,7 @@ export default function FeaturedMoviesPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </CardContent>
       </Card>

@@ -170,13 +170,13 @@ export default function AdminRequestsPage() {
         ))}
       </div>
 
-      <Card>
+      <Card className="overflow-visible">
         <CardHeader>
           <CardTitle>
             {statusFilter ? `${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)} Requests` : "All Requests"}
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2Icon className="size-6 animate-spin text-primary" />
@@ -186,8 +186,7 @@ export default function AdminRequestsPage() {
               No requests found.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <table className="w-full">
                 <thead>
                   <tr className="border-b text-left text-sm text-muted-foreground">
                     <th className="px-4 py-3 font-medium">Title</th>
@@ -274,7 +273,6 @@ export default function AdminRequestsPage() {
                   ))}
                 </tbody>
               </table>
-            </div>
           )}
         </CardContent>
       </Card>
