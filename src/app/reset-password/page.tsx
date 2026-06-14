@@ -19,7 +19,8 @@ function parseToken() {
 
 export default function ResetPasswordPage() {
   const router = useRouter();
-  const [{ token, error }] = useState(parseToken);
+  const [token] = useState(() => parseToken().token);
+  const [error, setError] = useState<string | null>(() => parseToken().error);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
