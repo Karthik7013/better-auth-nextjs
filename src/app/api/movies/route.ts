@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     if (tagsParam) {
       const tagIds = tagsParam.split(",").map(Number);
-      const [result, [{ value: total }]] = await Promise.all([
+      const settled = await Promise.allSettled([
         db
           .select({
             id: movies.id,
@@ -73,6 +73,11 @@ export async function GET(request: NextRequest) {
           ),
       ]);
 
+      if (settled.some(r => r.status === "rejected")) {
+        return NextResponse.json({ error: "Query Failed" }, { status: 500 });
+      }
+      const [result, [{ value: total }]] = settled.map(r => (r as PromiseFulfilledResult<any>).value);
+
       const lastItem = result[result.length - 1];
       return NextResponse.json({
         movies: result,
@@ -82,7 +87,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const [result, [{ value: total }]] = await Promise.all([
+    const settled = await Promise.allSettled([
       db
         .select({
           id: movies.id,
@@ -99,6 +104,11 @@ export async function GET(request: NextRequest) {
         .from(movies)
         .where(conditions.length > 0 ? and(...conditions) : undefined),
     ]);
+
+    if (settled.some(r => r.status === "rejected")) {
+      return NextResponse.json({ error: "Query Failed" }, { status: 500 });
+    }
+    const [result, [{ value: total }]] = settled.map(r => (r as PromiseFulfilledResult<any>).value);
 
     const lastItem = result[result.length - 1];
     return NextResponse.json({

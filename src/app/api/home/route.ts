@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const [featured, continueWatching, recentlyAdded] = await Promise.all([
+    const settled = await Promise.allSettled([
       db
         .select({
           id: movies.id,
@@ -57,6 +57,10 @@ export async function GET(request: NextRequest) {
         .orderBy(desc(movies.createdAt))
         .limit(12),
     ]);
+
+    const featured = settled[0].status === "fulfilled" ? settled[0].value : [];
+    const continueWatching = settled[1].status === "fulfilled" ? settled[1].value : [];
+    const recentlyAdded = settled[2].status === "fulfilled" ? settled[2].value : [];
 
     return NextResponse.json({ featured, continueWatching, recentlyAdded });
   } catch (e) {

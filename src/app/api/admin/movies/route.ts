@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .offset(offset);
 
-    const moviesWithTags = await Promise.all(
+    const settled = await Promise.allSettled(
       moviesList.map(async (movie) => {
         const movieTagRows = await db
           .select({ tag: tags })
@@ -55,6 +55,12 @@ export async function GET(request: NextRequest) {
           tags: movieTagRows.map((r) => r.tag),
         };
       })
+    );
+
+    const moviesWithTags = moviesList.map((movie, i) =>
+      settled[i].status === "fulfilled"
+        ? (settled[i] as PromiseFulfilledResult<any>).value
+        : { ...movie, tags: [] }
     );
 
     return NextResponse.json({

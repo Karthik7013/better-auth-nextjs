@@ -6,6 +6,8 @@ import {
   Card,
   CardContent,
 } from "@/components/ui/card";
+
+export const dynamic = "force-dynamic";
 import { Film, Tags as TagsIcon, Users, ShieldCheck, Heart, UserPlus } from "lucide-react";
 
 const statConfig = [
