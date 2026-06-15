@@ -184,8 +184,8 @@ export default function AdminMoviesPage() {
         </DialogContent>
       </Dialog>
 
-      <Card className="flex flex-col min-w-0 overflow-hidden border-muted/60 shadow-sm">
-        <CardHeader className="border-b bg-muted/10 pb-4">
+      <Card className="flex p-0 flex-col min-w-0 overflow-hidden border-muted/60 shadow-sm">
+        <CardHeader className="border-b bg-muted/10 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
             <div>
               <CardTitle>All Movies</CardTitle>

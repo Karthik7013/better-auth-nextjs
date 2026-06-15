@@ -60,9 +60,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ featured, continueWatching, recentlyAdded });
   } catch (e) {
-    console.error("api/home error:", e);
+    console.error("api/home error:", e instanceof Error ? e.message : e, e instanceof Error ? e.stack : "");
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Internal Server Error", detail: e instanceof Error ? e.message : "Unknown" },
       { status: 500 }
     );
   }

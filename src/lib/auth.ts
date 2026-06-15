@@ -16,6 +16,12 @@ export const auth = betterAuth({
     provider: "pg",
     schema: schema,
   }),
+  session: {
+    cookieCache: {
+      enabled: true,
+      strategy: "jwt",
+    },
+  },
   plugins: [
     admin({
       defaultRole: "user",

@@ -223,7 +223,7 @@ export default function LoginPage() {
               <Button
                 onClick={handleGoogleLogin}
                 disabled={isLoading}
-                variant={lastMethod === "google" ? "default" : "secondary"}
+                variant={"secondary"}
                 className="w-full h-12 rounded-full font-semibold transition-all active:scale-95 flex items-center justify-center gap-3"
               >
                 {isLoading ? (
@@ -252,7 +252,7 @@ export default function LoginPage() {
               <Button
                 onClick={handleGitHubLogin}
                 disabled={isLoading}
-                variant={lastMethod === "github" ? "default" : "secondary"}
+                variant={"secondary"}
                 className="w-full h-12 rounded-full font-semibold transition-all active:scale-95 flex items-center justify-center gap-3"
               >
                 {isLoading ? (
@@ -321,13 +321,8 @@ export default function LoginPage() {
             </div>
 
             <div className="relative">
-              {mode === "signIn" && lastMethod === "email" && (
-                <span className="absolute -top-2 right-0 z-10 flex items-center gap-1 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-medium text-primary-foreground shadow-sm">
-                  <Clock className="size-3" />
-                  Last used
-                </span>
-              )}
               <Button
+                variant={'default'}
                 type="submit"
                 disabled={isLoading}
                 className="w-full h-12 rounded-full font-semibold transition-all active:scale-95"

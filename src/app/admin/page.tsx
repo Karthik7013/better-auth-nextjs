@@ -95,7 +95,7 @@ export default async function AdminDashboard() {
             <UserPlus className="size-5 text-blue-500" />
             Recent Signups
           </h2>
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden p-0">
             <CardContent className="p-0 overflow-x-auto">
               <table className="w-full min-w-[500px]">
                 <thead>
@@ -150,7 +150,7 @@ export default async function AdminDashboard() {
             <Heart className="size-5 text-rose-500" />
             Most Favorited
           </h2>
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden p-0">
             <CardContent className="p-0 overflow-x-auto">
               <table className="w-full min-w-[400px]">
                 <thead>
