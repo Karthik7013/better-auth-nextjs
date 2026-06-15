@@ -57,11 +57,10 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    const moviesWithTags = moviesList.map((movie, i) =>
-      settled[i].status === "fulfilled"
-        ? (settled[i] as PromiseFulfilledResult<any>).value
-        : { ...movie, tags: [] }
-    );
+    const moviesWithTags = moviesList.map((movie, i) => {
+      const r = settled[i];
+      return r.status === "fulfilled" ? r.value : { ...movie, tags: [] };
+    });
 
     return NextResponse.json({
       movies: moviesWithTags,

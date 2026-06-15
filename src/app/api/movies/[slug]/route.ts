@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { movies, favorites } from "@/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { movies, favorites, movieTags } from "@/db/schema";
+import { eq, and, sql, ne, inArray, desc } from "drizzle-orm";
 
 export async function GET(
   request: NextRequest,
@@ -36,7 +36,37 @@ export async function GET(
       return NextResponse.json({ error: "Movie Not Found" }, { status: 404 });
     }
 
-    return NextResponse.json(result[0]);
+    const movie = result[0];
+
+    const tagRows = await db
+      .select({ tagId: movieTags.tagId })
+      .from(movieTags)
+      .where(eq(movieTags.movieId, movie.id));
+
+    let related: { id: number; title: string; slug: string; thumbnailUrl: string }[] = [];
+    if (tagRows.length > 0) {
+      const tagIds = tagRows.map((t) => t.tagId);
+      related = await db
+        .select({
+          id: movies.id,
+          title: movies.title,
+          slug: movies.slug,
+          thumbnailUrl: movies.thumbnailUrl,
+        })
+        .from(movies)
+        .innerJoin(movieTags, eq(movies.id, movieTags.movieId))
+        .where(
+          and(
+            inArray(movieTags.tagId, tagIds),
+            ne(movies.id, movie.id),
+          )
+        )
+        .groupBy(movies.id)
+        .orderBy(desc(movies.createdAt))
+        .limit(6);
+    }
+
+    return NextResponse.json({ ...movie, related });
   } catch {
     return NextResponse.json({ error: "Fetch Failed" }, { status: 500 });
   }

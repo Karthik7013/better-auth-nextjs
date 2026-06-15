@@ -1,9 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { HeroCarousel } from "@/components/hero-carousel";
 import { MovieCard } from "@/components/movie-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Film } from "lucide-react";
 
 async function fetchHome() {
   const res = await fetch("/api/home");
@@ -41,7 +44,22 @@ export function HomeContent() {
     );
   }
 
-  if (!data) return null;
+  if (!data || (data.featured?.length === 0 && data.continueWatching?.length === 0 && data.recentlyAdded?.length === 0)) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted">
+          <Film className="size-8 text-muted-foreground" />
+        </div>
+        <h3 className="mb-1 text-lg font-semibold">Welcome to StreamFlix!</h3>
+        <p className="mb-6 max-w-xs text-sm text-muted-foreground">
+          No movies available yet. Check back soon or browse our collection.
+        </p>
+        <Link href="/explore">
+          <Button>Browse Movies</Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <>

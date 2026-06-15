@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { Play, Heart, ChevronLeft } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { MovieCard } from "@/components/movie-card";
 
 export function MovieDetailContent() {
   const params = useParams<{ slug: string }>();
@@ -183,6 +184,20 @@ export function MovieDetailContent() {
           <p className="text-foreground/80 leading-relaxed text-base md:text-lg">
             {movie.description}
           </p>
+
+          {/* Related movies */}
+          {movie.related?.length > 0 && (
+            <section className="pt-4">
+              <h2 className="text-xl font-semibold mb-4">Related Movies</h2>
+              <div className="flex gap-4 overflow-x-auto pb-2">
+                {movie.related.map((m: { id: number; title: string; slug: string; thumbnailUrl: string }) => (
+                  <div key={m.id} className="shrink-0 w-48">
+                    <MovieCard {...m} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </div>
     </div>

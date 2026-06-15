@@ -7,6 +7,13 @@ import { ilike, and, lt, desc, inArray, eq, sql, count } from "drizzle-orm";
 
 export const dynamic = 'force-dynamic';
 
+interface MovieRow {
+  id: number;
+  title: string;
+  slug: string;
+  thumbnailUrl: string;
+}
+
 export async function GET(request: NextRequest) {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session) {
@@ -76,7 +83,10 @@ export async function GET(request: NextRequest) {
       if (settled.some(r => r.status === "rejected")) {
         return NextResponse.json({ error: "Query Failed" }, { status: 500 });
       }
-      const [result, [{ value: total }]] = settled.map(r => (r as PromiseFulfilledResult<any>).value);
+      const r0 = settled[0] as PromiseFulfilledResult<MovieRow[]>;
+      const r1 = settled[1] as PromiseFulfilledResult<{ value: number }[]>;
+      const result = r0.value;
+      const total = r1.value[0].value;
 
       const lastItem = result[result.length - 1];
       return NextResponse.json({
@@ -108,7 +118,10 @@ export async function GET(request: NextRequest) {
     if (settled.some(r => r.status === "rejected")) {
       return NextResponse.json({ error: "Query Failed" }, { status: 500 });
     }
-    const [result, [{ value: total }]] = settled.map(r => (r as PromiseFulfilledResult<any>).value);
+    const r0 = settled[0] as PromiseFulfilledResult<MovieRow[]>;
+    const r1 = settled[1] as PromiseFulfilledResult<{ value: number }[]>;
+    const result = r0.value;
+    const total = r1.value[0].value;
 
     const lastItem = result[result.length - 1];
     return NextResponse.json({

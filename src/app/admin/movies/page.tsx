@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 import { SearchIcon, PlusIcon, PencilIcon, Trash2Icon, Loader2Icon } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -111,9 +112,10 @@ export default function AdminMoviesPage() {
       if (!res.ok) throw new Error("Delete failed")
       setDeleteTarget(null)
       setDeleteDialogOpen(false)
+      toast.success("Movie deleted")
       fetchMovies()
     } catch {
-      // silent
+      toast.error("Failed to delete movie")
     } finally {
       setDeleting(false)
     }
@@ -152,7 +154,10 @@ export default function AdminMoviesPage() {
           tagIds: editingMovie.tags.map((t) => t.id),
         } : undefined}
         editMovieId={editingMovie?.id}
-        onSuccess={fetchMovies}
+        onSuccess={() => {
+          toast.success(editingMovie ? "Movie updated" : "Movie created")
+          fetchMovies()
+        }}
       />
 
       <Dialog

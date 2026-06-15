@@ -11,7 +11,7 @@ import {
   AlertDialogClose,
 } from "@/components/ui/alert-dialog";
 import { authClient } from "@/lib/auth-client";
-import { Trash2, UserX, LogOut, Camera, Loader2, Shield } from "lucide-react";
+import { Trash2, UserX, LogOut, Camera, Loader2, Shield, Lock } from "lucide-react";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,6 +26,9 @@ export function SettingsContent() {
   const [confirmText, setConfirmText] = useState("");
   const [clearAlertOpen, setClearAlertOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: session, isPending } = authClient.useSession();
@@ -143,6 +146,78 @@ export function SettingsContent() {
         </CardHeader>
         <CardContent>
           <ModeToggle />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Password</CardTitle>
+          <CardDescription>Change your account password.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form
+            className="flex flex-col gap-3"
+            onSubmit={async (e) => {
+            e.preventDefault();
+            setPasswordError("");
+            setPasswordSuccess(false);
+            const form = e.currentTarget;
+            const formData = new FormData(form);
+            const currentPassword = formData.get("currentPassword") as string;
+            const newPassword = formData.get("newPassword") as string;
+            const confirmPassword = formData.get("confirmPassword") as string;
+            if (newPassword !== confirmPassword) {
+              setPasswordError("Passwords do not match");
+              return;
+            }
+            if (newPassword.length < 8) {
+              setPasswordError("New password must be at least 8 characters");
+              return;
+            }
+            setChangingPassword(true);
+            const { error } = await authClient.changePassword({
+              currentPassword,
+              newPassword,
+              revokeOtherSessions: true,
+            });
+            setChangingPassword(false);
+            if (error) {
+              setPasswordError(error.message || "Failed to change password");
+            } else {
+              setPasswordSuccess(true);
+              form.reset();
+            }
+          }}>
+            <Input
+              name="currentPassword"
+              type="password"
+              placeholder="Current password"
+              required
+            />
+            <Input
+              name="newPassword"
+              type="password"
+              placeholder="New password (8+ characters)"
+              required
+              minLength={8}
+            />
+            <Input
+              name="confirmPassword"
+              type="password"
+              placeholder="Confirm new password"
+              required
+            />
+            {passwordError && (
+              <p className="text-sm text-destructive">{passwordError}</p>
+            )}
+            {passwordSuccess && (
+              <p className="text-sm text-emerald-500">Password changed successfully.</p>
+            )}
+            <Button type="submit" disabled={changingPassword}>
+              <Lock className="size-4 mr-2" />
+              {changingPassword ? "Changing..." : "Change Password"}
+            </Button>
+          </form>
         </CardContent>
       </Card>
 
