@@ -24,6 +24,7 @@ export async function GET(
         description: movies.description,
         videoUrl: movies.videoUrl,
         thumbnailUrl: movies.thumbnailUrl,
+        backdropUrl: movies.backdropUrl,
         durationSeconds: movies.durationSeconds,
         releaseDate: movies.releaseDate,
         isFavorited: sql<boolean>`exists(select 1 from ${favorites} where ${eq(favorites.userId, session.user.id)} and ${eq(favorites.movieId, movies.id)})`,

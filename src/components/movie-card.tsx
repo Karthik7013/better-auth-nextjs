@@ -26,7 +26,7 @@ export function MovieCard({
 
   return (
     <Link href={`/movies/${slug}`} className="group block">
-      <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">
+      <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-muted">
         <Image
           src={thumbnailUrl}
           alt={title}

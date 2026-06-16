@@ -179,7 +179,7 @@ export function ExploreContent({ isAdmin }: { isAdmin?: boolean }) {
           {loading &&
             Array.from({ length: 4 }).map((_, i) => (
               <div key={"skel-" + i} className="space-y-2">
-                <Skeleton className="aspect-video rounded-lg" />
+                <Skeleton className="aspect-[2/3] rounded-lg" />
                 <Skeleton className="h-4 w-24" />
               </div>
             ))}

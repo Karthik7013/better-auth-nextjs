@@ -99,9 +99,10 @@ export default async function AdminDashboard() {
           </h2>
           <Card className="overflow-hidden p-0">
             <CardContent className="p-0 overflow-x-auto">
+              <div className="max-h-[400px] min-h-[200px] overflow-y-auto">
               <table className="w-full min-w-[500px]">
                 <thead>
-                  <tr className="border-b bg-muted/50 text-left text-sm text-muted-foreground">
+                  <tr className="border-b bg-muted/50 text-left text-sm text-muted-foreground sticky top-0 z-10">
                     <th className="px-4 py-3 font-medium">User</th>
                     <th className="px-4 py-3 font-medium">Email</th>
                     <th className="px-4 py-3 font-medium">Joined</th>
@@ -143,6 +144,7 @@ export default async function AdminDashboard() {
                   )}
                 </tbody>
               </table>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -154,9 +156,10 @@ export default async function AdminDashboard() {
           </h2>
           <Card className="overflow-hidden p-0">
             <CardContent className="p-0 overflow-x-auto">
+              <div className="max-h-[400px] min-h-[200px] overflow-y-auto">
               <table className="w-full min-w-[400px]">
                 <thead>
-                  <tr className="border-b bg-muted/50 text-left text-sm text-muted-foreground">
+                  <tr className="border-b bg-muted/50 text-left text-sm text-muted-foreground sticky top-0 z-10">
                     <th className="px-4 py-3 font-medium">Movie</th>
                     <th className="px-4 py-3 font-medium">Favorites</th>
                   </tr>
@@ -200,6 +203,7 @@ export default async function AdminDashboard() {
                   )}
                 </tbody>
               </table>
+              </div>
             </CardContent>
           </Card>
         </div>

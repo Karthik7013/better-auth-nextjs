@@ -11,6 +11,7 @@ interface HeroCarouselProps {
     title: string;
     slug: string;
     thumbnailUrl: string;
+    backdropUrl?: string;
   }[];
 }
 
@@ -48,7 +49,7 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
           <Link href={`/movies/${item.slug}`}>
             <div className="relative aspect-video md:aspect-[21/9]">
               <Image
-                src={item.thumbnailUrl}
+                src={item.backdropUrl || item.thumbnailUrl}
                 alt={item.title}
                 fill
                 priority={i === 0}

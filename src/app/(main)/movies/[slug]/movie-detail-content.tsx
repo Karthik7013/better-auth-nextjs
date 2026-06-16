@@ -92,7 +92,7 @@ export function MovieDetailContent() {
         {/* Backdrop */}
         <div className="absolute inset-0 bg-muted">
           <Image
-            src={movie.thumbnailUrl}
+            src={movie.backdropUrl || movie.thumbnailUrl}
             alt=""
             fill
             priority

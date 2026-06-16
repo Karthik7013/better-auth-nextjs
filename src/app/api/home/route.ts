@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
           title: movies.title,
           slug: movies.slug,
           thumbnailUrl: movies.thumbnailUrl,
+          backdropUrl: movies.backdropUrl,
         })
         .from(featuredMovies)
         .innerJoin(movies, eq(featuredMovies.movieId, movies.id))
