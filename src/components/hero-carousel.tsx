@@ -89,26 +89,41 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
             i === current ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
           }`}
         >
-          <div className="relative aspect-video md:aspect-[21/9] overflow-hidden">
+          {/* Mobile: vertical poster */}
+          <div className="relative h-[60vh] md:h-[60vh] xl:h-[70vh] overflow-hidden">
             <div
-              className={`absolute inset-0 transition-transform duration-[8000ms] ease-linear ${
+              className={`absolute inset-0 transition-transform duration-8000 ease-linear ${
                 i === current ? "scale-110" : "scale-100"
               }`}
             >
+              {/* Poster image — visible on mobile only */}
+              <Image
+                src={item.thumbnailUrl}
+                alt={item.title}
+                fill
+                priority={i === 0}
+                sizes="100vw"
+                className="object-cover md:hidden"
+                referrerPolicy="no-referrer"
+              />
+              {/* Backdrop image — visible on md+ */}
               <Image
                 src={item.backdropUrl || item.thumbnailUrl}
                 alt={item.title}
                 fill
                 priority={i === 0}
                 sizes="100vw"
-                className="object-cover"
+                className="hidden md:block object-cover"
                 referrerPolicy="no-referrer"
               />
             </div>
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
 
-            <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 lg:p-14">
+            {/* Mobile gradient: bottom fade */}
+            <div className="absolute inset-0 bg-linear-to-t from-black/95 via-black/40 via-40% to-transparent md:bg-linear-to-r md:from-black/80 md:via-black/30 md:to-transparent" />
+            {/* Desktop extra: bottom fade for text */}
+            <div className="absolute inset-0 hidden md:block bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+
+            <div className="absolute bottom-0 left-0 right-0 p-6 pb-10 md:p-10 lg:p-14">
               <div className="max-w-2xl space-y-3">
                 <div
                   className={`flex flex-wrap items-center gap-2 text-sm text-white/80 transition-all duration-500 ${
@@ -175,7 +190,7 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
         </div>
       ))}
 
-      <div className="relative z-0 aspect-video md:aspect-[21/9]" />
+      <div className="relative z-0 h-[60vh] md:h-[60vh] xl:h-[70vh]" />
 
       {length > 1 && (
         <div className="absolute bottom-0 left-0 right-0 z-20 flex items-center gap-3 px-6 md:px-10 lg:px-14 pb-4">
