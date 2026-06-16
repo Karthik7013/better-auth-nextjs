@@ -82,10 +82,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { title, slug, description, videoUrl, thumbnailUrl, durationSeconds, releaseDate, tagIds } = body;
+    const { title, slug, description, videoUrl, thumbnailUrl, backdropUrl, durationSeconds, releaseDate, tagIds } = body;
 
-    if (!title || !slug || !videoUrl || !thumbnailUrl || !durationSeconds) {
-      return NextResponse.json({ error: "Missing required fields: title, slug, videoUrl, thumbnailUrl, durationSeconds" }, { status: 400 });
+    if (!title || !slug) {
+      return NextResponse.json({ error: "Missing required fields: title, slug" }, { status: 400 });
     }
 
     const [createdMovie] = await db
@@ -94,9 +94,10 @@ export async function POST(request: NextRequest) {
         title,
         slug,
         description: description || null,
-        videoUrl,
-        thumbnailUrl,
-        durationSeconds,
+        videoUrl: videoUrl || null,
+        thumbnailUrl: thumbnailUrl || null,
+        backdropUrl: backdropUrl || null,
+        durationSeconds: durationSeconds || null,
         releaseDate: releaseDate || null,
       })
       .returning();

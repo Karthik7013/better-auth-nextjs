@@ -34,9 +34,10 @@ interface Movie {
   title: string
   slug: string
   description: string | null
-  videoUrl: string
-  thumbnailUrl: string
-  durationSeconds: number
+  videoUrl: string | null
+  thumbnailUrl: string | null
+  backdropUrl: string | null
+  durationSeconds: number | null
   releaseDate: string | null
   createdAt: string
   updatedAt: string
@@ -147,9 +148,10 @@ export default function AdminMoviesPage() {
           title: editingMovie.title,
           slug: editingMovie.slug,
           description: editingMovie.description ?? "",
-          videoUrl: editingMovie.videoUrl,
-          thumbnailUrl: editingMovie.thumbnailUrl,
-          durationSeconds: String(editingMovie.durationSeconds),
+          videoUrl: editingMovie.videoUrl ?? "",
+          thumbnailUrl: editingMovie.thumbnailUrl ?? "",
+          backdropUrl: editingMovie.backdropUrl ?? "",
+          durationSeconds: editingMovie.durationSeconds ? String(editingMovie.durationSeconds) : "",
           releaseDate: editingMovie.releaseDate ?? "",
           tagIds: editingMovie.tags.map((t) => t.id),
         } : undefined}
@@ -278,7 +280,7 @@ export default function AdminMoviesPage() {
                           : "—"}
                       </td>
                       <td className="px-6 py-4 text-sm text-muted-foreground whitespace-nowrap">
-                        {formatDuration(movie.durationSeconds)}
+                        {movie.durationSeconds ? formatDuration(movie.durationSeconds) : "—"}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-1">

@@ -8,9 +8,10 @@ interface MovieUpdateData {
   title?: string;
   slug?: string;
   description?: string | null;
-  videoUrl?: string;
+  videoUrl?: string | null;
   thumbnailUrl?: string;
-  durationSeconds?: number;
+  backdropUrl?: string | null;
+  durationSeconds?: number | null;
   releaseDate?: string | null;
   updatedAt?: Date;
 }
@@ -29,7 +30,7 @@ export async function PUT(
 
   try {
     const body = await request.json();
-    const { title, slug, description, videoUrl, thumbnailUrl, durationSeconds, releaseDate, tagIds } = body;
+    const { title, slug, description, videoUrl, thumbnailUrl, backdropUrl, durationSeconds, releaseDate, tagIds } = body;
 
     const updateData: MovieUpdateData = {};
     if (title !== undefined) updateData.title = title;
@@ -37,6 +38,7 @@ export async function PUT(
     if (description !== undefined) updateData.description = description;
     if (videoUrl !== undefined) updateData.videoUrl = videoUrl;
     if (thumbnailUrl !== undefined) updateData.thumbnailUrl = thumbnailUrl;
+    if (backdropUrl !== undefined) updateData.backdropUrl = backdropUrl;
     if (durationSeconds !== undefined) updateData.durationSeconds = durationSeconds;
     if (releaseDate !== undefined) updateData.releaseDate = releaseDate;
 

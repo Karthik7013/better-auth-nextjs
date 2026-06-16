@@ -26,6 +26,7 @@ interface MovieFormData {
   description: string
   videoUrl: string
   thumbnailUrl: string
+  backdropUrl: string
   durationSeconds: string
   releaseDate: string
   tagIds: number[]
@@ -37,6 +38,7 @@ const emptyForm: MovieFormData = {
   description: "",
   videoUrl: "",
   thumbnailUrl: "",
+  backdropUrl: "",
   durationSeconds: "",
   releaseDate: "",
   tagIds: [],
@@ -66,6 +68,7 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
           description: initialData.description ?? "",
           videoUrl: initialData.videoUrl ?? "",
           thumbnailUrl: initialData.thumbnailUrl ?? "",
+          backdropUrl: initialData.backdropUrl ?? "",
           durationSeconds: initialData.durationSeconds ?? "",
           releaseDate: initialData.releaseDate ?? "",
           tagIds: initialData.tagIds ?? [],
@@ -116,7 +119,7 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
     try {
       const body = {
         ...form,
-        durationSeconds: parseInt(form.durationSeconds) || 0,
+        durationSeconds: parseInt(form.durationSeconds) || null,
         tagIds: form.tagIds,
         releaseDate: form.releaseDate || null,
       }
@@ -206,6 +209,14 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
                 onChange={(url) => setForm((prev) => ({ ...prev, thumbnailUrl: url }))}
               />
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <UploadField
+              label="Backdrop"
+              folder="backdrops"
+              value={form.backdropUrl}
+              onChange={(url) => setForm((prev) => ({ ...prev, backdropUrl: url }))}
+            />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
