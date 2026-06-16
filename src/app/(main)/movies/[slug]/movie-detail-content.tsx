@@ -88,7 +88,7 @@ export function MovieDetailContent() {
   return (
     <div className="min-h-screen bg-background">
       {/* ─────────── Hero Section ─────────── */}
-      <div className="relative h-[65vh] min-h-[500px] w-full overflow-hidden">
+      <div className="relative h-[85vh] min-h-125 w-full overflow-hidden mb-16">
         {/* Backdrop */}
         <div className="absolute inset-0 bg-muted">
           <Image
@@ -101,8 +101,8 @@ export function MovieDetailContent() {
             referrerPolicy="no-referrer"
           />
           {/* Gradient overlays — Netflix-style */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-background via-background/50 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-r from-background/80 via-transparent to-transparent" />
         </div>
 
         {/* Back button */}
@@ -137,6 +137,14 @@ export function MovieDetailContent() {
                   <span className="text-white/30">&bull;</span>
                 </>
               )}
+              {movie.tags?.map((tag: { id: number; name: string }) => (
+                <span
+                  key={tag.id}
+                  className="border border-white/20 px-2 py-0.5 rounded text-xs text-white/80"
+                >
+                  {tag.name}
+                </span>
+              ))}
               <span className="border border-white/20 px-2 py-0.5 rounded text-xs text-white/80 uppercase tracking-wide">
                 HD
               </span>
@@ -166,11 +174,10 @@ export function MovieDetailContent() {
                 className="flex items-center justify-center border-2 border-white/40 text-white rounded-full size-10 hover:border-white hover:bg-white/10 transition-all active:scale-90"
               >
                 <Heart
-                  className={`size-5 ${
-                    movie.isFavorited
+                  className={`size-5 ${movie.isFavorited
                       ? "fill-destructive text-destructive"
                       : "text-white"
-                  }`}
+                    }`}
                 />
               </button>
             </div>
@@ -181,10 +188,6 @@ export function MovieDetailContent() {
       {/* ─────────── Below the Fold ─────────── */}
       <div className="px-6 md:px-12 lg:px-16 -mt-10 relative z-20">
         <div className="max-w-4xl mx-auto space-y-6 pb-16">
-          {/* Full description */}
-          <p className="text-foreground/80 leading-relaxed text-base md:text-lg">
-            {movie.description}
-          </p>
 
           {/* Related movies */}
           {movie.related?.length > 0 && (

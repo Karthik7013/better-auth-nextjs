@@ -17,7 +17,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative h-dvh">
       <main className="h-full overflow-y-auto pb-16">{children}</main>
-      <nav className="fixed bottom-0 left-0 right-0 z-10 flex items-center justify-around border-t border-muted/30 rounded-t-md bg-background/60 backdrop-blur-lg px-2 py-1">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-muted/30 rounded-t-md bg-background/60 backdrop-blur-lg px-2 py-1">
         {navItems.map((item) => {
           const active = pathname === item.href;
           return (

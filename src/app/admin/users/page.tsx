@@ -10,6 +10,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useDebounce } from "@/hooks/use-debounce"
 import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
+import { cn } from "@/lib/utils"
+import {
   AlertDialog,
   AlertDialogTrigger,
   AlertDialogContent,
@@ -124,6 +134,20 @@ export default function AdminUsersPage() {
   const startItem = (page - 1) * limit + 1
   const endItem = Math.min(page * limit, total)
 
+  function getPageNumbers(current: number, total: number): (number | "ellipsis")[] {
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1)
+    }
+    const pages: (number | "ellipsis")[] = [1]
+    if (current > 3) pages.push("ellipsis")
+    const start = Math.max(2, current - 1)
+    const end = Math.min(total - 1, current + 1)
+    for (let i = start; i <= end; i++) pages.push(i)
+    if (current < total - 2) pages.push("ellipsis")
+    pages.push(total)
+    return pages
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -135,8 +159,8 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
+      <Card className="p-0">
+        <CardHeader className="pt-4">
           <div className="flex items-center justify-between">
             <CardTitle>All Users</CardTitle>
             <div className="relative w-64">
@@ -150,7 +174,7 @@ export default function AdminUsersPage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 min-h-100">
           {loading ? (
             <div className="divide-y">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -328,33 +352,46 @@ export default function AdminUsersPage() {
             </div>
           )}
         </CardContent>
-      </Card>
-
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>
-            Showing {startItem}–{endItem} of {total} users
-          </span>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            >
-              Next
-            </Button>
-          </div>
+        <div className="flex items-center justify-between p-4 border-t bg-muted/5 text-sm text-muted-foreground">
+          <p className="hidden sm:block">
+            Showing <span className="font-medium text-foreground">{startItem}</span> to{" "}
+            <span className="font-medium text-foreground">{endItem}</span> of{" "}
+            <span className="font-medium text-foreground">{total}</span> users
+          </p>
+          <Pagination className="mx-0 w-auto">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={(e) => { e.preventDefault(); setPage((p) => Math.max(1, p - 1)); }}
+                  className={cn(page <= 1 && "pointer-events-none opacity-50")}
+                />
+              </PaginationItem>
+              {getPageNumbers(page, totalPages).map((p, i) =>
+                p === "ellipsis" ? (
+                  <PaginationItem key={`e-${i}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={p}>
+                    <PaginationLink
+                      isActive={p === page}
+                      onClick={(e) => { e.preventDefault(); setPage(p); }}
+                    >
+                      {p}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={(e) => { e.preventDefault(); setPage((p) => Math.min(totalPages, p + 1)); }}
+                  className={cn(page >= totalPages && "pointer-events-none opacity-50")}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
-      )}
+      </Card>
     </div>
   )
 }

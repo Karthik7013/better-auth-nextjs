@@ -213,7 +213,7 @@ export default function FeaturedMoviesPage() {
         </Dialog>
       </div>
 
-      <Card className="overflow-visible">
+      <Card className="overflow-visible p-0">
         <CardContent className="p-0 overflow-x-auto">
           {loading ? (
             <div className="divide-y">

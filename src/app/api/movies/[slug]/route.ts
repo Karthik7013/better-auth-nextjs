@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { movies, favorites, movieTags } from "@/db/schema";
+import { movies, favorites, movieTags, tags } from "@/db/schema";
 import { eq, and, sql, ne, inArray, desc } from "drizzle-orm";
 
 export async function GET(
@@ -40,13 +40,14 @@ export async function GET(
     const movie = result[0];
 
     const tagRows = await db
-      .select({ tagId: movieTags.tagId })
+      .select({ id: tags.id, name: tags.name })
       .from(movieTags)
+      .innerJoin(tags, eq(movieTags.tagId, tags.id))
       .where(eq(movieTags.movieId, movie.id));
 
     let related: { id: number; title: string; slug: string; thumbnailUrl: string }[] = [];
     if (tagRows.length > 0) {
-      const tagIds = tagRows.map((t) => t.tagId);
+      const tagIds = tagRows.map((t) => t.id);
       related = await db
         .select({
           id: movies.id,
@@ -67,7 +68,7 @@ export async function GET(
         .limit(6);
     }
 
-    return NextResponse.json({ ...movie, related });
+    return NextResponse.json({ ...movie, tags: tagRows, related });
   } catch {
     return NextResponse.json({ error: "Fetch Failed" }, { status: 500 });
   }
