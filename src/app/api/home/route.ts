@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { featuredMovies, movies, watchHistory } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { featuredMovies, movies, watchHistory, movieTags, tags } from "@/db/schema";
+import { eq, and, desc, inArray } from "drizzle-orm";
 
 
 export const dynamic = 'force-dynamic';
@@ -20,6 +20,9 @@ export async function GET(request: NextRequest) {
           id: movies.id,
           title: movies.title,
           slug: movies.slug,
+          description: movies.description,
+          releaseDate: movies.releaseDate,
+          durationSeconds: movies.durationSeconds,
           thumbnailUrl: movies.thumbnailUrl,
           backdropUrl: movies.backdropUrl,
         })
@@ -62,6 +65,25 @@ export async function GET(request: NextRequest) {
     const featured = settled[0].status === "fulfilled" ? settled[0].value : [];
     const continueWatching = settled[1].status === "fulfilled" ? settled[1].value : [];
     const recentlyAdded = settled[2].status === "fulfilled" ? settled[2].value : [];
+
+    if (featured.length > 0) {
+      const featuredIds = featured.map((m) => m.id);
+      const tagRows = await db
+        .select({ movieId: movieTags.movieId, id: tags.id, name: tags.name })
+        .from(movieTags)
+        .innerJoin(tags, eq(movieTags.tagId, tags.id))
+        .where(inArray(movieTags.movieId, featuredIds));
+
+      const tagsByMovie: Record<number, { id: number; name: string }[]> = {};
+      for (const row of tagRows) {
+        if (!tagsByMovie[row.movieId]) tagsByMovie[row.movieId] = [];
+        tagsByMovie[row.movieId].push({ id: row.id, name: row.name });
+      }
+
+      for (const movie of featured) {
+        (movie as any).tags = tagsByMovie[movie.id] || [];
+      }
+    }
 
     return NextResponse.json({ featured, continueWatching, recentlyAdded });
   } catch (e) {

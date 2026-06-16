@@ -1,41 +1,84 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Play } from "lucide-react";
+import { Play, Info } from "lucide-react";
+
+interface HeroCarouselItem {
+  id: number;
+  title: string;
+  slug: string;
+  description?: string | null;
+  releaseDate?: string | null;
+  durationSeconds?: number | null;
+  thumbnailUrl: string;
+  backdropUrl?: string;
+  tags?: { id: number; name: string }[];
+}
 
 interface HeroCarouselProps {
-  items: {
-    id: number;
-    title: string;
-    slug: string;
-    thumbnailUrl: string;
-    backdropUrl?: string;
-  }[];
+  items: HeroCarouselItem[];
 }
 
 export function HeroCarousel({ items }: HeroCarouselProps) {
   const [current, setCurrent] = useState(0);
-  const [prev, setPrev] = useState(0);
+  const [progress, setProgress] = useState(0);
   const length = items.length;
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const clearTimers = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (progressRef.current) clearInterval(progressRef.current);
+  }, []);
+
+  const startProgress = useCallback(() => {
+    setProgress(0);
+    if (progressRef.current) clearInterval(progressRef.current);
+    const startTime = Date.now();
+    const duration = 6000;
+    progressRef.current = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      setProgress(Math.min(elapsed / duration, 1));
+    }, 30);
+  }, []);
 
   const goTo = useCallback((i: number) => {
-    setPrev(current);
+    if (i === current) return;
+    clearTimers();
     setCurrent(i);
-  }, [current]);
-
-  const next = useCallback(() => {
-    goTo((current + 1) % length);
-  }, [current, length, goTo]);
+    startProgress();
+    timerRef.current = setInterval(() => {
+      setCurrent((c) => (c + 1) % length);
+      startProgress();
+    }, 6000);
+  }, [current, length, clearTimers, startProgress]);
 
   useEffect(() => {
     if (length <= 1) return;
-    const id = setInterval(next, 6000);
-    return () => clearInterval(id);
-  }, [length, next]);
+    startProgress();
+    timerRef.current = setInterval(() => {
+      setCurrent((c) => (c + 1) % length);
+      startProgress();
+    }, 6000);
+    return clearTimers;
+  }, [length, startProgress, clearTimers]);
 
   if (length === 0) return null;
+
+  function formatDuration(seconds: number | null | undefined): string | null {
+    if (!seconds) return null;
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m`;
+  }
+
+  function getYear(date: string | null | undefined): string | null {
+    if (!date) return null;
+    return new Date(date).getFullYear().toString();
+  }
 
   return (
     <div className="relative overflow-hidden rounded-xl bg-muted">
@@ -43,11 +86,15 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
         <div
           key={item.id}
           className={`absolute inset-0 transition-opacity duration-700 ${
-            i === current ? "opacity-100 z-10" : "opacity-0 z-0"
+            i === current ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
           }`}
         >
-          <Link href={`/movies/${item.slug}`}>
-            <div className="relative aspect-video md:aspect-[21/9]">
+          <div className="relative aspect-video md:aspect-[21/9] overflow-hidden">
+            <div
+              className={`absolute inset-0 transition-transform duration-[8000ms] ease-linear ${
+                i === current ? "scale-110" : "scale-100"
+              }`}
+            >
               <Image
                 src={item.backdropUrl || item.thumbnailUrl}
                 alt={item.title}
@@ -57,35 +104,101 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
                 className="object-cover"
                 referrerPolicy="no-referrer"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 lg:p-14">
-                <h2 className="text-2xl font-bold text-white drop-shadow-lg md:text-4xl lg:text-5xl max-w-2xl leading-tight">
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+
+            <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 lg:p-14">
+              <div className="max-w-2xl space-y-3">
+                <div
+                  className={`flex flex-wrap items-center gap-2 text-sm text-white/80 transition-all duration-500 ${
+                    i === current ? "opacity-100 translate-y-0 delay-0" : "opacity-0 translate-y-4"
+                  }`}
+                >
+                  {getYear(item.releaseDate) && (
+                    <span className="font-semibold text-white">{getYear(item.releaseDate)}</span>
+                  )}
+                  {formatDuration(item.durationSeconds) && (
+                    <>
+                      <span className="text-white/40">&bull;</span>
+                      <span>{formatDuration(item.durationSeconds)}</span>
+                    </>
+                  )}
+                  {item.tags?.slice(0, 3).map((tag) => (
+                    <span key={tag.id} className="text-white/60 text-xs border border-white/20 px-2 py-0.5 rounded">
+                      {tag.name}
+                    </span>
+                  ))}
+                </div>
+
+                <h2
+                  className={`text-2xl font-bold text-white drop-shadow-lg md:text-4xl lg:text-5xl leading-tight transition-all duration-500 ${
+                    i === current ? "opacity-100 translate-y-0 delay-100" : "opacity-0 translate-y-4"
+                  }`}
+                >
                   {item.title}
                 </h2>
-                <div className="mt-4 flex items-center gap-3">
-                  <span className="flex items-center gap-2 rounded-md bg-white px-4 py-2 text-sm font-bold text-black transition-transform hover:scale-105 active:scale-95">
+
+                {item.description && (
+                  <p
+                    className={`text-sm md:text-base text-white/70 leading-relaxed line-clamp-2 max-w-xl drop-shadow-md transition-all duration-500 ${
+                      i === current ? "opacity-100 translate-y-0 delay-200" : "opacity-0 translate-y-4"
+                    }`}
+                  >
+                    {item.description}
+                  </p>
+                )}
+
+                <div
+                  className={`flex items-center gap-3 pt-1 transition-all duration-500 ${
+                    i === current ? "opacity-100 translate-y-0 delay-300" : "opacity-0 translate-y-4"
+                  }`}
+                >
+                  <Link
+                    href={`/watch/${item.slug}`}
+                    className="flex items-center gap-2 bg-white text-black px-5 py-2.5 rounded font-bold text-sm hover:bg-white/90 transition-all active:scale-95 shadow-lg"
+                  >
                     <Play className="size-4 fill-black" />
                     Play
-                  </span>
+                  </Link>
+                  <Link
+                    href={`/movies/${item.slug}`}
+                    className="flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white px-5 py-2.5 rounded font-semibold text-sm border border-white/20 hover:bg-white/20 transition-all active:scale-95"
+                  >
+                    <Info className="size-4" />
+                    More Info
+                  </Link>
                 </div>
               </div>
             </div>
-          </Link>
+          </div>
         </div>
       ))}
-      <div className="relative z-20 aspect-video md:aspect-[21/9]" />
+
+      <div className="relative z-0 aspect-video md:aspect-[21/9]" />
+
       {length > 1 && (
-        <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-2">
-          {items.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => goTo(i)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === current ? "w-8 bg-white" : "w-1.5 bg-white/40 hover:bg-white/60"
-              }`}
-            />
-          ))}
+        <div className="absolute bottom-0 left-0 right-0 z-20 flex items-center gap-3 px-6 md:px-10 lg:px-14 pb-4">
+          <div className="flex gap-1.5 flex-1 max-w-md">
+            {items.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => goTo(i)}
+                className="relative flex-1 h-1 rounded-full bg-white/30 overflow-hidden cursor-pointer"
+              >
+                <div
+                  className="absolute inset-0 bg-white rounded-full transition-all duration-300"
+                  style={{
+                    width: i === current ? `${progress * 100}%` : i < current ? "100%" : "0%",
+                    opacity: i === current ? 1 : i < current ? 0.4 : 0,
+                  }}
+                />
+              </button>
+            ))}
+          </div>
+          <span className="text-xs text-white/60 font-medium tabular-nums">
+            {String(current + 1).padStart(2, "0")}/{String(length).padStart(2, "0")}
+          </span>
         </div>
       )}
     </div>
