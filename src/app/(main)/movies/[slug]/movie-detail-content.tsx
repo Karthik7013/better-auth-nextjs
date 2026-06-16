@@ -98,6 +98,7 @@ export function MovieDetailContent() {
             priority
             sizes="100vw"
             className="object-cover"
+            referrerPolicy="no-referrer"
           />
           {/* Gradient overlays — Netflix-style */}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
