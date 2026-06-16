@@ -36,6 +36,13 @@
       "when": 1781595813106,
       "tag": "0004_amused_kid_colt",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789648000000,
+      "tag": "0005_make_video_url_and_duration_seconds_nullable",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,3 @@
-import { config } from "dotenv";
-config({ path: ".env.local" });
-
 import { db } from "../src/db";
 import { movies, tags, movieTags } from "../src/db/schema";
 import { eq, inArray } from "drizzle-orm";
