@@ -7,9 +7,12 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, "Liberation Mono", "Courier New", monospace;
   --font-heading: var(--font-sans);
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -18,11 +21,13 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -39,6 +44,10 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+
+  /* Premium tokens you can reach for in components */
+  --color-primary-glow: var(--primary-glow);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -46,6 +55,7 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
   --text-xs: clamp(0.75rem, 0.5vw + 0.625rem, 0.75rem);
   --text-sm: clamp(0.8rem, 0.5vw + 0.7rem, 0.875rem);
   --text-base: clamp(0.875rem, 0.5vw + 0.75rem, 1rem);
@@ -56,38 +66,76 @@
 }
 
 :root {
-  --background: oklch(12.35% 0.03403 143.188);
-  --foreground: oklch(0.95 0.01 238.46);
-  --card: oklch(20.752% 0.00247 145.93);
-  --card-foreground: oklch(0.95 0.01 238.46);
-  --popover: oklch(0.20 0.02 266.02);
-  --popover-foreground: oklch(0.95 0.01 238.46);
-  --primary: oklch(0.67 0.17 153.85);
-  --primary-foreground: oklch(100% 0.00011 271.152);
-  --secondary: oklch(0.30 0.03 271.05);
-  --secondary-foreground: oklch(0.95 0.01 238.46);
-  --muted: oklch(0.30 0.03 271.05);
-  --muted-foreground: oklch(0.60 0.03 269.46);
-  --accent: oklch(0.30 0.03 271.05);
-  --accent-foreground: oklch(0.95 0.01 238.46);
-  --destructive: oklch(0.64 0.25 19.69);
-  --border: oklch(0.95 0.01 238.46 / 15%);
-  --input: oklch(0.95 0.01 238.46 / 20%);
-  --ring: oklch(0.67 0.17 153.85);
-  --chart-1: oklch(0.67 0.17 153.85);
-  --chart-2: oklch(0.60 0.10 269.83);
-  --chart-3: oklch(0.72 0.12 201.79);
-  --chart-4: oklch(0.80 0.10 100.65);
-  --chart-5: oklch(0.60 0.15 300.14);
-  --radius: 0.25rem;
-  --sidebar: oklch(0.20 0.02 266.02);
-  --sidebar-foreground: oklch(0.95 0.01 238.46);
-  --sidebar-primary: oklch(0.67 0.17 153.85);
-  --sidebar-primary-foreground: oklch(0.15 0.02 269.18);
-  --sidebar-accent: oklch(0.30 0.03 271.05);
-  --sidebar-accent-foreground: oklch(0.95 0.01 238.46);
-  --sidebar-border: oklch(0.95 0.01 238.46 / 15%);
-  --sidebar-ring: oklch(0.67 0.17 153.85);
+  /* ── Surfaces: warm near-black, with a real elevation ladder ── */
+  --background: oklch(0.13 0.012 160);
+  /* deep theater black w/ green undertone */
+  --foreground: oklch(0.97 0.008 160);
+  /* soft warm white, not pure */
+
+  --card: oklch(0.17 0.014 160);
+  /* +4L from bg — feels lifted */
+  --card-foreground: oklch(0.97 0.008 160);
+
+  --popover: oklch(0.19 0.016 160);
+  /* +6L for floating layers */
+  --popover-foreground: oklch(0.97 0.008 160);
+
+  /* ── Brand: vivid emerald with a glow companion ── */
+  --primary: oklch(0.74 0.19 155);
+  /* brighter, more luminous green */
+  --primary-foreground: oklch(0.14 0.02 160);
+  /* dark text on bright primary */
+  --primary-glow: oklch(0.82 0.18 152);
+  /* halo for gradients/shadows */
+
+  --secondary: oklch(0.24 0.018 160);
+  /* charcoal, same family */
+  --secondary-foreground: oklch(0.95 0.008 160);
+
+  --muted: oklch(0.22 0.014 160);
+  --muted-foreground: oklch(0.68 0.018 160);
+
+  --accent: oklch(0.32 0.06 152);
+  /* faint emerald tint — real identity on hover */
+  --accent-foreground: oklch(0.97 0.01 152);
+
+  --destructive: oklch(0.62 0.24 22);
+  /* hotter red, pops on dark */
+
+  --border: oklch(0.97 0.008 160 / 10%);
+  --input: oklch(0.97 0.008 160 / 14%);
+  --ring: oklch(0.74 0.19 155 / 60%);
+
+  /* ── Charts: diversified hues so series are distinguishable ── */
+  --chart-1: oklch(0.74 0.19 155);
+  /* emerald (brand) */
+  --chart-2: oklch(0.72 0.16 75);
+  /* amber */
+  --chart-3: oklch(0.68 0.22 25);
+  /* coral */
+  --chart-4: oklch(0.66 0.16 250);
+  /* indigo */
+  --chart-5: oklch(0.70 0.20 320);
+  /* magenta */
+
+  --radius: 0.5rem;
+  /* softer, more media-app feel */
+
+  /* ── Sidebar: slightly darker than card for separation ── */
+  --sidebar: oklch(0.15 0.014 160);
+  --sidebar-foreground: oklch(0.95 0.008 160);
+  --sidebar-primary: oklch(0.74 0.19 155);
+  --sidebar-primary-foreground: oklch(0.14 0.02 160);
+  --sidebar-accent: oklch(0.22 0.018 160);
+  --sidebar-accent-foreground: oklch(0.97 0.008 160);
+  --sidebar-border: oklch(0.97 0.008 160 / 8%);
+  --sidebar-ring: oklch(0.74 0.19 155 / 60%);
+
+  /* ── Premium effect tokens ── */
+  --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-glow));
+  --gradient-surface: linear-gradient(180deg, var(--card), var(--background));
+  --shadow-glow: 0 0 40px -8px color-mix(in oklab, var(--primary) 55%, transparent);
+  --shadow-elegant: 0 20px 50px -20px color-mix(in oklab, var(--primary) 30%, transparent);
 }
 
 @layer base {
@@ -103,7 +151,7 @@
     @apply font-sans;
   }
 
-  /* ── Scrollbar styling ── */
+  /* Scrollbar */
   * {
     scrollbar-width: thin;
     scrollbar-color: var(--muted) transparent;

@@ -81,7 +81,7 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-xl bg-muted">
+    <div className="relative overflow-hidden bg-muted">
       {items.map((item, i) => (
         <div
           key={item.id}
@@ -211,9 +211,6 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
               </button>
             ))}
           </div>
-          <span className="text-xs text-white/60 font-medium tabular-nums">
-            {String(current + 1).padStart(2, "0")}/{String(length).padStart(2, "0")}
-          </span>
         </div>
       )}
     </div>

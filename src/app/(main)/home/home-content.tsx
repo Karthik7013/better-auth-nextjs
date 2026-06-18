@@ -63,12 +63,12 @@ export function HomeContent() {
 
   return (
     <>
-      <section>
+      <section className="pb-6">
         <HeroCarousel items={data.featured} />
       </section>
 
       {data.continueWatching?.length > 0 && (
-        <section>
+        <section className="p-4">
           <h2 className="text-xl font-semibold mb-4">Continue Watching</h2>
           <div className="flex gap-4 overflow-x-auto pb-2">
             {data.continueWatching.map((m: any) => (
@@ -80,7 +80,7 @@ export function HomeContent() {
         </section>
       )}
 
-      <section>
+      <section className="p-4">
         <h2 className="text-xl font-semibold mb-4">Recently Added</h2>
         <div className="flex gap-4 overflow-x-auto pb-2">
           {data.recentlyAdded.map((m: any) => (
