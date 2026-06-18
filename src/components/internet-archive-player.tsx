@@ -9,7 +9,7 @@ export function InternetArchivePlayer({ identifier, className }: InternetArchive
 
   if (!identifier) return null;
 
-  const embedSrc = `https://archive.org/embed/${getEmbedId(identifier)}`;
+  const embedSrc = `https://archive.org/embed/${identifier}`;
 
   return (
     <iframe
