@@ -1,38 +1,9 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider, useTheme } from "next-themes";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { NavigationProgress } from "@/components/navigation-progress";
-
-function ThemeColorUpdater() {
-  const { resolvedTheme } = useTheme();
-  const metaRef = useRef<HTMLMetaElement | null>(null);
-
-  useEffect(() => {
-    const existing = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-    const meta = existing || document.createElement("meta");
-    if (!existing) {
-      meta.name = "theme-color";
-      document.head.appendChild(meta);
-    }
-    metaRef.current = meta;
-
-    const color = getComputedStyle(document.documentElement)
-      .getPropertyValue("--primary")
-      .trim();
-    if (color) meta.content = color;
-
-    return () => {
-      if (!existing && meta.parentNode) {
-        meta.parentNode.removeChild(meta);
-      }
-    };
-  }, [resolvedTheme]);
-
-  return null;
-}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -49,13 +20,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" disableTransitionOnChange>
-        <ThemeColorUpdater />
-        <TooltipProvider>
-          <NavigationProgress />
-          {children}
-        </TooltipProvider>
-      </ThemeProvider>
+      <TooltipProvider>
+        <NavigationProgress />
+        {children}
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }

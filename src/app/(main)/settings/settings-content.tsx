@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { authClient } from "@/lib/auth-client";
 import { Trash2, UserX, LogOut, Camera, Loader2, Shield, Lock } from "lucide-react";
-import { ModeToggle } from "@/components/mode-toggle";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -136,16 +135,6 @@ export function SettingsContent() {
             </div>
             <p className="text-sm text-zinc-400">{user?.email}</p>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Appearance</CardTitle>
-          <CardDescription>Choose your preferred theme.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ModeToggle />
         </CardContent>
       </Card>
 

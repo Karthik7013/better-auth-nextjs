@@ -6,7 +6,6 @@ import {
   LayoutDashboard, Film, Tags, Users, ChevronLeft, Star, ListChecks,
   Shield,
 } from "lucide-react";
-import { ModeToggle } from "@/components/mode-toggle";
 import {
   Sidebar,
   SidebarContent,
@@ -90,9 +89,6 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       <SidebarInset>
         <header className="flex h-12 items-center gap-2 border-b px-4">
           <SidebarTrigger />
-          <div className="ml-auto">
-            <ModeToggle />
-          </div>
         </header>
         <div className="flex-1 overflow-auto p-4 md:p-6 min-w-0">{children}</div>
       </SidebarInset>
