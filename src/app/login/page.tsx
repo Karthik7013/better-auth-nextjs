@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 
 type Mode = "signIn" | "signUp";
 type AuthMethod = "google" | "github" | "email" | null;
@@ -25,7 +26,7 @@ function setLastMethod(method: AuthMethod) {
 export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("signIn");
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMethod, setLoadingMethod] = useState<AuthMethod>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -59,41 +60,39 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     setLastMethod("google");
-    setIsLoading(true);
+    setLoadingMethod("google");
+    setError(null);
     try {
-      setError(null);
       await authClient.signIn.social({
         provider: "google",
         callbackURL: "/home",
       });
     } catch (err) {
       console.error("Login failed:", err);
-      setError("Failed to sign in. Please try again.");
-    } finally {
-      setIsLoading(false);
+      toast.error("Failed to sign in with Google. Please try again.");
+      setLoadingMethod(null);
     }
   };
 
   const handleGitHubLogin = async () => {
     setLastMethod("github");
-    setIsLoading(true);
+    setLoadingMethod("github");
+    setError(null);
     try {
-      setError(null);
       await authClient.signIn.social({
         provider: "github",
         callbackURL: "/home",
       });
     } catch (err) {
       console.error("Login failed:", err);
-      setError("Failed to sign in. Please try again.");
-    } finally {
-      setIsLoading(false);
+      toast.error("Failed to sign in with GitHub. Please try again.");
+      setLoadingMethod(null);
     }
   };
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setLoadingMethod("email");
     setError(null);
     setSuccess(null);
     try {
@@ -115,13 +114,13 @@ export default function LoginPage() {
       console.error("Sign in failed:", err);
       setError("Failed to sign in. Please try again.");
     } finally {
-      setIsLoading(false);
+      setLoadingMethod(null);
     }
   };
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setLoadingMethod("email");
     setError(null);
     setSuccess(null);
     try {
@@ -147,7 +146,7 @@ export default function LoginPage() {
       console.error("Sign up failed:", err);
       setError("Failed to create account. Please try again.");
     } finally {
-      setIsLoading(false);
+      setLoadingMethod(null);
     }
   };
 
@@ -222,11 +221,11 @@ export default function LoginPage() {
               )}
               <Button
                 onClick={handleGoogleLogin}
-                disabled={isLoading}
+                disabled={loadingMethod !== null}
                 variant={"secondary"}
                 className="w-full h-12 rounded-full font-semibold transition-all active:scale-95 flex items-center justify-center gap-3"
               >
-                {isLoading ? (
+                {loadingMethod === "google" ? (
                   <Loader2 className="size-5 animate-spin" />
                 ) : (
                   <>
@@ -251,11 +250,11 @@ export default function LoginPage() {
               )}
               <Button
                 onClick={handleGitHubLogin}
-                disabled={isLoading}
+                disabled={loadingMethod !== null}
                 variant={"secondary"}
                 className="w-full h-12 rounded-full font-semibold transition-all active:scale-95 flex items-center justify-center gap-3"
               >
-                {isLoading ? (
+                {loadingMethod === "github" ? (
                   <Loader2 className="size-5 animate-spin" />
                 ) : (
                   <>
@@ -324,10 +323,10 @@ export default function LoginPage() {
               <Button
                 variant={'default'}
                 type="submit"
-                disabled={isLoading}
+                disabled={loadingMethod !== null}
                 className="w-full h-12 rounded-full font-semibold transition-all active:scale-95"
               >
-                {isLoading ? (
+                {loadingMethod === "email" ? (
                   <Loader2 className="size-5 animate-spin" />
                 ) : (
                   mode === "signIn" ? "Sign in" : "Create account"
@@ -371,6 +370,7 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+
     </div>
   );
 }
