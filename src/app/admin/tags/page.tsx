@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback, useRef } from "react"
+import { useEffect, useState, useRef, useMemo, memo } from "react"
 import { SearchIcon, PlusIcon, PencilIcon, Trash2Icon, CheckIcon, XIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useDebounce } from "@/hooks/use-debounce"
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -33,14 +32,161 @@ interface PaginatedResponse {
   totalPages: number
 }
 
+function getPageNumbers(current: number, total: number): (number | "...")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const pages: (number | "...")[] = [1]
+  if (current > 3) pages.push("...")
+  const start = Math.max(2, current - 1)
+  const end = Math.min(total - 1, current + 1)
+  for (let i = start; i <= end; i++) pages.push(i)
+  if (current < total - 2) pages.push("...")
+  if (total > 1) pages.push(total)
+  return pages
+}
+
+function SearchInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
+  const [local, setLocal] = useState(value)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  useEffect(() => {
+    setLocal(value)
+  }, [value])
+
+  useEffect(() => {
+    timerRef.current = setTimeout(() => onChange(local), 300)
+    return () => clearTimeout(timerRef.current)
+  }, [local])
+
+  return (
+    <div className="relative w-64">
+      <SearchIcon className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        value={local}
+        onChange={(e) => setLocal(e.target.value)}
+        placeholder={placeholder}
+        className="pl-8"
+      />
+    </div>
+  )
+}
+
+const TagRow = memo(function TagRow({
+  tag,
+  editingId,
+  editingName,
+  onEditingNameChange,
+  onSaveEdit,
+  onCancelEdit,
+  onEdit,
+  deleteTarget,
+  onDeleteTargetChange,
+  onDelete,
+  editInputRef,
+  disabled,
+}: {
+  tag: Tag
+  editingId: number | null
+  editingName: string
+  onEditingNameChange: (v: string) => void
+  onSaveEdit: () => void
+  onCancelEdit: () => void
+  onEdit: (tag: Tag) => void
+  deleteTarget: Tag | null
+  onDeleteTargetChange: (tag: Tag | null) => void
+  onDelete: () => void
+  editInputRef: { readonly current: HTMLInputElement | null }
+  disabled: boolean
+}) {
+  return (
+    <tr className="border-b last:border-0 hover:bg-muted/50">
+      <td className="px-4 py-3">
+        {editingId === tag.id ? (
+          <div className="flex items-center gap-2">
+            <Input
+              ref={editInputRef}
+              value={editingName}
+              onChange={(e) => onEditingNameChange(e.target.value)}
+              className="h-8 max-w-xs"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") onSaveEdit()
+                if (e.key === "Escape") onCancelEdit()
+              }}
+            />
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={onSaveEdit}
+              disabled={!editingName.trim()}
+            >
+              <CheckIcon className="size-3.5" />
+              <span className="sr-only">Save</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={onCancelEdit}
+            >
+              <XIcon className="size-3.5" />
+              <span className="sr-only">Cancel</span>
+            </Button>
+          </div>
+        ) : (
+          <span className="font-medium">{tag.name}</span>
+        )}
+      </td>
+      <td className="px-4 py-3">
+        <Badge variant="secondary">{tag.movieCount ?? 0}</Badge>
+      </td>
+      <td className="px-4 py-3 text-right">
+        <div className="flex items-center justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => onEdit(tag)}
+            disabled={disabled}
+          >
+            <PencilIcon className="size-3.5" />
+            <span className="sr-only">Edit</span>
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger onClick={() => onDeleteTargetChange(tag)}>
+              <Trash2Icon className="size-3.5" />
+              <span className="sr-only">Delete</span>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogTitle>Delete Tag</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete <strong>{deleteTarget?.name}</strong>?
+                This action cannot be undone.
+              </AlertDialogDescription>
+              <div className="flex justify-end gap-2 mt-6">
+                <AlertDialogClose
+                  render={<Button variant="outline">Cancel</Button>}
+                  onClick={() => onDeleteTargetChange(null)}
+                />
+                <Button
+                  variant="destructive"
+                  onClick={onDelete}
+                >
+                  Delete
+                </Button>
+              </div>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </td>
+    </tr>
+  )
+})
+
 export default function AdminTagsPage() {
   const [tags, setTags] = useState<Tag[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [search, setSearch] = useState("")
-  const debouncedSearch = useDebounce(search, 300)
   const [loading, setLoading] = useState(true)
+  const [version, setVersion] = useState(0)
 
   const [creating, setCreating] = useState(false)
   const [newTagName, setNewTagName] = useState("")
@@ -52,32 +198,33 @@ export default function AdminTagsPage() {
 
   const [deleteTarget, setDeleteTarget] = useState<Tag | null>(null)
   const snapshotRef = useRef<Tag[] | null>(null)
+  const fetchIdRef = useRef(0)
 
   useEffect(() => {
     setPage(1)
-  }, [debouncedSearch])
-
-  const fetchTags = useCallback(async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams({ page: String(page), limit: "50" })
-      if (debouncedSearch) params.set("search", debouncedSearch)
-      const res = await fetch(`/api/admin/tags?${params}`)
-      if (!res.ok) throw new Error("Failed to fetch")
-      const data: PaginatedResponse = await res.json()
-      setTags(data.tags)
-      setTotal(data.total)
-      setTotalPages(data.totalPages)
-    } catch {
-      // silent
-    } finally {
-      setLoading(false)
-    }
-  }, [page, debouncedSearch])
+  }, [search])
 
   useEffect(() => {
-    fetchTags()
-  }, [fetchTags])
+    const id = ++fetchIdRef.current
+    setLoading(true)
+    ;(async () => {
+      try {
+        const params = new URLSearchParams({ page: String(page), limit: "50" })
+        if (search) params.set("search", search)
+        const res = await fetch(`/api/admin/tags?${params}`)
+        if (!res.ok) throw new Error("Failed to fetch")
+        if (id !== fetchIdRef.current) return
+        const data: PaginatedResponse = await res.json()
+        setTags(data.tags)
+        setTotal(data.total)
+        setTotalPages(data.totalPages)
+      } catch {
+        // silent
+      } finally {
+        if (id === fetchIdRef.current) setLoading(false)
+      }
+    })()
+  }, [page, search, version])
 
   function startCreate() {
     setCreating(true)
@@ -100,7 +247,7 @@ export default function AdminTagsPage() {
         body: JSON.stringify({ name }),
       })
       if (!res.ok) throw new Error("Create failed")
-      fetchTags()
+      setVersion((v) => v + 1)
     } catch {
       if (snapshotRef.current) setTags(snapshotRef.current)
     }
@@ -131,7 +278,7 @@ export default function AdminTagsPage() {
         body: JSON.stringify({ name }),
       })
       if (!res.ok) throw new Error("Update failed")
-      fetchTags()
+      setVersion((v) => v + 1)
     } catch {
       if (snapshotRef.current) setTags(snapshotRef.current)
     }
@@ -153,7 +300,7 @@ export default function AdminTagsPage() {
         method: "DELETE",
       })
       if (!res.ok) throw new Error("Delete failed")
-      fetchTags()
+      setVersion((v) => v + 1)
     } catch {
       if (snapshotRef.current) setTags(snapshotRef.current)
     }
@@ -162,6 +309,7 @@ export default function AdminTagsPage() {
   const limit = 50
   const startItem = (page - 1) * limit + 1
   const endItem = Math.min(page * limit, total)
+  const pageNumbers = useMemo(() => getPageNumbers(page, totalPages), [page, totalPages])
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -182,15 +330,7 @@ export default function AdminTagsPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>All Tags</CardTitle>
-            <div className="relative w-64">
-              <SearchIcon className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name..."
-                className="pl-8"
-              />
-            </div>
+            <SearchInput value={search} onChange={setSearch} placeholder="Search by name..." />
           </div>
         </CardHeader>
         <CardContent className="p-0 overflow-auto flex-1 min-h-0">
@@ -261,84 +401,21 @@ export default function AdminTagsPage() {
                     </tr>
                   )}
                   {tags.map((tag) => (
-                    <tr key={tag.id} className="border-b last:border-0 hover:bg-muted/50">
-                      <td className="px-4 py-3">
-                        {editingId === tag.id ? (
-                          <div className="flex items-center gap-2">
-                            <Input
-                              ref={editInputRef}
-                              value={editingName}
-                              onChange={(e) => setEditingName(e.target.value)}
-                              className="h-8 max-w-xs"
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") handleSaveEdit()
-                                if (e.key === "Escape") cancelEdit()
-                              }}
-                            />
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={handleSaveEdit}
-                              disabled={!editingName.trim()}
-                            >
-                              <CheckIcon className="size-3.5" />
-                              <span className="sr-only">Save</span>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={cancelEdit}
-                            >
-                              <XIcon className="size-3.5" />
-                              <span className="sr-only">Cancel</span>
-                            </Button>
-                          </div>
-                        ) : (
-                          <span className="font-medium">{tag.name}</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant="secondary">{tag.movieCount ?? 0}</Badge>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => startEdit(tag)}
-                            disabled={editingId !== null}
-                          >
-                            <PencilIcon className="size-3.5" />
-                            <span className="sr-only">Edit</span>
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger onClick={() => setDeleteTarget(tag)}>
-                              <Trash2Icon className="size-3.5" />
-                              <span className="sr-only">Delete</span>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogTitle>Delete Tag</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete <strong>{deleteTarget?.name}</strong>?
-                                This action cannot be undone.
-                              </AlertDialogDescription>
-                              <div className="flex justify-end gap-2 mt-6">
-                                <AlertDialogClose
-                                  render={<Button variant="outline">Cancel</Button>}
-                                  onClick={() => setDeleteTarget(null)}
-                                />
-                                <Button
-                                  variant="destructive"
-                                  onClick={handleDelete}
-                                >
-                                  Delete
-                                </Button>
-                              </div>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </td>
-                    </tr>
+                    <TagRow
+                      key={tag.id}
+                      tag={tag}
+                      editingId={editingId}
+                      editingName={editingName}
+                      onEditingNameChange={setEditingName}
+                      onSaveEdit={handleSaveEdit}
+                      onCancelEdit={cancelEdit}
+                      onEdit={startEdit}
+                      deleteTarget={deleteTarget}
+                      onDeleteTargetChange={setDeleteTarget}
+                      onDelete={handleDelete}
+                      editInputRef={editInputRef}
+                      disabled={editingId !== null}
+                    />
                   ))}
                 </tbody>
               </table>
@@ -361,6 +438,20 @@ export default function AdminTagsPage() {
             >
               Previous
             </Button>
+            {pageNumbers.map((p, i) =>
+              p === "..." ? (
+                <span key={`e-${i}`} className="px-1">...</span>
+              ) : (
+                <Button
+                  key={p}
+                  variant={p === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setPage(p as number)}
+                >
+                  {p}
+                </Button>
+              )
+            )}
             <Button
               variant="outline"
               size="sm"

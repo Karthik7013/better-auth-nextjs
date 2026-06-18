@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useRef, useMemo, memo } from "react"
 import Link from "next/link"
 import { SearchIcon, PlusIcon, PencilIcon, Trash2Icon, Loader2Icon } from "lucide-react"
 import { toast } from "sonner"
@@ -61,6 +61,106 @@ interface PaginatedResponse {
   totalPages: number
 }
 
+function SearchInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
+  const [local, setLocal] = useState(value)
+  const syncRef = useRef(onChange)
+  syncRef.current = onChange
+
+  useEffect(() => {
+    setLocal(value)
+  }, [value])
+
+  useEffect(() => {
+    const timeout = setTimeout(() => syncRef.current(local), 300)
+    return () => clearTimeout(timeout)
+  }, [local])
+
+  return (
+    <div className="relative w-full sm:w-72">
+      <SearchIcon className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        value={local}
+        onChange={(e) => setLocal(e.target.value)}
+        placeholder={placeholder}
+        className="pl-9 bg-background"
+      />
+    </div>
+  )
+}
+
+const MovieRow = memo(function MovieRow({
+  movie,
+  onEdit,
+  onDelete,
+}: {
+  movie: Movie
+  onEdit: (m: Movie) => void
+  onDelete: (m: Movie) => void
+}) {
+  return (
+    <tr className="group hover:bg-muted/30 transition-colors">
+      <td className="px-6 py-4">
+        <Link href={`/movies/${movie.slug}`} className="flex items-center gap-3 group min-w-0">
+          <div className="size-12 rounded-lg bg-muted overflow-hidden shrink-0 border border-muted-foreground/10">
+            {movie.thumbnailUrl ? (
+              <img
+                src={movie.thumbnailUrl}
+                alt={movie.title}
+                className="size-full object-cover transition-transform group-hover:scale-105"
+              />
+            ) : (
+              <div className="size-full flex items-center justify-center">
+                <SearchIcon className="size-4 text-muted-foreground/40" />
+              </div>
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-sm group-hover:text-primary transition-colors truncate">
+              {movie.title}
+            </p>
+            <p className="text-xs text-muted-foreground truncate max-w-[240px]">
+              {movie.description}
+            </p>
+          </div>
+        </Link>
+      </td>
+      <td className="px-6 py-4 text-sm whitespace-nowrap font-medium">
+        {movie.releaseDate
+          ? new Date(movie.releaseDate).getFullYear()
+          : "—"}
+      </td>
+      <td className="px-6 py-4 text-sm text-muted-foreground whitespace-nowrap">
+        {movie.durationSeconds ? formatDuration(movie.durationSeconds) : "—"}
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex flex-wrap gap-1">
+          {movie.tags.length === 0 ? (
+            <span className="text-xs text-muted-foreground">—</span>
+          ) : (
+            movie.tags.map((tag) => (
+              <Badge key={tag.id} variant="secondary" className="bg-primary text-primary-foreground border-none font-normal">
+                {tag.name}
+              </Badge>
+            ))
+          )}
+        </div>
+      </td>
+      <td className="px-6 py-4 text-right">
+        <div className="flex items-center justify-end gap-1">
+          <Button variant="ghost" size="icon" className="size-8" onClick={() => onEdit(movie)}>
+            <PencilIcon className="size-3.5" />
+            <span className="sr-only">Edit</span>
+          </Button>
+          <Button variant="ghost" size="icon" className="size-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50/50" onClick={() => onDelete(movie)}>
+            <Trash2Icon className="size-3.5" />
+            <span className="sr-only">Delete</span>
+          </Button>
+        </div>
+      </td>
+    </tr>
+  )
+})
+
 export default function AdminMoviesPage() {
   const [movies, setMovies] = useState<Movie[]>([])
   const [total, setTotal] = useState(0)
@@ -75,32 +175,39 @@ export default function AdminMoviesPage() {
   const [deleteTarget, setDeleteTarget] = useState<Movie | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [version, setVersion] = useState(0)
+
+  const pageCount = useRef(0)
 
   useEffect(() => {
-    setPage(1)
+    const controller = new AbortController()
+    const fetchId = ++pageCount.current
+
+    const params = new URLSearchParams({ page: String(page), limit: "20" })
+    if (debouncedSearch) params.set("search", debouncedSearch)
+
+    if (fetchId === 1) setLoading(true)
+    fetch(`/api/admin/movies?${params}`, { signal: controller.signal })
+      .then((res) => res.json())
+      .then((data: PaginatedResponse) => {
+        if (fetchId === pageCount.current) {
+          setMovies(data.movies)
+          setTotal(data.total)
+          setTotalPages(data.totalPages)
+          setLoading(false)
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (fetchId === pageCount.current) setLoading(false)
+      })
+
+    return () => controller.abort()
+  }, [page, debouncedSearch, version])
+
+  useEffect(() => {
+    if (debouncedSearch) setPage(1)
   }, [debouncedSearch])
-
-  const fetchMovies = useCallback(async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams({ page: String(page), limit: "20" })
-      if (debouncedSearch) params.set("search", debouncedSearch)
-      const res = await fetch(`/api/admin/movies?${params}`)
-      if (!res.ok) throw new Error("Failed to fetch")
-      const data: PaginatedResponse = await res.json()
-      setMovies(data.movies)
-      setTotal(data.total)
-      setTotalPages(data.totalPages)
-    } catch {
-      // silent
-    } finally {
-      setLoading(false)
-    }
-  }, [page, debouncedSearch])
-
-  useEffect(() => {
-    fetchMovies()
-  }, [fetchMovies])
 
   function openCreateDialog() {
     setEditingMovie(null)
@@ -123,7 +230,7 @@ export default function AdminMoviesPage() {
       setDeleteTarget(null)
       setDeleteDialogOpen(false)
       toast.success("Movie deleted")
-      fetchMovies()
+      setVersion((v) => v + 1)
     } catch {
       toast.error("Failed to delete movie")
     } finally {
@@ -132,8 +239,20 @@ export default function AdminMoviesPage() {
   }
 
   const limit = 20
-  const startItem = (page - 1) * limit + 1
-  const endItem = Math.min(page * limit, total)
+  const startItem = useMemo(() => (page - 1) * limit + 1, [page])
+  const endItem = useMemo(() => Math.min(page * limit, total), [page, total])
+  const pageNumbers = useMemo(() => getPageNumbers(page, totalPages), [page, totalPages])
+  const editInitialData = useMemo(() => editingMovie ? {
+    title: editingMovie.title,
+    slug: editingMovie.slug,
+    description: editingMovie.description ?? "",
+    videoUrl: editingMovie.videoUrl ?? "",
+    thumbnailUrl: editingMovie.thumbnailUrl ?? "",
+    backdropUrl: editingMovie.backdropUrl ?? "",
+    durationSeconds: editingMovie.durationSeconds ? String(editingMovie.durationSeconds) : "",
+    releaseDate: editingMovie.releaseDate ?? "",
+    tagIds: editingMovie.tags.map((t) => t.id),
+  } : undefined, [editingMovie])
 
   return (
     <div className="flex flex-col gap-6 w-full min-w-0 max-h-150">
@@ -153,21 +272,11 @@ export default function AdminMoviesPage() {
       <MovieDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        initialData={editingMovie ? {
-          title: editingMovie.title,
-          slug: editingMovie.slug,
-          description: editingMovie.description ?? "",
-          videoUrl: editingMovie.videoUrl ?? "",
-          thumbnailUrl: editingMovie.thumbnailUrl ?? "",
-          backdropUrl: editingMovie.backdropUrl ?? "",
-          durationSeconds: editingMovie.durationSeconds ? String(editingMovie.durationSeconds) : "",
-          releaseDate: editingMovie.releaseDate ?? "",
-          tagIds: editingMovie.tags.map((t) => t.id),
-        } : undefined}
+        initialData={editingMovie ? editInitialData : undefined}
         editMovieId={editingMovie?.id}
         onSuccess={() => {
           toast.success(editingMovie ? "Movie updated" : "Movie created")
-          fetchMovies()
+          setVersion((v) => v + 1)
         }}
       />
 
@@ -209,15 +318,7 @@ export default function AdminMoviesPage() {
                 {total} movies registered
               </p>
             </div>
-            <div className="relative w-full sm:w-72">
-              <SearchIcon className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by title..."
-                className="pl-9 bg-background"
-              />
-            </div>
+            <SearchInput value={search} onChange={setSearch} placeholder="Search by title..." />
           </div>
         </CardHeader>
         <CardContent className="p-0 relative min-w-0 overflow-auto">
@@ -257,66 +358,7 @@ export default function AdminMoviesPage() {
                 </thead>
                 <tbody className="divide-y">
                   {movies.map((movie) => (
-                    <tr key={movie.id} className="group hover:bg-muted/30 transition-colors">
-                      <td className="px-6 py-4">
-                        <Link href={`/movies/${movie.slug}`} className="flex items-center gap-3 group min-w-0">
-                          <div className="size-12 rounded-lg bg-muted overflow-hidden shrink-0 border border-muted-foreground/10">
-                            {movie.thumbnailUrl ? (
-                              <img
-                                src={movie.thumbnailUrl}
-                                alt={movie.title}
-                                className="size-full object-cover transition-transform group-hover:scale-105"
-                              />
-                            ) : (
-                              <div className="size-full flex items-center justify-center">
-                                <SearchIcon className="size-4 text-muted-foreground/40" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-semibold text-sm group-hover:text-primary transition-colors truncate">
-                              {movie.title}
-                            </p>
-                            <p className="text-xs text-muted-foreground truncate max-w-[240px]">
-                              {movie.description}
-                            </p>
-                          </div>
-                        </Link>
-                      </td>
-                      <td className="px-6 py-4 text-sm whitespace-nowrap font-medium">
-                        {movie.releaseDate
-                          ? new Date(movie.releaseDate).getFullYear()
-                          : "—"}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-muted-foreground whitespace-nowrap">
-                        {movie.durationSeconds ? formatDuration(movie.durationSeconds) : "—"}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-wrap gap-1">
-                          {movie.tags.length === 0 ? (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          ) : (
-                            movie.tags.map((tag) => (
-                              <Badge key={tag.id} variant="secondary" className="bg-primary text-primary-foreground border-none font-normal">
-                                {tag.name}
-                              </Badge>
-                            ))
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="size-8" onClick={() => openEditDialog(movie)}>
-                            <PencilIcon className="size-3.5" />
-                            <span className="sr-only">Edit</span>
-                          </Button>
-                          <Button variant="ghost" size="icon" className="size-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50/50" onClick={() => { setDeleteTarget(movie); setDeleteDialogOpen(true); }}>
-                            <Trash2Icon className="size-3.5" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
+                    <MovieRow key={movie.id} movie={movie} onEdit={openEditDialog} onDelete={(m) => { setDeleteTarget(m); setDeleteDialogOpen(true) }} />
                   ))}
                 </tbody>
               </table>
@@ -336,7 +378,7 @@ export default function AdminMoviesPage() {
                     className={cn(page <= 1 && "pointer-events-none opacity-50")}
                   />
                 </PaginationItem>
-                {getPageNumbers(page, totalPages).map((p, i) =>
+                {pageNumbers.map((p, i) =>
                   p === "ellipsis" ? (
                     <PaginationItem key={`e-${i}`}>
                       <PaginationEllipsis />

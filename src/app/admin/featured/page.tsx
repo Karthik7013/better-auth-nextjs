@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback, memo } from "react";
 import { Film, ArrowUp, ArrowDown, Trash2, Plus, Search, Loader2Icon, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,98 @@ type Movie = {
   thumbnailUrl: string;
 };
 
+const FeaturedRow = memo(function FeaturedRow({
+  item,
+  index,
+  total,
+  onSwap,
+  onRemove,
+}: {
+  item: FeaturedMovie;
+  index: number;
+  total: number;
+  onSwap: (index: number, direction: "up" | "down") => void;
+  onRemove: (id: number) => void;
+}) {
+  return (
+    <tr className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+      <td className="px-4 py-2.5">
+        <div className="flex items-center gap-3">
+          {item.thumbnailUrl ? (
+            <div className="size-10 rounded-md overflow-hidden bg-muted shrink-0">
+              <img src={item.thumbnailUrl} alt={item.title} className="size-full object-cover" />
+            </div>
+          ) : (
+            <div className="size-10 rounded-md bg-muted flex items-center justify-center shrink-0">
+              <Film className="size-4 text-muted-foreground" />
+            </div>
+          )}
+          <span className="font-medium">{item.title}</span>
+        </div>
+      </td>
+      <td className="px-4 py-2.5 text-sm text-muted-foreground">
+        #{item.displayOrder + 1}
+      </td>
+      <td className="px-4 py-2.5 text-right">
+        <div className="flex items-center justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={() => onSwap(index, "up")}
+            disabled={index === 0}
+          >
+            <ArrowUp className="size-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={() => onSwap(index, "down")}
+            disabled={index === total - 1}
+          >
+            <ArrowDown className="size-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={() => onRemove(item.id)}
+            className="text-destructive hover:text-destructive"
+          >
+            <Trash2 className="size-3.5" />
+          </Button>
+        </div>
+      </td>
+    </tr>
+  );
+});
+
+const SearchResultRow = memo(function SearchResultRow({
+  movie,
+  disabled,
+  onAdd,
+}: {
+  movie: Movie;
+  disabled: boolean;
+  onAdd: (movieId: number) => void;
+}) {
+  return (
+    <button
+      onClick={() => !disabled && onAdd(movie.id)}
+      disabled={disabled}
+      className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left"
+    >
+      {movie.thumbnailUrl ? (
+        <img src={movie.thumbnailUrl} alt={movie.title} className="size-10 rounded object-cover" />
+      ) : (
+        <div className="size-10 rounded bg-muted flex items-center justify-center">
+          <Film className="size-4 text-muted-foreground" />
+        </div>
+      )}
+      <span className="font-medium truncate flex-1">{movie.title}</span>
+      {disabled && <span className="text-xs text-muted-foreground">Already featured</span>}
+    </button>
+  );
+});
+
 export default function FeaturedMoviesPage() {
   const [featured, setFeatured] = useState<FeaturedMovie[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,10 +134,10 @@ export default function FeaturedMoviesPage() {
   const [searchResults, setSearchResults] = useState<Movie[]>([]);
   const [searching, setSearching] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
-  const [removingId, setRemovingId] = useState<number | null>(null);
+
   const snapshotRef = useRef<FeaturedMovie[] | null>(null);
 
-  const fetchFeatured = async () => {
+  const fetchFeatured = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/featured");
       if (!res.ok) throw new Error(res.statusText);
@@ -55,13 +147,13 @@ export default function FeaturedMoviesPage() {
       console.error("Failed to fetch featured movies", e);
     }
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     fetchFeatured();
-  }, []);
+  }, [fetchFeatured]);
 
-  const searchMovies = async (q: string) => {
+  const searchMovies = useCallback(async (q: string) => {
     setSearchQuery(q);
     if (!q.trim()) {
       setSearchResults([]);
@@ -72,9 +164,9 @@ export default function FeaturedMoviesPage() {
     const data = await res.json();
     setSearchResults(data.movies || []);
     setSearching(false);
-  };
+  }, []);
 
-  const addFeatured = async (movieId: number) => {
+  const addFeatured = useCallback(async (movieId: number) => {
     const matching = searchResults.find((m) => m.id === movieId);
     if (!matching) return;
     snapshotRef.current = [...featured];
@@ -102,9 +194,9 @@ export default function FeaturedMoviesPage() {
     } catch {
       if (snapshotRef.current) setFeatured(snapshotRef.current);
     }
-  };
+  }, [searchResults, featured]);
 
-  const removeFeatured = async (id: number) => {
+  const removeFeatured = useCallback(async (id: number) => {
     snapshotRef.current = [...featured];
     setFeatured((prev) => prev.filter((f) => f.id !== id));
 
@@ -114,9 +206,9 @@ export default function FeaturedMoviesPage() {
     } catch {
       if (snapshotRef.current) setFeatured(snapshotRef.current);
     }
-  };
+  }, [featured]);
 
-  const swapItems = async (index: number, direction: "up" | "down") => {
+  const swapItems = useCallback(async (index: number, direction: "up" | "down") => {
     if (direction === "up" && index === 0) return;
     if (direction === "down" && index === featured.length - 1) return;
     const items = [...featured];
@@ -143,9 +235,9 @@ export default function FeaturedMoviesPage() {
     } catch {
       if (snapshotRef.current) setFeatured(snapshotRef.current);
     }
-  };
+  }, [featured]);
 
-  const alreadyFeaturedIds = new Set(featured.map((f) => f.movieId));
+  const alreadyFeaturedIds = useMemo(() => new Set(featured.map((f) => f.movieId)), [featured]);
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -157,10 +249,7 @@ export default function FeaturedMoviesPage() {
           </p>
         </div>
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
-          <DialogTrigger render={<Button />}>
-            <Plus className="size-4 mr-2" />
-            Add Movie
-          </DialogTrigger>
+          <DialogTrigger render={<Button><Plus className="size-4 mr-2" />Add Movie</Button>} />
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add Featured Movie</DialogTitle>
@@ -181,27 +270,14 @@ export default function FeaturedMoviesPage() {
                     <Loader2Icon className="size-5 animate-spin text-primary" />
                   </div>
                 ) : searchResults.length > 0 ? (
-                  searchResults.map((movie) => {
-                    const isFeatured = alreadyFeaturedIds.has(movie.id);
-                    return (
-                      <button
-                        key={movie.id}
-                        onClick={() => !isFeatured && addFeatured(movie.id)}
-                        disabled={isFeatured}
-                        className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left"
-                      >
-                        {movie.thumbnailUrl ? (
-                          <img src={movie.thumbnailUrl} alt={movie.title} className="size-10 rounded object-cover" />
-                        ) : (
-                          <div className="size-10 rounded bg-muted flex items-center justify-center">
-                            <Film className="size-4 text-muted-foreground" />
-                          </div>
-                        )}
-                        <span className="font-medium truncate flex-1">{movie.title}</span>
-                        {isFeatured && <span className="text-xs text-muted-foreground">Already featured</span>}
-                      </button>
-                    );
-                  })
+                  searchResults.map((movie) => (
+                    <SearchResultRow
+                      key={movie.id}
+                      movie={movie}
+                      disabled={alreadyFeaturedIds.has(movie.id)}
+                      onAdd={addFeatured}
+                    />
+                  ))
                 ) : searchQuery ? (
                   <p className="text-sm text-muted-foreground text-center py-4">No movies found.</p>
                 ) : (
@@ -248,53 +324,14 @@ export default function FeaturedMoviesPage() {
               </thead>
               <tbody>
                 {featured.map((item, index) => (
-                  <tr key={item.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-2.5">
-                      <div className="flex items-center gap-3">
-                        {item.thumbnailUrl ? (
-                          <div className="size-10 rounded-md overflow-hidden bg-muted shrink-0">
-                            <img src={item.thumbnailUrl} alt={item.title} className="size-full object-cover" />
-                          </div>
-                        ) : (
-                          <div className="size-10 rounded-md bg-muted flex items-center justify-center shrink-0">
-                            <Film className="size-4 text-muted-foreground" />
-                          </div>
-                        )}
-                        <span className="font-medium">{item.title}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-2.5 text-sm text-muted-foreground">
-                      #{item.displayOrder + 1}
-                    </td>
-                    <td className="px-4 py-2.5 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          onClick={() => swapItems(index, "up")}
-                          disabled={index === 0}
-                        >
-                          <ArrowUp className="size-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          onClick={() => swapItems(index, "down")}
-                          disabled={index === featured.length - 1}
-                        >
-                          <ArrowDown className="size-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          onClick={() => removeFeatured(item.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="size-3.5" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
+                  <FeaturedRow
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    total={featured.length}
+                    onSwap={swapItems}
+                    onRemove={removeFeatured}
+                  />
                 ))}
               </tbody>
             </table>

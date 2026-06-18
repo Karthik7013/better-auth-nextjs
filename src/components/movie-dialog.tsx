@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Loader2Icon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -59,8 +59,13 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
   const [allTags, setAllTags] = useState<Tag[]>([])
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false)
 
+  const prevOpen = useRef(open)
+
   useEffect(() => {
-    if (open) {
+    const justOpened = open && !prevOpen.current
+    prevOpen.current = open
+
+    if (justOpened) {
       if (initialData) {
         setForm({
           title: initialData.title ?? "",
@@ -82,7 +87,7 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
       }
       fetchTags()
     }
-  }, [open, initialData, editMovieId])
+  }, [open])
 
   async function fetchTags() {
     try {

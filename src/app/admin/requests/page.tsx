@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
-import { Trash2Icon, CheckIcon, PlusIcon, Loader2Icon, ExternalLinkIcon } from "lucide-react"
+import { useEffect, useState, useRef, useMemo, memo } from "react"
+import { Trash2Icon, CheckIcon, PlusIcon, Loader2Icon, ExternalLinkIcon, SearchIcon } from "lucide-react"
+import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -40,6 +41,125 @@ interface PaginatedResponse {
   totalPages: number
 }
 
+function getPageNumbers(currentPage: number, totalPages: number): number[] {
+  const pages: number[] = []
+  const start = Math.max(1, currentPage - 2)
+  const end = Math.min(totalPages, currentPage + 2)
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  return pages
+}
+
+function SearchInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
+  const [localValue, setLocalValue] = useState(value)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  useEffect(() => {
+    setLocalValue(value)
+  }, [value])
+
+  useEffect(() => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
+      onChange(localValue)
+    }, 300)
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
+  }, [localValue, onChange])
+
+  return (
+    <div className="relative">
+      <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+      <Input
+        placeholder={placeholder}
+        value={localValue}
+        onChange={(e) => setLocalValue(e.target.value)}
+        className="pl-8"
+      />
+    </div>
+  )
+}
+
+const RequestRow = memo(function RequestRow({ req, onFulfill, onOpenCreateMovie, onSetDeleteTarget }: {
+  req: MovieRequest
+  onFulfill: (r: MovieRequest) => void
+  onOpenCreateMovie: (r: MovieRequest) => void
+  onSetDeleteTarget: (r: MovieRequest | null) => void
+}) {
+  return (
+    <tr className="border-b last:border-0 hover:bg-muted/50">
+      <td className="px-4 py-3 font-medium">{req.title}</td>
+      <td className="px-4 py-3 text-sm">
+        <div>{req.user.name}</div>
+        <div className="text-xs text-muted-foreground">{req.user.email}</div>
+      </td>
+      <td className="px-4 py-3 text-sm text-muted-foreground max-w-[200px] truncate">
+        {req.description || "—"}
+      </td>
+      <td className="px-4 py-3 text-sm">
+        {req.externalLink ? (
+          <a
+            href={req.externalLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-primary hover:underline"
+          >
+            Link <ExternalLinkIcon className="size-3" />
+          </a>
+        ) : (
+          "—"
+        )}
+      </td>
+      <td className="px-4 py-3">
+        <Badge variant={req.status === "fulfilled" ? "default" : "secondary"}>
+          {req.status}
+        </Badge>
+      </td>
+      <td className="px-4 py-3 text-sm text-muted-foreground">
+        {new Date(req.createdAt).toLocaleDateString()}
+      </td>
+      <td className="px-4 py-3 text-right">
+        <div className="flex items-center justify-end gap-1">
+          {req.status === "pending" && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onFulfill(req)}
+                title="Mark as fulfilled"
+                className="size-8"
+              >
+                <CheckIcon className="size-3.5" />
+                <span className="sr-only">Fulfill</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onOpenCreateMovie(req)}
+                title="Create movie from request"
+                className="size-8"
+              >
+                <PlusIcon className="size-3.5" />
+                <span className="sr-only">Create Movie</span>
+              </Button>
+            </>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onSetDeleteTarget(req)}
+            title="Delete request"
+            className="size-8"
+          >
+            <Trash2Icon className="size-3.5" />
+            <span className="sr-only">Delete</span>
+          </Button>
+        </div>
+      </td>
+    </tr>
+  )
+})
+
 export default function AdminRequestsPage() {
   const [requests, setRequests] = useState<MovieRequest[]>([])
   const [total, setTotal] = useState(0)
@@ -47,6 +167,8 @@ export default function AdminRequestsPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [statusFilter, setStatusFilter] = useState<string>("")
   const [loading, setLoading] = useState(true)
+  const [version, setVersion] = useState(0)
+  const [search, setSearch] = useState("")
 
   const [deleteTarget, setDeleteTarget] = useState<MovieRequest | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -55,32 +177,34 @@ export default function AdminRequestsPage() {
   const [prefillData, setPrefillData] = useState<{ title: string; description?: string } | null>(null)
 
   const limit = 20
-
-  const fetchRequests = useCallback(async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams({ page: String(page), limit: String(limit) })
-      if (statusFilter) params.set("status", statusFilter)
-      const res = await fetch(`/api/admin/requests?${params}`)
-      if (!res.ok) throw new Error("Failed to fetch")
-      const data: PaginatedResponse = await res.json()
-      setRequests(data.requests)
-      setTotal(data.total)
-      setTotalPages(data.totalPages)
-    } catch {
-      // silent
-    } finally {
-      setLoading(false)
-    }
-  }, [page, statusFilter])
+  const fetchCounter = useRef(0)
 
   useEffect(() => {
-    fetchRequests()
-  }, [fetchRequests])
+    const counter = ++fetchCounter.current
+    setLoading(true)
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) })
+    if (statusFilter) params.set("status", statusFilter)
+    if (search) params.set("search", search)
+    fetch(`/api/admin/requests?${params}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch")
+        return res.json()
+      })
+      .then((data: PaginatedResponse) => {
+        if (counter !== fetchCounter.current) return
+        setRequests(data.requests)
+        setTotal(data.total)
+        setTotalPages(data.totalPages)
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (counter === fetchCounter.current) setLoading(false)
+      })
+  }, [page, statusFilter, search, version])
 
   useEffect(() => {
     setPage(1)
-  }, [statusFilter])
+  }, [statusFilter, search])
 
   async function handleFulfill(request: MovieRequest) {
     try {
@@ -90,7 +214,7 @@ export default function AdminRequestsPage() {
         body: JSON.stringify({ status: "fulfilled" }),
       })
       if (!res.ok) throw new Error("Failed")
-      fetchRequests()
+      setVersion((v) => v + 1)
     } catch {
       // silent
     }
@@ -105,7 +229,7 @@ export default function AdminRequestsPage() {
       })
       if (!res.ok) throw new Error("Delete failed")
       setDeleteTarget(null)
-      fetchRequests()
+      setVersion((v) => v + 1)
     } catch {
       // silent
     } finally {
@@ -136,11 +260,12 @@ export default function AdminRequestsPage() {
         }).catch(() => {})
       }
     }
-    fetchRequests()
+    setVersion((v) => v + 1)
   }
 
-  const startItem = (page - 1) * limit + 1
-  const endItem = Math.min(page * limit, total)
+  const startItem = useMemo(() => (page - 1) * limit + 1, [page, limit])
+  const endItem = useMemo(() => Math.min(page * limit, total), [page, limit, total])
+  const pageNumbers = useMemo(() => getPageNumbers(page, totalPages), [page, totalPages])
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -158,7 +283,8 @@ export default function AdminRequestsPage() {
         onSuccess={onMovieCreated}
       />
 
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
+        <SearchInput value={search} onChange={setSearch} placeholder="Search requests..." />
         {["", "pending", "fulfilled"].map((s) => (
           <Button
             key={s}
@@ -212,76 +338,13 @@ export default function AdminRequestsPage() {
                 </thead>
                 <tbody>
                   {requests.map((req) => (
-                    <tr key={req.id} className="border-b last:border-0 hover:bg-muted/50">
-                      <td className="px-4 py-3 font-medium">{req.title}</td>
-                      <td className="px-4 py-3 text-sm">
-                        <div>{req.user.name}</div>
-                        <div className="text-xs text-muted-foreground">{req.user.email}</div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground max-w-[200px] truncate">
-                        {req.description || "—"}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        {req.externalLink ? (
-                          <a
-                            href={req.externalLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-primary hover:underline"
-                          >
-                            Link <ExternalLinkIcon className="size-3" />
-                          </a>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant={req.status === "fulfilled" ? "default" : "secondary"}>
-                          {req.status}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">
-                        {new Date(req.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          {req.status === "pending" && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleFulfill(req)}
-                                title="Mark as fulfilled"
-                                className="size-8"
-                              >
-                                <CheckIcon className="size-3.5" />
-                                <span className="sr-only">Fulfill</span>
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => openCreateMovie(req)}
-                                title="Create movie from request"
-                                className="size-8"
-                              >
-                                <PlusIcon className="size-3.5" />
-                                <span className="sr-only">Create Movie</span>
-                              </Button>
-                            </>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setDeleteTarget(req)}
-                            title="Delete request"
-                            className="size-8"
-                          >
-                            <Trash2Icon className="size-3.5" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
+                    <RequestRow
+                      key={req.id}
+                      req={req}
+                      onFulfill={handleFulfill}
+                      onOpenCreateMovie={openCreateMovie}
+                      onSetDeleteTarget={setDeleteTarget}
+                    />
                   ))}
                 </tbody>
               </table>
@@ -303,6 +366,16 @@ export default function AdminRequestsPage() {
             >
               Previous
             </Button>
+            {pageNumbers.map((p) => (
+              <Button
+                key={p}
+                variant={p === page ? "default" : "outline"}
+                size="sm"
+                onClick={() => setPage(p)}
+              >
+                {p}
+              </Button>
+            ))}
             <Button
               variant="outline"
               size="sm"
