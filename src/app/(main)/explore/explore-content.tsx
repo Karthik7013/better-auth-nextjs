@@ -106,11 +106,11 @@ export function ExploreContent({ isAdmin }: { isAdmin?: boolean }) {
     return () => observer.disconnect();
   }, [appendCursor, hasMore, loadingMore, loadMore, initialLoading]);
 
-  const toggleTag = (tagId: number) => {
+  const toggleTag = useCallback((tagId: number) => {
     setSelectedTags((prev) =>
       prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]
     );
-  };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -135,9 +135,9 @@ export function ExploreContent({ isAdmin }: { isAdmin?: boolean }) {
       </div>
       {tags && (
         <div className="flex gap-2 flex-wrap">
-          {tags.map((tag: any, _: number) => (
+          {tags.map((tag: { id: number; name: string }) => (
             <button
-              key={_}
+              key={tag.id}
               onClick={() => toggleTag(tag.id)}
               className={`rounded-full px-3 py-1 text-sm border transition-colors ${
                 selectedTags.includes(tag.id)
@@ -173,8 +173,8 @@ export function ExploreContent({ isAdmin }: { isAdmin?: boolean }) {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {movies.map((m, _) => (
-            <MovieCard key={_} {...m} />
+          {movies.map((m: React.ComponentPropsWithoutRef<typeof MovieCard>) => (
+            <MovieCard key={m.id} {...m} />
           ))}
           {loading &&
             Array.from({ length: 4 }).map((_, i) => (
