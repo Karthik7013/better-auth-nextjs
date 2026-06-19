@@ -43,6 +43,7 @@ export function WatchContent() {
   const params = useParams<{ slug: string }>();
   const router = useRouter();
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const uiVisibleRef = useRef(true);
   const [uiVisible, setUiVisible] = useState(true);
 
   const { data: movie, isLoading, error } = useQuery({
@@ -56,15 +57,22 @@ export function WatchContent() {
     retry: false,
   });
 
-  const showUi = useCallback(() => {
-    setUiVisible(true);
+  const showUiTemporarily = useCallback(() => {
+    if (!uiVisibleRef.current) {
+      uiVisibleRef.current = true;
+      setUiVisible(true);
+    }
     clearTimeout(hideTimer.current);
-    hideTimer.current = setTimeout(() => setUiVisible(false), 3000);
+    hideTimer.current = setTimeout(() => {
+      uiVisibleRef.current = false;
+      setUiVisible(false);
+    }, 3000);
   }, []);
 
   useEffect(() => {
-    hideTimer.current = setTimeout(() => setUiVisible(false), 3000);
+    showUiTemporarily();
     return () => clearTimeout(hideTimer.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (isLoading) {
@@ -171,7 +179,7 @@ export function WatchContent() {
   return (
     <div
       className="fixed inset-0 bg-black select-none"
-      onMouseMove={() => setUiVisible(true)}
+      onMouseMove={showUiTemporarily}
       onMouseLeave={() => setUiVisible(false)}
     >
       {/* Internet Archive embed */}
