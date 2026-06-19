@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Play, Info } from "lucide-react";
+import { formatDuration, formatYear } from "@/lib/format";
 
 interface HeroCarouselItem {
   id: number;
@@ -51,19 +52,6 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
   }, [length, clearTimers]);
 
   if (length === 0) return null;
-
-  function formatDuration(seconds: number | null | undefined): string | null {
-    if (!seconds) return null;
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    if (h > 0) return `${h}h ${m}m`;
-    return `${m}m`;
-  }
-
-  function getYear(date: string | null | undefined): string | null {
-    if (!date) return null;
-    return new Date(date).getFullYear().toString();
-  }
 
   return (
     <div className="relative overflow-hidden bg-muted">
@@ -115,8 +103,8 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
                     i === current ? "opacity-100 translate-y-0 delay-0" : "opacity-0 translate-y-4"
                   }`}
                 >
-                  {getYear(item.releaseDate) && (
-                    <span className="font-semibold text-white">{getYear(item.releaseDate)}</span>
+                  {formatYear(item.releaseDate) && (
+                    <span className="font-semibold text-white">{formatYear(item.releaseDate)}</span>
                   )}
                   {formatDuration(item.durationSeconds) && (
                     <>

@@ -21,6 +21,7 @@ import {
 import { MovieDialog } from "@/components/movie-dialog"
 import { cn } from "@/lib/utils"
 import { useDebounce } from "@/hooks/use-debounce"
+import { formatDuration } from "@/lib/format"
 import {
   Pagination,
   PaginationContent,
@@ -436,9 +437,3 @@ function getPageNumbers(current: number, total: number): (number | "ellipsis")[]
   return pages
 }
 
-function formatDuration(seconds: number): string {
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  if (h > 0) return `${h}h ${m}m`
-  return `${m}m`
-}

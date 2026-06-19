@@ -6,13 +6,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { ChevronLeft, Film, Heart, Clock, Calendar, Tag } from "lucide-react";
 import { InternetArchivePlayer } from "@/components/internet-archive-player";
-
-function formatDuration(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
-}
+import { formatDuration, formatYear } from "@/lib/format";
 
 function LoadingState({ movie }: { movie?: { thumbnailUrl?: string | null; backdropUrl?: string | null; title?: string } }) {
   return (
@@ -103,7 +97,7 @@ export function WatchContent() {
       ? Math.round(movie.durationSeconds / 60)
       : null;
     const releaseYear = movie.releaseDate
-      ? new Date(movie.releaseDate).getFullYear()
+      ? formatYear(movie.releaseDate)
       : null;
 
     return (
@@ -173,7 +167,7 @@ export function WatchContent() {
     ? Math.round(movie.durationSeconds / 60)
     : null;
   const releaseYear = movie.releaseDate
-    ? new Date(movie.releaseDate).getFullYear()
+    ? formatYear(movie.releaseDate)
     : null;
 
   return (

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Play, Heart, ChevronLeft } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MovieCard } from "@/components/movie-card";
+import { formatMinutes, formatYear } from "@/lib/format";
 
 export function MovieDetailContent() {
   const params = useParams<{ slug: string }>();
@@ -77,13 +78,9 @@ export function MovieDetailContent() {
     );
   }
 
-  const durationMin = movie.durationSeconds
-    ? Math.round(movie.durationSeconds / 60)
-    : null;
+  const durationMin = formatMinutes(movie.durationSeconds);
 
-  const releaseYear = movie.releaseDate
-    ? new Date(movie.releaseDate).getFullYear()
-    : null;
+  const releaseYear = formatYear(movie.releaseDate);
 
   return (
     <div className="min-h-screen bg-background">
