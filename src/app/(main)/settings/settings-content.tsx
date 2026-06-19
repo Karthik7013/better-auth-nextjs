@@ -89,6 +89,38 @@ export function SettingsContent() {
     }
   };
 
+  const handlePasswordChange = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordSuccess(false);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const currentPassword = formData.get("currentPassword") as string;
+    const newPassword = formData.get("newPassword") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Passwords do not match");
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPasswordError("New password must be at least 8 characters");
+      return;
+    }
+    setChangingPassword(true);
+    const { error } = await authClient.changePassword({
+      currentPassword,
+      newPassword,
+      revokeOtherSessions: true,
+    });
+    setChangingPassword(false);
+    if (error) {
+      setPasswordError(error.message || "Failed to change password");
+    } else {
+      setPasswordSuccess(true);
+      form.reset();
+    }
+  };
+
   const user = session?.user;
 
   return (
@@ -146,37 +178,7 @@ export function SettingsContent() {
         <CardContent>
           <form
             className="flex flex-col gap-3"
-            onSubmit={async (e) => {
-            e.preventDefault();
-            setPasswordError("");
-            setPasswordSuccess(false);
-            const form = e.currentTarget;
-            const formData = new FormData(form);
-            const currentPassword = formData.get("currentPassword") as string;
-            const newPassword = formData.get("newPassword") as string;
-            const confirmPassword = formData.get("confirmPassword") as string;
-            if (newPassword !== confirmPassword) {
-              setPasswordError("Passwords do not match");
-              return;
-            }
-            if (newPassword.length < 8) {
-              setPasswordError("New password must be at least 8 characters");
-              return;
-            }
-            setChangingPassword(true);
-            const { error } = await authClient.changePassword({
-              currentPassword,
-              newPassword,
-              revokeOtherSessions: true,
-            });
-            setChangingPassword(false);
-            if (error) {
-              setPasswordError(error.message || "Failed to change password");
-            } else {
-              setPasswordSuccess(true);
-              form.reset();
-            }
-          }}>
+            onSubmit={handlePasswordChange}>
             <Input
               name="currentPassword"
               type="password"

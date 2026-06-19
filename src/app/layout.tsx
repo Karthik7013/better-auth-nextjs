@@ -57,6 +57,12 @@ export default function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased dark`}
       suppressHydrationWarning
     >
+      <head>
+        <link rel="preconnect" href="https://media-cache.cinematerial.com" />
+        <link rel="preconnect" href="https://cdn.cinematerial.com" />
+        <link rel="preconnect" href="https://image.tmdb.org" />
+        <link rel="preconnect" href="https://archive.org" />
+      </head>
       <body className="min-h-full flex flex-col"><Providers>{children}<Toaster /></Providers></body>
     </html>
   );
