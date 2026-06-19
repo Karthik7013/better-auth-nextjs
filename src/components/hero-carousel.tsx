@@ -34,6 +34,7 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
 
   const goTo = useCallback((i: number) => {
     if (skippingRef.current) return;
+    if (i === current) return;
     skippingRef.current = true;
     clearTimers();
     setCurrent(i);

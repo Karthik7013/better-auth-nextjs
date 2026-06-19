@@ -7,7 +7,7 @@ import Image from "next/image";
 import { ChevronLeft, Film, Heart, Clock, Calendar, Tag } from "lucide-react";
 import { InternetArchivePlayer } from "@/components/internet-archive-player";
 import { BackButton } from "@/components/back-button";
-import { formatDuration, formatYear } from "@/lib/format";
+import { formatDuration, formatMinutes, formatYear } from "@/lib/format";
 
 function LoadingState({ movie }: { movie?: { thumbnailUrl?: string | null; backdropUrl?: string | null; title?: string } }) {
   return (
@@ -95,7 +95,7 @@ export function WatchContent() {
 
   if (!movie.videoUrl) {
     const durationMin = movie.durationSeconds
-      ? Math.round(movie.durationSeconds / 60)
+      ? formatMinutes(movie.durationSeconds)
       : null;
     const releaseYear = movie.releaseDate
       ? formatYear(movie.releaseDate)
@@ -159,7 +159,7 @@ export function WatchContent() {
   }
 
   const durationMin = movie.durationSeconds
-    ? Math.round(movie.durationSeconds / 60)
+    ? formatMinutes(movie.durationSeconds)
     : null;
   const releaseYear = movie.releaseDate
     ? formatYear(movie.releaseDate)
@@ -169,7 +169,7 @@ export function WatchContent() {
     <div
       className="fixed inset-0 bg-black select-none"
       onMouseMove={showUiTemporarily}
-      onMouseLeave={() => setUiVisible(false)}
+      onMouseLeave={() => { if (uiVisibleRef.current) setUiVisible(false); }}
     >
       {/* Internet Archive embed */}
       <InternetArchivePlayer
