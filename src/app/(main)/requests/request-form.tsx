@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react"
+import { useMutation } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Loader2Icon, CheckCircle2Icon } from "lucide-react"
@@ -9,18 +10,10 @@ export function RequestForm() {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [externalLink, setExternalLink] = useState("")
-  const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-  const [error, setError] = useState("")
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!title.trim()) return
-
-    setSubmitting(true)
-    setError("")
-
-    try {
+  const { mutate: handleSubmit, isPending: submitting, error } = useMutation({
+    mutationFn: async () => {
       const res = await fetch("/api/requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -30,18 +23,18 @@ export function RequestForm() {
           externalLink: externalLink.trim() || undefined,
         }),
       })
-
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
         throw new Error(body.error || "Failed to submit")
       }
+    },
+    onSuccess: () => setSubmitted(true),
+  })
 
-      setSubmitted(true)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong")
-    } finally {
-      setSubmitting(false)
-    }
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!title.trim()) return
+    handleSubmit()
   }
 
   if (submitted) {
@@ -60,7 +53,7 @@ export function RequestForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={onSubmit} className="space-y-5">
       <div className="space-y-1.5">
         <label htmlFor="title" className="text-sm font-medium">
           Movie Title <span className="text-destructive">*</span>
@@ -101,7 +94,7 @@ export function RequestForm() {
       </div>
 
       {error && (
-        <p className="text-sm text-destructive">{error}</p>
+        <p className="text-sm text-destructive">{error.message}</p>
       )}
 
       <Button type="submit" className="w-full" disabled={submitting || !title.trim()}>
