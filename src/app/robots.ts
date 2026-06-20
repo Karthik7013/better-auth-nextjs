@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 
+const baseUrl = process.env.BETTER_AUTH_URL || "http://localhost:3000";
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
@@ -7,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/admin/", "/api/"],
     },
-    sitemap: "https://streamflix.example.com/sitemap.xml",
+    sitemap: `${baseUrl}/sitemap.xml`,
   };
 }

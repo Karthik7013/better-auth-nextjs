@@ -3,7 +3,6 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { movieRequests } from "@/db/schema";
 
-export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   const session = await auth.api.getSession({ headers: request.headers });

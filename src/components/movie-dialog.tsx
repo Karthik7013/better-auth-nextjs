@@ -135,7 +135,7 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
       title,
       slug: slugManuallyEdited
         ? prev.slug
-        : title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
+        : title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").replace(/-+/g, "-").replace(/^-|-$/g, ""),
     }))
   }
 

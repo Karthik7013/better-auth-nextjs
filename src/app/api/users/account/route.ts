@@ -4,9 +4,6 @@ import { db } from "@/db";
 import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-
-export const dynamic = 'force-dynamic';
-
 export async function DELETE(request: NextRequest) {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session) {
@@ -14,6 +11,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
+    await auth.api.signOut({ headers: request.headers });
     await db.delete(user).where(eq(user.id, session.user.id));
     return NextResponse.json({ success: true });
   } catch {

@@ -6,20 +6,17 @@ function requireEnv(name: string): string {
   return value;
 }
 
-function getTransporter() {
-  return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    auth: {
-      user: requireEnv("EMAIL"),
-      pass: requireEnv("APP_PASSWORD"),
-    },
-  });
-}
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: requireEnv("EMAIL"),
+    pass: requireEnv("APP_PASSWORD"),
+  },
+});
 
 export async function sendEmail(options: { to: string; subject: string; html: string }) {
-  const transporter = getTransporter();
   await transporter.sendMail({
     from: requireEnv("EMAIL"),
     to: options.to,

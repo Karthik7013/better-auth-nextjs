@@ -32,6 +32,14 @@ export async function PUT(
     const body = await request.json();
     const { title, slug, description, videoUrl, thumbnailUrl, backdropUrl, durationSeconds, releaseDate, tagIds } = body;
 
+    if (slug !== undefined && (!/^[a-z0-9-]+$/.test(slug) || slug.length === 0)) {
+      return NextResponse.json({ error: "Slug must contain only lowercase letters, numbers, and hyphens" }, { status: 400 });
+    }
+
+    if (durationSeconds !== undefined && (typeof durationSeconds !== "number" || isNaN(durationSeconds) || durationSeconds < 0)) {
+      return NextResponse.json({ error: "Invalid duration" }, { status: 400 });
+    }
+
     const updateData: MovieUpdateData = {};
     if (title !== undefined) updateData.title = title;
     if (slug !== undefined) updateData.slug = slug;

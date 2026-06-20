@@ -54,12 +54,12 @@ export default async function Home() {
       <div className="absolute inset-0 pointer-events-none overflow-hidden select-none opacity-10 sm:opacity-90 perspective-distant">
         <div className="absolute -top-1/4 -left-1/4 w-[150%] h-[150%] origin-center transform rotate-x-35 rotate-z-20 skew-x-[-10deg]">
           <div className="grid grid-cols-6 sm:grid-cols-10 gap-2 sm:gap-3 p-4 animate-infinite-scroll">
-            {[...Array(120)].map((_, i) => (
+            {[...Array(40)].map((_, i) => (
               <PosterCard
                 key={i}
                 url={MOVIE_POSTERS[i % MOVIE_POSTERS.length]}
                 i={i}
-                priority={i < 6}
+                priority={i < 4}
               />
             ))}
           </div>

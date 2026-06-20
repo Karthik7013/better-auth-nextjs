@@ -34,11 +34,13 @@ export const metadata: Metadata = {
     siteName: "StreamFlix",
     type: "website",
     locale: "en_US",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "StreamFlix",
     description: "Stream the latest blockbusters, exclusive originals, and your favorite TV shows on StreamFlix.",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
   },
   robots: {
     index: true,

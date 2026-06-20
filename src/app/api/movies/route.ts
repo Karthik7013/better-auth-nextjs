@@ -5,8 +5,6 @@ import { movies, movieTags } from "@/db/schema";
 import { ilike, and, lt, desc, inArray, eq, sql, count } from "drizzle-orm";
 
 
-export const dynamic = 'force-dynamic';
-
 interface MovieRow {
   id: number;
   title: string;

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { movies, watchHistory } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 export async function POST(
   request: NextRequest,
@@ -35,34 +35,23 @@ export async function POST(
   }
 
   try {
-    const existing = await db
-      .select()
-      .from(watchHistory)
-      .where(
-        and(
-          eq(watchHistory.userId, session.user.id),
-          eq(watchHistory.movieId, movieId)
-        )
-      )
-      .limit(1);
-
-    if (existing.length > 0) {
-      await db
-        .update(watchHistory)
-        .set({
-          progressSeconds,
-          isCompleted: isCompleted ?? existing[0].isCompleted,
-          watchedAt: new Date(),
-        })
-        .where(eq(watchHistory.id, existing[0].id));
-    } else {
-      await db.insert(watchHistory).values({
+    await db
+      .insert(watchHistory)
+      .values({
         userId: session.user.id,
         movieId,
         progressSeconds,
         isCompleted: isCompleted ?? false,
+        watchedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [watchHistory.userId, watchHistory.movieId],
+        set: {
+          progressSeconds: sql`EXCLUDED.progress_seconds`,
+          isCompleted: sql`EXCLUDED.is_completed`,
+          watchedAt: sql`EXCLUDED.watched_at`,
+        },
       });
-    }
 
     return NextResponse.json({ success: true });
   } catch {

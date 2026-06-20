@@ -5,8 +5,6 @@ import { featuredMovies, movies, watchHistory, movieTags, tags } from "@/db/sche
 import { eq, and, desc, inArray } from "drizzle-orm";
 
 
-export const dynamic = 'force-dynamic';
-
 export async function GET(request: NextRequest) {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session) {

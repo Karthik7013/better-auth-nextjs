@@ -4,7 +4,6 @@ import { db } from "@/db";
 import { movieRequests } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-export const dynamic = "force-dynamic";
 
 export async function PATCH(
   request: NextRequest,

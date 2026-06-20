@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { movies, movieTags, tags } from "@/db/schema";
-import { eq, ilike, and, desc, count } from "drizzle-orm";
-
-
-export const dynamic = 'force-dynamic';
+import { eq, ilike, and, desc, count, inArray } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
   const session = await auth.api.getSession({ headers: request.headers });
@@ -42,25 +39,26 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .offset(offset);
 
-    const settled = await Promise.allSettled(
-      moviesList.map(async (movie) => {
-        const movieTagRows = await db
-          .select({ tag: tags })
+    const movieIds = moviesList.map((m) => m.id);
+
+    const tagRows = movieIds.length > 0
+      ? await db
+          .select({ movieId: movieTags.movieId, id: tags.id, name: tags.name, createdAt: tags.createdAt })
           .from(movieTags)
           .innerJoin(tags, eq(movieTags.tagId, tags.id))
-          .where(eq(movieTags.movieId, movie.id));
+          .where(inArray(movieTags.movieId, movieIds))
+      : [];
 
-        return {
-          ...movie,
-          tags: movieTagRows.map((r) => r.tag),
-        };
-      })
-    );
+    const tagsByMovieId: Record<number, typeof tags.$inferSelect[]> = {};
+    for (const row of tagRows) {
+      if (!tagsByMovieId[row.movieId]) tagsByMovieId[row.movieId] = [];
+      tagsByMovieId[row.movieId].push({ id: row.id, name: row.name, createdAt: row.createdAt });
+    }
 
-    const moviesWithTags = moviesList.map((movie, i) => {
-      const r = settled[i];
-      return r.status === "fulfilled" ? r.value : { ...movie, tags: [] };
-    });
+    const moviesWithTags = moviesList.map((movie) => ({
+      ...movie,
+      tags: tagsByMovieId[movie.id] || [],
+    }));
 
     return NextResponse.json({
       movies: moviesWithTags,
@@ -86,6 +84,10 @@ export async function POST(request: NextRequest) {
 
     if (!title || !slug) {
       return NextResponse.json({ error: "Missing required fields: title, slug" }, { status: 400 });
+    }
+
+    if (!/^[a-z0-9-]+$/.test(slug) || slug.length === 0) {
+      return NextResponse.json({ error: "Slug must contain only lowercase letters, numbers, and hyphens" }, { status: 400 });
     }
 
     const [createdMovie] = await db
