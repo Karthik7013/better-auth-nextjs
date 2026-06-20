@@ -224,12 +224,12 @@ export default function FeaturedMoviesPage() {
         fetch(`/api/admin/featured/${current[index].id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ displayOrder: current[index].displayOrder }),
+          body: JSON.stringify({ displayOrder: current[swapIdx].displayOrder }),
         }),
         fetch(`/api/admin/featured/${current[swapIdx].id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ displayOrder: current[swapIdx].displayOrder }),
+          body: JSON.stringify({ displayOrder: current[index].displayOrder }),
         }),
       ]);
       if (!res1.ok || !res2.ok) throw new Error();

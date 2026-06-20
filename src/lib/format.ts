@@ -12,6 +12,6 @@ export function formatYear(date: string | null | undefined): string | null {
 }
 
 export function formatMinutes(seconds: number | null | undefined): number | null {
-  if (!seconds) return null;
+  if (seconds === null || seconds === undefined) return null;
   return Math.round(seconds / 60);
 }
