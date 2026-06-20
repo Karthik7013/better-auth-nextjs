@@ -26,6 +26,13 @@ export async function POST(request: NextRequest) {
     }
 
     const contentType = request.headers.get("content-type") || "application/octet-stream";
+    if (
+      contentType !== "application/octet-stream" &&
+      !contentType.startsWith("video/") &&
+      !contentType.startsWith("image/")
+    ) {
+      return NextResponse.json({ error: "Only video and image files are allowed" }, { status: 400 });
+    }
     const buffer = Buffer.from(await request.arrayBuffer());
     const key = `${Date.now()}-${fileName}`;
 

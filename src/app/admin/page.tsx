@@ -2,14 +2,14 @@ import { db } from "@/db";
 import { movies, tags, user, favorites } from "@/db/schema";
 import { count, eq, desc } from "drizzle-orm";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Card,
   CardContent,
 } from "@/components/ui/card";
+import { Film, Tags as TagsIcon, Users, ShieldCheck, Heart, UserPlus } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-import Image from "next/image";
-import { Film, Tags as TagsIcon, Users, ShieldCheck, Heart, UserPlus } from "lucide-react";
 
 const statConfig = [
   { label: "Total Movies", icon: Film, color: "bg-blue-500/10 text-blue-600 dark:text-blue-400", border: "border-l-blue-500" },

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { movieRequests, user } from "@/db/schema";
-import { eq, desc, and, count } from "drizzle-orm";
+import { eq, desc, and, count, ilike } from "drizzle-orm";
 
 
 export async function GET(request: NextRequest) {
@@ -15,12 +15,16 @@ export async function GET(request: NextRequest) {
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "20");
   const status = searchParams.get("status");
+  const search = searchParams.get("search") || "";
   const offset = (page - 1) * limit;
 
   try {
     const conditions = [];
     if (status && (status === "pending" || status === "fulfilled")) {
       conditions.push(eq(movieRequests.status, status));
+    }
+    if (search) {
+      conditions.push(ilike(movieRequests.title, `%${search}%`));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;

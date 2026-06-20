@@ -31,7 +31,7 @@ const PosterCard = ({ url, i, priority }: { url: string; i: number; priority?: b
   <div key={i} className="relative aspect-2/3 w-full rounded-xl overflow-hidden border border-white/5 shadow-2xl transition-transform duration-500 bg-muted/20">
     <Image
       src={url}
-      alt="Movie Poster"
+      alt=""
       fill
       priority={priority}
       sizes="(max-width: 768px) 20vw, 10vw"

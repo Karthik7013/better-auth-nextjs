@@ -193,7 +193,7 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <UploadField
-                accept="*/*"
+                accept="video/*"
                 label="Video"
                 folder="videos"
                 value={form.videoUrl}

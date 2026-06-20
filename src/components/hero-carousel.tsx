@@ -56,20 +56,19 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
 
   return (
     <div className="relative overflow-hidden bg-muted">
-      {items.map((item, i) => (
+      {items.map((item, i) => {
+        const isActive = i === current;
+        return (
         <div
           key={item.id}
           className={`absolute inset-0 transition-opacity duration-700 ${
-            i === current ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+            isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
           }`}
         >
           {/* Mobile: vertical poster */}
           <div className="relative h-[60vh] md:h-[60vh] xl:h-[70vh] overflow-hidden">
-            <div
-              className={`absolute inset-0 transition-transform duration-8000 ease-linear ${
-                i === current ? "scale-110" : "scale-100"
-              }`}
-            >
+            {isActive && (
+            <div className="absolute inset-0 transition-transform duration-8000 ease-linear scale-110">
               {/* Poster image — visible on mobile only */}
               <Image
                 src={item.thumbnailUrl}
@@ -91,6 +90,7 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
                 referrerPolicy="no-referrer"
               />
             </div>
+            )}
 
             {/* Mobile gradient: bottom fade */}
             <div className="absolute inset-0 bg-linear-to-t from-black/95 via-black/40 via-40% to-transparent md:bg-linear-to-r md:from-black/80 md:via-black/30 md:to-transparent" />
@@ -162,7 +162,8 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
             </div>
           </div>
         </div>
-      ))}
+      );
+      })}
 
       <div className="relative z-0 h-[60vh] md:h-[60vh] xl:h-[70vh]" />
 
