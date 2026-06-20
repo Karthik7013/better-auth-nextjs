@@ -34,7 +34,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Only video and image files are allowed" }, { status: 400 });
     }
     const buffer = Buffer.from(await request.arrayBuffer());
-    const key = `${Date.now()}-${fileName}`;
+
+    const folder = searchParams.get("folder") || "uploads";
+    const sanitizedFolder = folder.replace(/[^a-zA-Z0-9_-]/g, "");
+    const key = sanitizedFolder ? `${sanitizedFolder}/${Date.now()}-${fileName}` : `${Date.now()}-${fileName}`;
 
     const accessKey = requireEnv("IA_S3_ACCESS_KEY");
     const secretKey = requireEnv("IA_S3_SECRET_KEY");
