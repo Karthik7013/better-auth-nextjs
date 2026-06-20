@@ -11,8 +11,10 @@ import {
 import { LogOut } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
 
 export function ProfileMenu() {
+  const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
 
   return (
@@ -42,7 +44,7 @@ export function ProfileMenu() {
         <DropdownMenuItem
           onClick={async () => {
             await authClient.signOut();
-            window.location.replace("/login");
+            router.push("/login");
           }}
         >
           <LogOut className="size-4 mr-2" />

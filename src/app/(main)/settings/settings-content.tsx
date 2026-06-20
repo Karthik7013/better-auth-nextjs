@@ -18,8 +18,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export function SettingsContent() {
+  const router = useRouter();
   const [alertOpen, setAlertOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [clearAlertOpen, setClearAlertOpen] = useState(false);
@@ -48,7 +50,7 @@ export function SettingsContent() {
     },
     onSuccess: async () => {
       await authClient.signOut();
-      window.location.replace("/login");
+      router.replace("/login");
     },
   });
 
@@ -68,7 +70,7 @@ export function SettingsContent() {
 
   const handleSignOut = async () => {
     await authClient.signOut();
-    window.location.replace("/login");
+    router.replace("/login");
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
