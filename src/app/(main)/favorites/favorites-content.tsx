@@ -50,7 +50,7 @@ export function FavoritesContent() {
 
   if (movies.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="flex h-full flex-col items-center justify-center text-center">
         <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted">
           <Heart className="size-8 text-muted-foreground" />
         </div>

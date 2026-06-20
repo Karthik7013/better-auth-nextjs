@@ -5,15 +5,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { Play, Heart } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MovieCard } from "@/components/movie-card";
 import { BackButton } from "@/components/back-button";
 import { formatMinutes, formatYear } from "@/lib/format";
+import RelatedMovies from "./related-movies";
 
 export function MovieDetailContent() {
   const params = useParams<{ slug: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
-
   const { data: movie, isLoading, error } = useQuery({
     queryKey: ["movie", params.slug],
     queryFn: async () => {
@@ -27,6 +26,7 @@ export function MovieDetailContent() {
 
   const toggleFavorite = useMutation({
     mutationFn: async () => {
+      if (!movie) throw new Error("No movie data");
       const res = await fetch("/api/favorites/toggle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -78,6 +78,8 @@ export function MovieDetailContent() {
       </div>
     );
   }
+
+  if (!movie) return null;
 
   const durationMin = formatMinutes(movie.durationSeconds);
 
@@ -167,8 +169,8 @@ export function MovieDetailContent() {
               >
                 <Heart
                   className={`size-5 ${movie.isFavorited
-                      ? "fill-destructive text-destructive"
-                      : "text-white"
+                    ? "fill-destructive text-destructive"
+                    : "text-white"
                     }`}
                 />
               </button>
@@ -180,20 +182,7 @@ export function MovieDetailContent() {
       {/* ─────────── Below the Fold ─────────── */}
       <div className="px-6 md:px-12 lg:px-16 -mt-10 relative z-20">
         <div className="max-w-4xl mx-auto space-y-6 pb-16">
-
-          {/* Related movies */}
-          {movie.related?.length > 0 && (
-            <section className="pt-4">
-              <h2 className="text-xl font-semibold mb-4">Related Movies</h2>
-              <div className="flex gap-4 overflow-x-auto pb-2">
-                {movie.related.map((m: { id: number; title: string; slug: string; thumbnailUrl: string }) => (
-                  <div key={m.id} className="shrink-0 w-48">
-                    <MovieCard {...m} />
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+          <RelatedMovies />
         </div>
       </div>
     </div>

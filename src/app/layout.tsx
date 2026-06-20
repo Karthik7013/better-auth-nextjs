@@ -65,7 +65,12 @@ export default function RootLayout({
         <link rel="preconnect" href="https://image.tmdb.org" />
         <link rel="preconnect" href="https://archive.org" />
       </head>
-      <body className="min-h-full flex flex-col"><Providers>{children}<Toaster /></Providers></body>
+      <body className="min-h-full flex flex-col">
+        <Providers>
+          {children}
+          <Toaster />
+        </Providers>
+      </body>
     </html>
   );
 }
