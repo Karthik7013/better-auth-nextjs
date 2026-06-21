@@ -23,10 +23,7 @@ export const metadata: Metadata = {
   },
   description: "Stream the latest blockbusters, exclusive originals, and your favorite TV shows on StreamFlix. Start watching today.",
   icons: {
-    icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
-      { url: "/favicon.ico", sizes: "any" },
-    ],
+    icon: { url: "/favicon.svg", type: "image/svg+xml" },
   },
   openGraph: {
     title: "StreamFlix | Watch Movies & TV Shows Online",

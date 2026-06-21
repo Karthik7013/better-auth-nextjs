@@ -10,7 +10,13 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 const HeroBanner = () => {
   return <div className="flex flex-col items-center sm:items-start">
     <main className="flex flex-col gap-10 w-full max-w-2xl items-center sm:items-start">
-      <span className="text-2xl font-bold tracking-tight text-foreground">StreamFlix</span>
+      <span className="inline-flex items-center gap-2 text-2xl font-bold tracking-tight text-foreground">
+        <svg viewBox="0 0 100 100" className="size-7 shrink-0">
+          <circle cx="50" cy="50" r="50" className="fill-primary" />
+          <path d="M38 28 L74 50 L38 72 Z" className="fill-black" />
+        </svg>
+        StreamFlix
+      </span>
       <div className="flex flex-col items-center gap-4 text-center sm:items-start sm:text-left">
         <h1 className="text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-[-0.04em] text-foreground text-balance">
           Welcome to StreamFlix, your cinematic journey starts here.

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Film, Tags, Users, ChevronLeft, Star, ListChecks,
-  Shield,
 } from "lucide-react";
 import {
   Sidebar,
@@ -39,10 +38,11 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="lg" render={<Link href="/admin" />}>
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground hover:bg-none">
-                  <Shield />
-                </div>
+              <SidebarMenuButton size="lg" render={<Link href="/admin" />} className="hover:bg-transparent hover:text-inherit active:bg-transparent data-active:bg-transparent">
+                <svg viewBox="0 0 100 100" className="size-8 shrink-0">
+                  <circle cx="50" cy="50" r="50" className="fill-primary" />
+                  <path d="M38 28 L74 50 L38 72 Z" className="fill-black" />
+                </svg>
                 <span className="font-semibold">StreamFlix</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
