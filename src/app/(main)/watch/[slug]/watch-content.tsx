@@ -69,6 +69,16 @@ export function WatchContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setUiVisible(prev => !prev);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   if (isLoading) {
     return <LoadingState />;
   }
@@ -175,8 +185,9 @@ export function WatchContent() {
 
   return (
     <div
-      className="fixed inset-0 bg-black select-none"
+      className="fixed inset-0 z-60 bg-black select-none overflow-hidden overscroll-none"
       onMouseMove={showUiTemporarily}
+      onTouchStart={showUiTemporarily}
       onMouseLeave={() => { if (uiVisibleRef.current) setUiVisible(false); }}
     >
       {/* Internet Archive embed */}
@@ -196,13 +207,13 @@ export function WatchContent() {
         </div>
       </div>
 
-      {/* Bottom gradient + movie info */}
+      {/* Bottom gradient + movie info — sits above native controls */}
       <div
-        className={`absolute bottom-0 left-0 right-0 z-20 transition-opacity duration-500 ${uiVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+        className={`absolute bottom-12 left-0 right-0 z-20 transition-opacity duration-500 ${uiVisible ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}
       >
-        <div className="bg-linear-to-t from-black/80 to-transparent pt-12 pb-4 px-4">
-          <div className="flex items-end justify-between">
+        <div className="bg-linear-to-t from-black/80 to-transparent pt-12 pb-4 px-4 pointer-events-none">
+          <div className="flex items-end justify-between pointer-events-auto">
             <div className="space-y-1.5">
               <h1 className="text-lg font-bold text-white drop-shadow-lg">
                 {movie.title}
@@ -238,12 +249,7 @@ export function WatchContent() {
         </div>
       </div>
 
-      {/* Overlay area to toggle UI visibility - made pointer-events-none when UI is hidden to allow iframe interaction */}
-      <button
-        className={`absolute inset-0 z-10 cursor-default transition-all ${uiVisible ? "bg-black/20" : "pointer-events-none"}`}
-        onClick={() => setUiVisible(!uiVisible)}
-        aria-label="Toggle controls"
-      />
+
     </div>
   );
 }
