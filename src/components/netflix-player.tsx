@@ -332,21 +332,14 @@ export function NetflixPlayer({ src, poster, title, metadata, onBack, onSkipIntr
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div
-                className="np-pause-poster w-[95px] h-[136px] max-sm:hidden rounded-[9px] shrink-0 flex items-center justify-center text-center p-[10px]"
-                style={{
-                  background: "linear-gradient(148deg, color-mix(in srgb, var(--np-primary) 25%, var(--np-bg)), color-mix(in srgb, var(--np-primary) 40%, var(--np-bg)), color-mix(in srgb, var(--np-primary) 55%, var(--np-bg)), var(--np-primary))",
-                  fontFamily: "'DM Serif Display', serif",
-                  fontStyle: "italic",
-                  fontSize: "12.5px",
-                  color: "var(--np-fg)",
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.55)",
-                }}
-              >
-                {title}
-              </div>
+              <img
+                src={poster}
+                alt={title}
+                className="np-pause-poster w-[95px] h-[136px] max-sm:hidden rounded-[9px] shrink-0 object-cover"
+                style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.55)" }}
+              />
               <div className="min-w-0">
-                <div className="np-pause-title text-[24px] max-sm:text-xl text-foreground leading-[1.2] mb-[5px]" style={{ fontFamily: "'DM Serif Display', serif", fontStyle: "italic" }}>
+                <div className="np-pause-title text-[24px] max-sm:text-xl text-foreground leading-[1.2] mb-3" style={{ fontFamily: "'DM Serif Display', serif", fontStyle: "italic" }}>
                   {title}
                 </div>
                 {(metadata?.year || metadata?.duration || metadata?.rating) && (
