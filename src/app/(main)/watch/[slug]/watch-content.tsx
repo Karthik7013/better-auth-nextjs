@@ -152,6 +152,18 @@ export function WatchContent() {
     ? formatYear(movie.releaseDate)
     : null;
 
+  const formatDuration = (sec: number) => {
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    return `${h}h ${m}m`;
+  };
+
+  const metadata = {
+    year: releaseYear || undefined,
+    duration: movie.durationSeconds ? formatDuration(movie.durationSeconds) : undefined,
+    synopsis: movie.description || undefined,
+  };
+
   return (
     <div className="fixed inset-0 z-60 bg-black select-none overflow-hidden overscroll-none">
       <NetflixPlayer
@@ -159,6 +171,7 @@ export function WatchContent() {
         src={movie.videoUrl}
         poster={movie.backdropUrl || movie.thumbnailUrl || undefined}
         title={movie.title}
+        metadata={metadata}
         onBack={() => router.back()}
         className="size-full"
       />

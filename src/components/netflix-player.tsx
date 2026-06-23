@@ -1,248 +1,570 @@
-"use client"
+﻿"use client"
 
 import { useRef, useState, useEffect, useCallback } from "react"
-import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, ChevronLeft, SkipBack, SkipForward } from "lucide-react"
+import { MediaController, MediaPlayButton, MediaMuteButton, MediaVolumeRange, MediaFullscreenButton } from "media-chrome/react"
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Volume1, Subtitles, Settings, LayoutGrid, Info, Keyboard, ChevronLeft, X } from "lucide-react"
 
-function formatTime(seconds: number): string {
-  if (!isFinite(seconds) || seconds < 0) return "0:00"
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  const s = Math.floor(seconds % 60)
-  if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
-  return `${m}:${s.toString().padStart(2, "0")}`
+const RED = "#E50914"
+
+function fmt(sec: number) {
+  if (!isFinite(sec) || sec < 0) return "0:00"
+  const h = Math.floor(sec / 3600)
+  const m = Math.floor((sec % 3600) / 60)
+  const s = Math.floor(sec % 60)
+  return h > 0
+    ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
+    : `${m}:${String(s).padStart(2, "0")}`
 }
 
 interface NetflixPlayerProps {
   src: string
   poster?: string
-  title?: string
+  title: string
+  metadata?: {
+    year?: number | string
+    duration?: string
+    durationSeconds?: number
+    rating?: string
+    synopsis?: string
+    cast?: string[]
+    chapters?: number[]
+  }
   onBack?: () => void
+  onSkipIntro?: () => void
+  nextEpisode?: {
+    title: string
+    onPlay: () => void
+    countdownSeconds?: number
+  }
   className?: string
 }
 
-export function NetflixPlayer({ src, poster, title, onBack, className }: NetflixPlayerProps) {
+export function NetflixPlayer({ src, poster, title, metadata, onBack, onSkipIntro, nextEpisode, className }: NetflixPlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const hideTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const barRef = useRef<HTMLDivElement>(null)
+  const idleRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const cntRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const [playing, setPlaying] = useState(false)
   const [paused, setPaused] = useState(true)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [volume, setVolume] = useState(1)
   const [muted, setMuted] = useState(false)
-  const [fullscreen, setFullscreen] = useState(false)
-  const [uiVisible, setUiVisible] = useState(true)
+  const [vol, setVol] = useState(75)
+  const [prog, setProg] = useState(0)
+  const [buf, setBuf] = useState(0)
+  const [dur, setDur] = useState(0)
+  const [idle, setIdle] = useState(false)
+  const [showVol, setShowVol] = useState(false)
+  const [hov, setHov] = useState<number | null>(null)
+  const [hovX, setHovX] = useState(0)
+  const [shortcuts, setShortcuts] = useState(false)
+  const [skipIntro, setSkipIntro] = useState(!!onSkipIntro)
+  const [countdown, setCountdown] = useState<number | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  const showTemporarily = useCallback(() => {
-    setUiVisible(true)
-    clearTimeout(hideTimerRef.current)
-    if (!paused) {
-      hideTimerRef.current = setTimeout(() => setUiVisible(false), 3000)
-    }
-  }, [paused])
+  const totalSec = metadata?.durationSeconds || dur
+
+  const resetIdle = useCallback(() => {
+    setIdle(false)
+    clearTimeout(idleRef.current)
+    if (playing) idleRef.current = setTimeout(() => setIdle(true), 3200)
+  }, [playing])
 
   useEffect(() => {
-    showTemporarily()
-    return () => clearTimeout(hideTimerRef.current)
+    resetIdle()
+    return () => clearTimeout(idleRef.current)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const onChange = () => setFullscreen(!!document.fullscreenElement)
-    el.addEventListener("fullscreenchange", onChange)
-    return () => el.removeEventListener("fullscreenchange", onChange)
-  }, [])
+    if (skipIntro && onSkipIntro) {
+      const t = setTimeout(() => setSkipIntro(false), 9000)
+      return () => clearTimeout(t)
+    }
+  }, [skipIntro, onSkipIntro])
+
+  useEffect(() => {
+    if (prog >= 93 && countdown === null && nextEpisode) setCountdown(nextEpisode.countdownSeconds ?? 30)
+  }, [prog, countdown, nextEpisode])
+
+  useEffect(() => {
+    if (countdown !== null && countdown > 0) {
+      cntRef.current = setTimeout(() => setCountdown((c) => (c !== null ? c - 1 : null)), 1000)
+    }
+    if (countdown === 0 && nextEpisode) {
+      nextEpisode.onPlay()
+    }
+    return () => clearTimeout(cntRef.current)
+  }, [countdown, nextEpisode])
 
   const togglePlay = useCallback(() => {
     if (!videoRef.current) return
     if (videoRef.current.paused) {
       videoRef.current.play()
+      setPlaying(true)
       setPaused(false)
     } else {
       videoRef.current.pause()
+      setPlaying(false)
       setPaused(true)
     }
   }, [])
 
-  const handleProgressClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!videoRef.current || !duration) return
-    const rect = e.currentTarget.getBoundingClientRect()
-    const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
-    videoRef.current.currentTime = pos * duration
-  }, [duration])
+  const seekTo = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!barRef.current || !videoRef.current || !dur) return
+    const r = barRef.current.getBoundingClientRect()
+    const pct = Math.max(0, Math.min(100, ((e.clientX - r.left) / r.width) * 100))
+    videoRef.current.currentTime = (pct / 100) * dur
+    setProg(pct)
+    setLoading(true)
+    setTimeout(() => setLoading(false), 500)
+  }, [dur])
 
-  const toggleMute = useCallback(() => {
-    if (!videoRef.current) return
-    videoRef.current.muted = !videoRef.current.muted
-    setMuted(videoRef.current.muted)
-  }, [])
-
-  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value)
-    setVolume(val)
-    if (videoRef.current) {
-      videoRef.current.volume = val
-      setMuted(val === 0)
-    }
-  }, [])
-
-  const toggleFullscreen = useCallback(() => {
-    if (!containerRef.current) return
-    if (document.fullscreenElement) {
-      document.exitFullscreen()
-    } else {
-      containerRef.current.requestFullscreen()
-    }
+  const onHover = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!barRef.current) return
+    const r = barRef.current.getBoundingClientRect()
+    const p = Math.max(0, Math.min(100, ((e.clientX - r.left) / r.width) * 100))
+    setHov(p)
+    setHovX(e.clientX - r.left)
   }, [])
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    switch (e.key) {
-      case " ": {
-        e.preventDefault()
-        togglePlay()
-        break
-      }
-      case "ArrowLeft": {
-        if (videoRef.current) {
-          videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 10)
-        }
-        break
-      }
-      case "ArrowRight": {
-        if (videoRef.current && duration) {
-          videoRef.current.currentTime = Math.min(duration, videoRef.current.currentTime + 10)
-        }
-        break
-      }
-      case "f":
-      case "F": {
-        toggleFullscreen()
-        break
-      }
-      case "Escape": {
-        setUiVisible(prev => !prev)
-        break
-      }
+    resetIdle()
+    if (e.key === " " || e.key === "k") { e.preventDefault(); togglePlay() }
+    if (e.key === "m") setMuted((v) => !v)
+    if (e.key === "ArrowRight") {
+      e.preventDefault()
+      if (videoRef.current) videoRef.current.currentTime = Math.min(dur, videoRef.current.currentTime + 10)
     }
-  }, [togglePlay, toggleFullscreen, duration])
+    if (e.key === "ArrowLeft") {
+      e.preventDefault()
+      if (videoRef.current) videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 10)
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault(); const nv = Math.min(100, vol + 5)
+      setVol(nv); if (videoRef.current) { videoRef.current.volume = nv / 100; setMuted(false) }
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault(); const nv = Math.max(0, vol - 5)
+      setVol(nv); if (videoRef.current) { videoRef.current.volume = nv / 100; setMuted(nv === 0) }
+    }
+    if (e.key === "f" || e.key === "F") {
+      if (!containerRef.current) return
+      if (document.fullscreenElement) document.exitFullscreen()
+      else containerRef.current.requestFullscreen()
+    }
+    if (e.key === "?") setShortcuts((v) => !v)
+    if (e.key === "Escape") setShortcuts(false)
+  }, [resetIdle, togglePlay, vol, dur])
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [handleKeyDown])
 
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
+  // Tap container to show UI when idle (mobile-friendly)
+  const handleContainerClick = useCallback((e: React.MouseEvent) => {
+    if (idle && e.target === e.currentTarget) {
+      resetIdle()
+    }
+  }, [idle, resetIdle])
+
+  const handleTouchEnd = useCallback(() => {
+    if (idle) resetIdle()
+  }, [idle, resetIdle])
+
+  const curSec = (prog / 100) * totalSec
+  const R = 18, C = 2 * Math.PI * R
+  const ringOffset = countdown !== null ? C - ((30 - countdown) / 30) * C : C
+  const hasChapters = metadata?.chapters && metadata.chapters.length > 0
+
+  const css = `
+    .np-root { --lb: 9%; }
+    .mp-prog-track { transition: height 0.2s ease; }
+    .mp-prog-wrap:hover .mp-prog-track { height: 7px; }
+    .mp-knob { transition: transform 0.2s; }
+    .mp-prog-wrap:hover .mp-knob { transform: translate(-50%, -50%) scale(1); }
+    @keyframes aurora {
+      0% { filter: hue-rotate(0deg) brightness(1); }
+      100% { filter: hue-rotate(15deg) brightness(1.06); }
+    }
+    @keyframes spot {
+      0%, 100% { opacity: 0.65; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+    @keyframes cardIn {
+      from { transform: scale(0.96) translateY(10px); opacity: 0; }
+      to { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(229,9,20,0.4); }
+      50% { box-shadow: 0 0 0 12px rgba(229,9,20,0); }
+    }
+    @keyframes slideR {
+      from { opacity: 0; transform: translateX(18px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes shim {
+      from { transform: translateX(-150%); }
+      to { transform: translateX(200%); }
+    }
+    @keyframes fadein {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes scalein {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @media (max-width: 640px) {
+      .np-root { --lb: 4%; }
+    }
+  `
 
   return (
-    <div
-      ref={containerRef}
-      className={`relative bg-black overflow-hidden ${className ?? ""}`}
-      onMouseMove={showTemporarily}
-      onTouchStart={showTemporarily}
-      onMouseLeave={() => { if (!paused) setUiVisible(false) }}
-    >
-      <video
-        ref={videoRef}
-        src={src}
-        poster={poster}
-        className="size-full object-contain cursor-pointer"
-        onClick={togglePlay}
-        onTimeUpdate={() => { if (videoRef.current) setCurrentTime(videoRef.current.currentTime) }}
-        onLoadedMetadata={() => { if (videoRef.current) setDuration(videoRef.current.duration) }}
-        onPlay={() => setPaused(false)}
-        onPause={() => setPaused(true)}
-        playsInline
-      />
-
-      {/* Center play button when paused */}
+    <>
+      <style>{css}</style>
       <div
-        className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${paused ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-        onClick={togglePlay}
+        ref={containerRef}
+        className={`np-root relative overflow-hidden ${className ?? ""} ${idle ? "cursor-none" : "cursor-default"}`}
+        style={{ fontFamily: "'DM Sans', sans-serif", background: "#07070E" }}
+        onMouseMove={resetIdle}
+        onMouseLeave={() => { if (playing) setIdle(true) }}
+        onTouchStart={resetIdle}
+        onTouchEnd={handleTouchEnd}
       >
-        <div className="size-16 rounded-full bg-white/10 backdrop-blur-xs flex items-center justify-center hover:bg-white/20 transition-colors">
-          <Play className="size-8 text-white fill-white ml-1" />
-        </div>
-      </div>
+        {/* Atmosphere layers */}
+        <div
+          className="absolute inset-0 z-0 pointer-events-none"
+          style={{
+            background: [
+              "radial-gradient(ellipse 90% 70% at 50% 55%, rgba(229,9,20,0.09) 0%, transparent 60%)",
+              "radial-gradient(ellipse 45% 45% at 12% 80%, rgba(245,166,35,0.07) 0%, transparent 55%)",
+              "radial-gradient(ellipse 55% 55% at 88% 18%, rgba(229,9,20,0.05) 0%, transparent 55%)",
+              "#07070E",
+            ].join(","),
+            animation: "aurora 16s ease-in-out infinite alternate",
+          }}
+        />
+        <div
+          className="absolute inset-0 z-1 pointer-events-none"
+          style={{
+            background: "radial-gradient(ellipse 55% 65% at 50% 50%, rgba(255,255,255,0.03) 0%, transparent 68%)",
+            animation: "spot 5.5s ease-in-out infinite",
+          }}
+        />
+        <div
+          className="absolute inset-0 z-2 pointer-events-none opacity-30"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+          }}
+        />
 
-      {/* Top gradient + back button */}
-      <div
-        className={`absolute top-0 left-0 right-0 z-10 transition-opacity duration-500 ${uiVisible ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-      >
-        <div className="bg-linear-to-b from-black/80 via-black/40 to-transparent pt-4 pb-16 px-4">
-          {onBack && (
-            <button onClick={onBack} className="flex items-center gap-2 text-white/80 hover:text-white transition-colors">
-              <ChevronLeft className="size-5" />
-              {title && <span className="text-sm font-medium">{title}</span>}
+        {/* Letterbox */}
+        <div className="absolute top-0 left-0 right-0 z-3 bg-black" style={{ height: "var(--lb)" }} />
+        <div className="absolute bottom-0 left-0 right-0 z-3 bg-black" style={{ height: "var(--lb)" }} />
+
+        {/* Spinner */}
+        {loading && (
+          <div className="absolute inset-0 z-9 flex items-center justify-center pointer-events-none" style={{ top: "var(--lb)", bottom: "var(--lb)" }}>
+            <div
+              className="w-[46px] h-[46px] rounded-full"
+              style={{
+                border: "3px solid rgba(229,9,20,0.18)",
+                borderTopColor: RED,
+                animation: "spin 0.75s linear infinite",
+                boxShadow: "0 0 26px rgba(229,9,20,0.25)",
+              }}
+            />
+          </div>
+        )}
+
+        {/* Video container */}
+        <MediaController
+          className="absolute inset-0 z-4"
+          style={{ top: "var(--lb)", bottom: "var(--lb)" } as React.CSSProperties}
+        >
+          <video
+            ref={videoRef}
+            slot="media"
+            src={src}
+            poster={poster}
+            className="size-full object-contain cursor-pointer"
+            onClick={togglePlay}
+            onTimeUpdate={() => { if (videoRef.current) { setProg((videoRef.current.currentTime / (dur || 1)) * 100) } }}
+            onLoadedMetadata={() => { if (videoRef.current) setDur(videoRef.current.duration) }}
+            onProgress={() => { if (videoRef.current && videoRef.current.buffered.length > 0) { setBuf((videoRef.current.buffered.end(videoRef.current.buffered.length - 1) / (dur || 1)) * 100) } }}
+            onPlay={() => { setPlaying(true); setPaused(false) }}
+            onPause={() => { setPlaying(false); setPaused(true) }}
+            playsInline
+          />
+
+          {/* Pause overlay */}
+          <div
+            className={`absolute inset-0 z-8 flex items-center justify-center transition-opacity duration-400 ${!paused ? "opacity-0 pointer-events-none" : ""}`}
+            style={{ background: "rgba(0,0,0,0.52)", backdropFilter: "blur(4px)" }}
+            onClick={togglePlay}
+          >
+            <div
+              className="np-pause-card flex gap-[22px] items-start max-sm:flex-col max-sm:gap-3 p-[26px] max-sm:p-4 max-w-[500px] max-sm:max-w-[85vw] w-[90%] rounded-[15px]"
+              style={{
+                background: "rgba(7,7,14,0.9)",
+                backdropFilter: "blur(28px)",
+                border: "1px solid rgba(255,255,255,0.07)",
+                boxShadow: "0 28px 90px rgba(0,0,0,0.75), 0 0 0 1px rgba(229,9,20,0.06)",
+                animation: "cardIn 0.35s ease",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div
+                className="np-pause-poster w-[95px] h-[136px] max-sm:hidden rounded-[9px] shrink-0 flex items-center justify-center text-center p-[10px]"
+                style={{
+                  background: "linear-gradient(148deg, #0f0408, #2a0810, #560d1a, #E50914 110%)",
+                  fontFamily: "'DM Serif Display', serif",
+                  fontStyle: "italic",
+                  fontSize: "12.5px",
+                  color: "rgba(255,255,255,0.82)",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.55)",
+                }}
+              >
+                {title}
+              </div>
+              <div className="min-w-0">
+                <div className="np-pause-title text-[24px] max-sm:text-xl text-white leading-[1.2] mb-[5px]" style={{ fontFamily: "'DM Serif Display', serif", fontStyle: "italic" }}>
+                  {title}
+                </div>
+                {(metadata?.year || metadata?.duration || metadata?.rating) && (
+                  <div className="flex gap-[7px] items-center mb-[10px] max-sm:flex-wrap">
+                    {metadata?.year && <span className="text-[12px]" style={{ color: "rgba(255,255,255,0.42)" }}>{metadata.year}</span>}
+                    {metadata?.duration && <span className="text-[12px]" style={{ color: "rgba(255,255,255,0.42)" }}>· {metadata.duration}</span>}
+                    {metadata?.rating && (
+                      <span className="px-[6px] py-[1px] text-[10.5px] font-medium" style={{ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "3px", color: "rgba(255,255,255,0.55)" }}>
+                        {metadata.rating}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {metadata?.synopsis && (
+                  <p className="text-[12.5px] mb-[16px] leading-[1.65]" style={{ color: "rgba(255,255,255,0.52)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                    {metadata.synopsis}
+                  </p>
+                )}
+                <button
+                  onClick={togglePlay}
+                  className="flex items-center gap-[8px] px-[18px] py-[10px] text-[13.5px] font-semibold text-white rounded-[8px] border-none cursor-pointer"
+                  style={{
+                    background: RED,
+                    fontFamily: "'DM Sans', sans-serif",
+                    letterSpacing: "0.04em",
+                    animation: "pulse 2.2s ease infinite",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.04)"; e.currentTarget.style.animation = "none"; e.currentTarget.style.boxShadow = `0 4px 28px ${RED}` }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = ""; e.currentTarget.style.animation = "pulse 2.2s ease infinite"; e.currentTarget.style.boxShadow = "" }}
+                >
+                  <Play size={15} fill="white" />
+                  &nbsp;{paused ? "Resume" : "Pause"}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Skip Intro */}
+          {skipIntro && onSkipIntro && !idle && (
+            <button
+              className="absolute right-[34px] max-sm:right-3 z-11 px-[20px] max-sm:px-3 py-[9px] max-sm:py-2 text-[13.5px] max-sm:text-xs font-semibold text-white rounded-[6px] border-none cursor-pointer"
+              style={{
+                bottom: "calc(var(--lb) + 112px)",
+                background: "rgba(7,7,14,0.93)",
+                border: "1.5px solid rgba(229,9,20,0.52)",
+                backdropFilter: "blur(12px)",
+                overflow: "hidden",
+                fontFamily: "'DM Sans', sans-serif",
+                letterSpacing: "0.07em",
+                animation: "slideR 0.4s ease",
+              }}
+              onClick={() => { setSkipIntro(false); onSkipIntro?.() }}
+            >
+              <span
+                className="absolute inset-0"
+                style={{
+                  background: "linear-gradient(90deg, transparent, rgba(229,9,20,0.22), transparent)",
+                  transform: "translateX(-100%)",
+                  animation: "shim 2.6s ease-in-out infinite",
+                }}
+              />
+              Skip Intro →
             </button>
           )}
-        </div>
-      </div>
 
-      {/* Bottom controls */}
-      <div
-        className={`absolute bottom-0 left-0 right-0 z-10 transition-opacity duration-500 ${uiVisible ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-      >
-        <div className="bg-linear-to-t from-black/80 via-black/40 to-transparent pt-16 pb-3 px-4">
-          <div className="flex items-center gap-3">
-            <button onClick={togglePlay} className="text-white/80 hover:text-white transition-colors shrink-0">
-              {paused ? <Play className="size-5 fill-white" /> : <Pause className="size-5 fill-white" />}
-            </button>
-
-            <button
-              onClick={() => { if (videoRef.current) videoRef.current.currentTime = Math.max(0, currentTime - 10) }}
-              className="text-white/60 hover:text-white transition-colors shrink-0"
-            >
-              <SkipBack className="size-4" />
-            </button>
-
-            <button
-              onClick={() => { if (videoRef.current && duration) videoRef.current.currentTime = Math.min(duration, currentTime + 10) }}
-              className="text-white/60 hover:text-white transition-colors shrink-0"
-            >
-              <SkipForward className="size-4" />
-            </button>
-
-            {/* Progress bar */}
+          {/* Next Episode Card */}
+          {countdown !== null && nextEpisode && !idle && (
             <div
-              className="flex-1 h-1 bg-white/20 rounded cursor-pointer group relative"
-              onClick={handleProgressClick}
+              className="absolute right-[34px] max-sm:right-3 z-11 w-[225px] max-sm:w-[180px] p-[14px] max-sm:p-3 rounded-[12px]"
+              style={{
+                bottom: "calc(var(--lb) + 112px)",
+                background: "rgba(7,7,14,0.96)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                backdropFilter: "blur(24px)",
+                boxShadow: "0 18px 55px rgba(0,0,0,0.68)",
+                animation: "slideR 0.4s ease",
+              }}
             >
-              <div className="h-full bg-white rounded" style={{ width: `${progress}%` }}>
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 size-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity -translate-y-1/2" />
+              <div
+                className="w-full h-[108px] max-sm:h-20 rounded-[8px] mb-[11px] flex items-center justify-center overflow-hidden relative"
+                style={{ background: "linear-gradient(145deg, #0d0618, #160824, #210920)" }}
+              >
+                <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 50%, rgba(229,9,20,0.07), transparent 70%)" }} />
+                <div className="absolute top-[8px] right-[8px] z-1">
+                  <svg width="38" height="38" viewBox="0 0 44 44">
+                    <circle cx="22" cy="22" r={R} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="3.5" />
+                    <circle cx="22" cy="22" r={R} fill="none" stroke={RED} strokeWidth="3.5" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={ringOffset} transform="rotate(-90 22 22)" style={{ transition: "stroke-dashoffset 1s linear" }} />
+                    <text x="22" y="26.5" textAnchor="middle" fill="#fff" fontSize="12" fontWeight="700" fontFamily="'DM Sans', sans-serif">{countdown}</text>
+                  </svg>
+                </div>
+                <span style={{ color: "rgba(255,255,255,0.32)", fontSize: "11px", letterSpacing: "0.1em" }}>UP NEXT</span>
+              </div>
+              <div className="text-[10px] font-semibold mb-[3px]" style={{ color: "rgba(255,255,255,0.36)", textTransform: "uppercase", letterSpacing: "0.14em" }}>Next Film</div>
+              <div className="text-[14px] text-white mb-[10px] leading-[1.3]" style={{ fontFamily: "'DM Serif Display', serif" }}>{nextEpisode.title}</div>
+              <div className="flex items-center justify-between">
+                <button className="px-[14px] py-[6px] text-[12px] font-semibold text-white rounded-[6px] border-none cursor-pointer" style={{ background: RED, fontFamily: "'DM Sans', sans-serif" }} onClick={() => nextEpisode.onPlay()}>Play Now</button>
+                <button className="bg-none border-none text-[11px] cursor-pointer underline" style={{ color: "rgba(255,255,255,0.32)", fontFamily: "'DM Sans', sans-serif" }} onClick={() => setCountdown(null)}>Cancel</button>
+              </div>
+            </div>
+          )}
+
+          {/* Top bar */}
+          <div
+            className={`np-top absolute top-0 left-0 right-0 z-10 px-9 max-sm:px-3 py-[18px] max-sm:py-2 flex items-center justify-between transition-all duration-400 ${idle ? "opacity-0 translate-y-[-7px] pointer-events-none" : ""}`}
+            style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, transparent 100%)" }}
+          >
+            {onBack && (
+              <button onClick={onBack} className="flex items-center gap-[7px] bg-none border-none cursor-pointer text-[13px] font-medium" style={{ color: "rgba(255,255,255,0.78)", letterSpacing: "0.06em", fontFamily: "'DM Sans', sans-serif" }}>
+                <ChevronLeft size={17} />
+                <span className="max-sm:hidden">Back to Browse</span>
+              </button>
+            )}
+            <div className="np-top-title absolute left-1/2 -translate-x-1/2 text-xl max-sm:text-sm text-white whitespace-nowrap" style={{ fontFamily: "'DM Serif Display', serif", fontStyle: "italic", letterSpacing: "0.01em", textShadow: "0 2px 28px rgba(0,0,0,0.95)" }}>
+              {title}{metadata?.year ? ` · ${metadata.year}` : ""}
+            </div>
+            <div className="np-cast flex items-center gap-[9px] max-sm:hidden">
+              {metadata?.cast?.slice(0, 3).map((n, i) => (
+                <div key={i} className="w-[32px] h-[32px] rounded-full flex items-center justify-center text-[10px] font-bold text-white cursor-pointer" style={{ background: "linear-gradient(135deg, #9b0710, #E50914)", border: "1.5px solid rgba(255,255,255,0.16)", letterSpacing: "0.02em" }} title={n}>
+                  {n.split(" ").map((w) => w[0]).join("")}
+                </div>
+              ))}
+              <button className="w-[32px] h-[32px] rounded-full flex items-center justify-center cursor-pointer" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.65)" }}>
+                <Info size={13} />
+              </button>
+            </div>
+          </div>
+
+          {/* Bottom controls */}
+          <div
+            className={`np-ctrl absolute bottom-0 left-0 right-0 z-10 px-[30px] max-sm:px-2 pb-5 max-sm:pb-2 transition-all duration-400 ${idle ? "opacity-0 translate-y-[10px] pointer-events-none" : ""}`}
+            style={{ background: "linear-gradient(to top, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.55) 65%, transparent 100%)" }}
+          >
+            {/* Progress bar */}
+            <div ref={barRef} className="mp-prog-wrap relative cursor-pointer mb-[9px]" style={{ padding: "14px 0" }} onClick={seekTo} onMouseMove={onHover} onMouseLeave={() => setHov(null)}>
+              {hov !== null && (
+                <div className="absolute bottom-[32px] -translate-x-1/2 px-[9px] py-[4px] text-[11.5px] font-medium text-white whitespace-nowrap rounded-[5px] pointer-events-none z-20 max-sm:hidden" style={{ left: `${hovX}px`, background: "rgba(7,7,14,0.95)", border: `1px solid rgba(229,9,20,0.35)`, backdropFilter: "blur(12px)", letterSpacing: "0.06em" }}>
+                  {fmt((hov / 100) * totalSec)}
+                </div>
+              )}
+              <div className="mp-prog-track relative h-[4px] rounded-[4px]" style={{ background: "rgba(255,255,255,0.17)" }}>
+                <div className="absolute top-0 left-0 h-full rounded-[4px]" style={{ width: `${buf}%`, background: "rgba(255,255,255,0.26)" }} />
+                <div className="absolute top-0 left-0 h-full rounded-[4px]" style={{ width: `${prog}%`, background: "linear-gradient(90deg, #b8060f, #E50914, #ff3b45)" }} />
+                {hasChapters && metadata!.chapters!.map((p, i) => (
+                  <div key={i} className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-[3px] h-[3px] rounded-full pointer-events-none" style={{ left: `${p}%`, background: "rgba(255,255,255,0.5)" }} />
+                ))}
+                <div className="mp-knob absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-[15px] h-[15px] bg-white rounded-full pointer-events-none" style={{ left: `${prog}%`, transform: "translate(-50%, -50%) scale(0)", boxShadow: "0 0 14px rgba(229,9,20,0.9), 0 2px 8px rgba(0,0,0,0.5)" }} />
               </div>
             </div>
 
-            <span className="text-white/60 text-xs tabular-nums whitespace-nowrap shrink-0">
-              {formatTime(currentTime)} / {formatTime(duration)}
-            </span>
-
-            {/* Volume */}
-            <div className="flex items-center gap-1.5 group/vol shrink-0">
-              <button onClick={toggleMute} className="text-white/60 hover:text-white transition-colors">
-                {muted || volume === 0 ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
-              </button>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={muted ? 0 : volume}
-                onChange={handleVolumeChange}
-                className="w-0 group-hover/vol:w-20 accent-white transition-all duration-300"
-              />
+            {/* Controls row */}
+            <div className="flex items-center justify-between gap-1">
+              <div className="flex items-center gap-[5px] max-sm:gap-[3px]">
+                <button className="mp-btn max-sm:hidden" onClick={() => { if (videoRef.current) videoRef.current.currentTime = Math.max(0, (prog - 0.9) / 100 * dur) }} title="Rewind 10s">
+                  <SkipBack size={20} />
+                </button>
+                <MediaPlayButton
+                  className="w-[50px] max-sm:w-[38px] max-sm:h-[38px] h-[50px] rounded-full flex items-center justify-center cursor-pointer"
+                  style={{
+                    border: "2px solid rgba(229,9,20,0.44)",
+                    background: "rgba(229,9,20,0.13)",
+                    "--media-primary-color": "#fff",
+                    "--media-button-icon-width": "21px",
+                    "--media-button-icon-height": "21px",
+                    transition: "all 0.18s",
+                  } as React.CSSProperties}
+                />
+                <button className="mp-btn max-sm:hidden" onClick={() => { if (videoRef.current) videoRef.current.currentTime = Math.min(dur, (prog + 0.9) / 100 * dur) }} title="Forward 10s">
+                  <SkipForward size={20} />
+                </button>
+                <div className="flex items-center gap-[3px] max-sm:hidden" onMouseEnter={() => setShowVol(true)} onMouseLeave={() => setShowVol(false)}>
+                  <MediaMuteButton className="mp-btn" style={{ "--media-primary-color": "rgba(255,255,255,0.8)", "--media-button-icon-width": "20px", "--media-button-icon-height": "20px" } as React.CSSProperties} />
+                  <div className={`overflow-hidden opacity-0 flex items-center transition-all duration-320 ${showVol ? "max-w-[84px] opacity-100" : "max-w-0"}`}>
+                    <MediaVolumeRange className="w-[76px] h-[4px] rounded-[4px] outline-none cursor-pointer ml-[3px]" style={{ "--media-primary-color": RED, "--media-range-track-background": "rgba(255,255,255,0.25)" } as React.CSSProperties} />
+                  </div>
+                </div>
+                <div className="text-[12.5px] max-sm:text-[10px] font-normal whitespace-nowrap ml-[4px]" style={{ color: "rgba(255,255,255,0.6)", letterSpacing: "0.05em" }}>
+                  {fmt(curSec)} <em style={{ color: "rgba(255,255,255,0.3)", fontStyle: "normal", margin: "0 3px" }}>/</em> {metadata?.duration || fmt(dur)}
+                </div>
+              </div>
+              <div className="np-center-title text-[11.5px] font-medium uppercase max-sm:hidden" style={{ color: "rgba(255,255,255,0.38)", letterSpacing: "0.15em" }}>
+                {title}
+              </div>
+              <div className="flex items-center gap-[3px] max-sm:gap-[2px]">
+                <button className="mp-rbtn max-sm:hidden" title="Subtitles"><Subtitles size={16} /></button>
+                <button className="mp-rbtn max-sm:hidden" title="Audio Track"><span className="text-[11.5px] font-semibold" style={{ letterSpacing: "0.08em" }}>ENG</span></button>
+                <button className="mp-rbtn max-sm:hidden" title="Episodes"><LayoutGrid size={16} /></button>
+                {nextEpisode && (
+                  <button className="flex items-center gap-[5px] max-sm:gap-1 px-[13px] max-sm:px-2 py-[5px] text-[12px] max-sm:text-[10px] font-semibold text-white cursor-pointer rounded-[18px] whitespace-nowrap" style={{ background: "rgba(229,9,20,0.11)", border: "1px solid rgba(229,9,20,0.36)", letterSpacing: "0.06em", fontFamily: "'DM Sans', sans-serif" }} onClick={() => setCountdown(nextEpisode.countdownSeconds ?? 30)}>
+                    <SkipForward size={12} /> Next
+                  </button>
+                )}
+                <button className="mp-rbtn max-sm:hidden" title="Settings"><Settings size={16} /></button>
+                <button className="mp-rbtn max-sm:hidden" title="Keyboard Shortcuts (?)" onClick={() => setShortcuts(true)}><Keyboard size={16} /></button>
+                <MediaFullscreenButton className="mp-rbtn" style={{ "--media-primary-color": "rgba(255,255,255,0.62)", "--media-button-icon-width": "16px", "--media-button-icon-height": "16px" } as React.CSSProperties} />
+              </div>
             </div>
-
-            <button onClick={toggleFullscreen} className="text-white/60 hover:text-white transition-colors shrink-0">
-              {fullscreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
-            </button>
           </div>
-        </div>
-      </div>
 
-      {/* Thin progress strip at very bottom */}
-      <div className="absolute bottom-0 left-0 right-0 h-0.5 z-20 bg-white/20 pointer-events-none">
-        <div className="h-full bg-red-600 transition-[width] duration-200" style={{ width: `${progress}%` }} />
+          <style>{`
+            .mp-btn { background: none; border: none; color: rgba(255,255,255,0.8); cursor: pointer; padding: 8px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.18s; font-family: 'DM Sans', sans-serif; }
+            .mp-btn:hover { color: #fff; background: rgba(255,255,255,0.08); transform: scale(1.12); }
+            .mp-btn:active { transform: scale(0.94); }
+            .mp-rbtn { background: none; border: none; color: rgba(255,255,255,0.62); cursor: pointer; padding: 7px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-family: 'DM Sans', sans-serif; transition: all 0.18s; }
+            .mp-rbtn:hover { color: #fff; background: rgba(255,255,255,0.08); }
+          `}</style>
+        </MediaController>
+
+        {/* Shortcuts Modal */}
+        {shortcuts && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(10px)", animation: "fadein 0.25s ease" }} onClick={() => setShortcuts(false)}>
+            <div className="p-[28px] max-sm:p-4 w-[375px] max-sm:w-full max-sm:max-w-[85vw] rounded-[14px]" style={{ background: "rgba(10,10,18,0.98)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 28px 85px rgba(0,0,0,0.85)", animation: "scalein 0.25s ease" }} onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-[20px]">
+                <div className="text-[19px] max-sm:text-base text-white" style={{ fontFamily: "'DM Serif Display', serif" }}>Keyboard Shortcuts</div>
+                <button className="w-[28px] h-[28px] rounded-full flex items-center justify-center cursor-pointer" style={{ background: "rgba(255,255,255,0.07)", border: "none", color: "rgba(255,255,255,0.5)" }} onClick={() => setShortcuts(false)}><X size={13} /></button>
+              </div>
+              {[
+                ["Space / K", "Play / Pause"],
+                ["← / →", "Seek −/+ 10 seconds"],
+                ["↑ / ↓", "Volume up / down"],
+                ["M", "Mute / Unmute"],
+                ["F", "Toggle fullscreen"],
+                ["?", "Toggle shortcuts"],
+                ["Esc", "Close"],
+              ].map(([k, l]) => (
+                <div key={k} className="flex items-center justify-between py-[9px] max-sm:py-2 gap-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <span className="text-[12.5px] max-sm:text-[11px]" style={{ color: "rgba(255,255,255,0.52)" }}>{l}</span>
+                  <span className="px-[9px] py-[3px] text-[11.5px] max-sm:text-[10px] font-semibold rounded-[4px] whitespace-nowrap" style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.78)", fontFamily: "monospace", letterSpacing: "0.04em" }}>{k}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
-    </div>
+    </>
   )
 }
