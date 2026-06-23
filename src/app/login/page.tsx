@@ -46,6 +46,7 @@ export default function LoginPage() {
 
   const { data: session, isPending } = authClient.useSession();
   const justLoggedOut = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("loggedOut") === "1";
+  const sessionExpired = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("sessionExpired") === "1";
 
   const bgGrid = useMemo(() => (
     <div className="absolute -top-1/4 -left-1/4 w-[150%] h-[150%] origin-center transform rotate-x-[35deg] rotate-z-[20deg] skew-x-[-10deg] blur-sm">
@@ -62,10 +63,16 @@ export default function LoginPage() {
   ), []);
 
   useEffect(() => {
-    if (session && !isPending && !justLoggedOut) {
+    if (sessionExpired) {
+      toast.error("Session expired. Please sign in again.");
+    }
+  }, [sessionExpired]);
+
+  useEffect(() => {
+    if (session && !isPending && !justLoggedOut && !sessionExpired) {
       router.replace("/home");
     }
-  }, [session, isPending, justLoggedOut, router]);
+  }, [session, isPending, justLoggedOut, sessionExpired, router]);
 
   if (session) return null;
 

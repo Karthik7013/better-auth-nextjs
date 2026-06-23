@@ -1,3 +1,4 @@
+import { RequireAuth } from "@/components/require-auth";
 import { WatchContent } from "./watch-content";
 import type { Metadata } from "next";
 import { db } from "@/db";
@@ -26,5 +27,9 @@ export async function generateMetadata({
 }
 
 export default async function WatchPage() {
-  return <WatchContent />;
+  return (
+    <RequireAuth>
+      <WatchContent />
+    </RequireAuth>
+  );
 }
