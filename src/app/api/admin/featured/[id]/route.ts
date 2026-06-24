@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
+import { invalidateCache } from "@/lib/cache";
 import { db } from "@/db";
 import { featuredMovies } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -25,6 +26,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Featured movie not found" }, { status: 404 });
     }
 
+    invalidateCache("featured");
     return NextResponse.json({ featured: updated });
   } catch {
     return NextResponse.json({ error: "Failed to update featured movie" }, { status: 500 });
@@ -49,6 +51,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: "Featured movie not found" }, { status: 404 });
     }
 
+    invalidateCache("featured");
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Failed to delete featured movie" }, { status: 500 });

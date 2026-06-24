@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
+import { invalidateCache } from "@/lib/cache";
 import { db } from "@/db";
 import { featuredMovies, movies } from "@/db/schema";
 import { eq, asc, sql } from "drizzle-orm";
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
       .values({ movieId, displayOrder: nextOrder })
       .returning();
 
+    invalidateCache("featured");
     return NextResponse.json({ featured: created }, { status: 201 });
   } catch (error: unknown) {
     const err = error as { message?: string; code?: string };

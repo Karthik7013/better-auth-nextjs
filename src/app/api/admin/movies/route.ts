@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
+import { invalidateCache } from "@/lib/cache";
 import { db } from "@/db";
 import { movies, movieTags, tags } from "@/db/schema";
 import { eq, ilike, and, desc, count, inArray } from "drizzle-orm";
@@ -112,6 +113,8 @@ export async function POST(request: NextRequest) {
         }))
       );
     }
+
+    invalidateCache("movies");
 
     return NextResponse.json(createdMovie, { status: 201 });
   } catch {

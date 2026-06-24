@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const featured = await cacheGetOrSet("home:featured", 60, async () => {
+    const featured = await cacheGetOrSet("home:featured", 600, async () => {
       const items = await db
         .select({
           id: movies.id,

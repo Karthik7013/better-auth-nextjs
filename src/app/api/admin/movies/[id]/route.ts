@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
+import { invalidateCache } from "@/lib/cache";
 import { db } from "@/db";
 import { movies, movieTags } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -93,6 +94,7 @@ export async function PUT(
       return NextResponse.json({ error: "Movie Not Found" }, { status: 404 });
     }
 
+    invalidateCache("movies");
     return NextResponse.json(updatedMovie);
   } catch {
     return NextResponse.json({ error: "Update Failed" }, { status: 500 });
@@ -123,6 +125,7 @@ export async function DELETE(
     await db.delete(movieTags).where(eq(movieTags.movieId, movieId));
     await db.delete(movies).where(eq(movies.id, movieId));
 
+    invalidateCache("movies");
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Delete Failed" }, { status: 500 });

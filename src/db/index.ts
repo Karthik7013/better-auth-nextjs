@@ -8,8 +8,9 @@ const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
   throw new Error("DATABASE_URL is not set");
 }
+const poolMax = parseInt(process.env.DB_POOL_MAX || "20", 10);
 const client = postgres(connectionString, {
-  max: 3,
+  max: poolMax,
   prepare: true,
   idle_timeout: 300,
   connect_timeout: 30,

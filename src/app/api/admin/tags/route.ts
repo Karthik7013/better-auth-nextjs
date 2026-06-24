@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
+import { invalidateCache } from "@/lib/cache";
 import { db } from "@/db";
 import { tags, movieTags } from "@/db/schema";
 import { eq, like, count } from "drizzle-orm";
@@ -80,6 +81,7 @@ export async function POST(request: NextRequest) {
       .values({ name: trimmedName })
       .returning();
 
+    invalidateCache("tags");
     return NextResponse.json(createdTag, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Create Failed" }, { status: 500 });

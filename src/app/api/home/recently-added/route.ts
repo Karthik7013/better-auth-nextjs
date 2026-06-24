@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const recentlyAdded = await cacheGetOrSet("home:recently-added", 60, () =>
+    const recentlyAdded = await cacheGetOrSet("home:recently-added", 600, () =>
       db
         .select({
           id: movies.id,

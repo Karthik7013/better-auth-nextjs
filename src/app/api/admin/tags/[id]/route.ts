@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
+import { invalidateCache } from "@/lib/cache";
 import { db } from "@/db";
 import { tags } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -40,6 +41,7 @@ export async function PUT(
       return NextResponse.json({ error: "Tag Not Found" }, { status: 404 });
     }
 
+    invalidateCache("tags");
     return NextResponse.json(updatedTag);
   } catch {
     return NextResponse.json({ error: "Update Failed" }, { status: 500 });
@@ -60,6 +62,7 @@ export async function DELETE(
 
   try {
     await db.delete(tags).where(eq(tags.id, tagId));
+    invalidateCache("tags");
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Delete Failed" }, { status: 500 });

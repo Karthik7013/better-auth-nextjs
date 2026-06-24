@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getCachedSession } from "@/lib/session";
 import { isExtensionBlocked, deleteFromIA } from "@/lib/upload-utils";
 
 function requireEnv(name: string): string {
@@ -9,7 +9,7 @@ function requireEnv(name: string): string {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await auth.api.getSession({ headers: request.headers });
+  const session = await getCachedSession(request);
   if (!session || session.user.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const session = await auth.api.getSession({ headers: request.headers });
+  const session = await getCachedSession(request);
   if (!session || session.user.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
