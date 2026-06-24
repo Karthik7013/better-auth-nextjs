@@ -37,7 +37,7 @@ interface NetflixPlayerProps {
   className?: string
 }
 
-export function NetflixPlayer({ src, poster, title, metadata, onBack, onSkipIntro, nextEpisode, className }: NetflixPlayerProps) {
+export function StreamflixPlayer({ src, poster, title, metadata, onBack, onSkipIntro, nextEpisode, className }: NetflixPlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const barRef = useRef<HTMLDivElement>(null)

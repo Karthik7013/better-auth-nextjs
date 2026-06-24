@@ -1,33 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { isExtensionBlocked } from "@/lib/upload-utils";
-import { createHmac } from "node:crypto";
 
 function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) throw new Error(`${name} is not set`);
   return value;
-}
-
-function signStringToSign(secretKey: string, stringToSign: string): string {
-  return createHmac("sha1", secretKey).update(stringToSign).digest("base64");
-}
-
-function buildStringToSign(
-  method: string,
-  contentType: string,
-  date: string,
-  amzHeaders: string,
-  resource: string,
-): string {
-  return [
-    method,
-    "",
-    contentType,
-    date,
-    amzHeaders,
-    resource,
-  ].join("\n");
 }
 
 export async function POST(request: NextRequest) {
@@ -58,7 +36,7 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await request.arrayBuffer());
 
     const folder = searchParams.get("folder") || "uploads";
-    const sanitizedFolder = folder.replace(/[^a-zA-Z0-9_-]/g, "");
+    const sanitizedFolder = folder.replace(/[^a-zA-Z0-9_\/-]/g, "");
     const key = sanitizedFolder ? `${sanitizedFolder}/${Date.now()}-${fileName}` : `${Date.now()}-${fileName}`;
 
     const accessKey = requireEnv("IA_S3_ACCESS_KEY");
@@ -66,23 +44,18 @@ export async function POST(request: NextRequest) {
     const bucket = requireEnv("IA_S3_BUCKET");
     const endpoint = requireEnv("IA_S3_ENDPOINT");
 
-    const date = new Date().toUTCString();
-    const resource = `/${bucket}/${key}`;
-    const canonicalAmzHeaders = "x-amz-auto-make-bucket:1\n";
-    const stringToSign = buildStringToSign("PUT", contentType, date, canonicalAmzHeaders, resource);
-    const signature = signStringToSign(secretKey, stringToSign);
-
+    const encodedKey = encodeURIComponent(key).replace(/%2F/g, "/");
+    const resource = `/${bucket}/${encodedKey}`;
     const url = `${endpoint}${resource}`;
 
     const res = await fetch(url, {
       method: "PUT",
       headers: {
-        "Authorization": `LOW ${accessKey}:${signature}`,
+        "Authorization": `LOW ${accessKey}:${secretKey}`,
         "x-amz-auto-make-bucket": "1",
         "x-archive-meta-mediatype": contentType.startsWith("video/") ? "movies" : "image",
         "x-archive-meta-collection": "opensource",
         "Content-Type": contentType,
-        "Date": date,
       },
       body: buffer,
     });

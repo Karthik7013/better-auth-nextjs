@@ -61,6 +61,9 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
   })
 
   const title = watch("title")
+  const slug = watch("slug")
+  const year = (watch("releaseDate") ?? "").split("-")[0]
+
   const watchedTagIds = watch("tagIds")
 
   const { data: allTags } = useQuery<Tag[]>({
@@ -206,34 +209,7 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
               <textarea
                 {...register("description")}
                 placeholder="Movie description"
-                className="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 resize-y min-h-[80px]"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <UploadField
-                  accept="video/*"
-                  label="Video"
-                  folder="videos"
-                  value={watch("videoUrl") ?? ""}
-                  onChange={(url) => setValue("videoUrl", url)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <UploadField
-                  label="Thumbnail"
-                  folder="thumbnails"
-                  value={watch("thumbnailUrl") ?? ""}
-                  onChange={(url) => setValue("thumbnailUrl", url)}
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <UploadField
-                label="Backdrop"
-                folder="backdrops"
-                value={watch("backdropUrl") ?? ""}
-                onChange={(url) => setValue("backdropUrl", url)}
+                className="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 resize-y min-h-20"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -252,6 +228,33 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
                   {...register("releaseDate")}
                 />
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <UploadField
+                  accept="video/*"
+                  label="Video"
+                  folder="videos"
+                  value={watch("videoUrl") ?? ""}
+                  onChange={(url) => setValue("videoUrl", url)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <UploadField
+                  label="Thumbnail"
+                  folder={`movies/${year}/${slug}/thumbnails`}
+                  value={watch("thumbnailUrl") ?? ""}
+                  onChange={(url) => setValue("thumbnailUrl", url)}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <UploadField
+                label="Backdrop"
+                folder={`movies/${year}/${slug}/backdrops`}
+                value={watch("backdropUrl") ?? ""}
+                onChange={(url) => setValue("backdropUrl", url)}
+              />
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Tags</label>

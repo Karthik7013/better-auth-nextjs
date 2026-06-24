@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, Film, Clock, Calendar, Tag, RefreshCw } from "lucide-react";
-import { NetflixPlayer } from "@/components/netflix-player";
+import { StreamflixPlayer } from "@/components/streamflix-player";
 import { BackButton } from "@/components/back-button";
 import { formatMinutes, formatYear } from "@/lib/format";
 
@@ -166,7 +166,7 @@ export function WatchContent() {
 
   return (
     <div className="fixed inset-0 z-60 bg-black select-none overflow-hidden overscroll-none">
-      <NetflixPlayer
+      <StreamflixPlayer
         key={movie.videoUrl}
         src={movie.videoUrl}
         poster={movie.backdropUrl || movie.thumbnailUrl || undefined}
