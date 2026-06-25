@@ -7,6 +7,52 @@ import SearchBar from "./search-bar";
 import TagFilter from "./tag-filter";
 import MovieGrid from "./movie-grid";
 
+const SCROLL_KEY = "explore-scroll";
+
+function findScrollContainer(el: HTMLElement | null): HTMLElement | null {
+  while (el) {
+    const style = getComputedStyle(el);
+    if (style.overflowY === "auto" || style.overflowY === "scroll") return el;
+    el = el.parentElement;
+  }
+  return null;
+}
+
+function useScrollRestoration() {
+  const scrollRef = useRef<number>(0);
+  const restoringRef = useRef(false);
+
+  useEffect(() => {
+    const el = findScrollContainer(document.querySelector("main"));
+    if (!el) return;
+
+    const saved = sessionStorage.getItem(SCROLL_KEY);
+    if (saved) {
+      restoringRef.current = true;
+      el.scrollTop = parseInt(saved, 10);
+      restoringRef.current = false;
+      sessionStorage.removeItem(SCROLL_KEY);
+    }
+
+    let timer: ReturnType<typeof setTimeout>;
+    const onScroll = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (!restoringRef.current) {
+          scrollRef.current = el.scrollTop;
+        }
+      }, 300);
+    };
+
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      clearTimeout(timer);
+      sessionStorage.setItem(SCROLL_KEY, String(scrollRef.current));
+    };
+  }, []);
+}
+
 async function fetchTags() {
   const res = await fetch("/api/tags");
   if (!res.ok) throw new Error("Failed to fetch tags");
@@ -24,6 +70,7 @@ export function ExploreContent({ isAdmin = false }: { isAdmin?: boolean }) {
   const debouncedSearch = useDebounce(search, 300);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  useScrollRestoration();
 
   const { data: tags, isLoading: tagsLoading } = useQuery({
     queryKey: ["tags"],

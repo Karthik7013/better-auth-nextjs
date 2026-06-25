@@ -43,6 +43,13 @@
       "when": 1789648000000,
       "tag": "0005_make_video_url_and_duration_seconds_nullable",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790000000000,
+      "tag": "0006_add_performance_indexes",
+      "breakpoints": true
     }
   ]
 }

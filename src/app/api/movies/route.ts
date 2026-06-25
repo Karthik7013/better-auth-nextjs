@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     const isDefaultPage = !q && cursor === 0;
     const result = isDefaultPage
-      ? await cacheGetOrSet(`movies:page1:${limit}`, 120, () => searchMovies({ q, tagsParam, cursor, limit }))
+      ? await cacheGetOrSet(`movies:page1:${limit}`, 300, () => searchMovies({ q, tagsParam, cursor, limit }))
       : await searchMovies({ q, tagsParam, cursor, limit });
 
     const lastItem = result.movies[result.movies.length - 1];
