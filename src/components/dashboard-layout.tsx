@@ -21,27 +21,28 @@ const BottomNavbar = ({ navItems }: {
   navItems: NavItemProps[]
 }) => {
   const pathname = usePathname();
-  return <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around bg-background/85 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.15)] px-2 py-2 pb-[env(safe-area-inset-bottom)] relative before:absolute before:inset-x-0 before:-top-px before:h-px before:bg-gradient-to-r before:from-transparent before:via-muted-foreground/15 before:to-transparent">
-    {navItems.map((item) => {
-      const active = pathname === item.href;
-      return (
-        <Link
-          key={item.href}
-          href={item.href}
-          className={`relative flex flex-col items-center gap-0.5 px-4 py-2 active:scale-90 transition-[transform,colors] duration-150 ${active
-            ? "text-primary"
-            : "text-muted-foreground hover:text-foreground"
-            }`}
-        >
-          <item.icon className="size-5" />
-          <span className="text-[10px] font-medium tracking-tight">{item.label}</span>
-          {active && (
-            <span className="absolute -bottom-1 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-primary transition-all duration-200" />
-          )}
-        </Link>
-      );
-    })}
-  </nav>
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-evenly bg-background/80 backdrop-blur-lg shadow-[0_-2px_10px_rgba(0,0,0,0.1)] py-1 pb-[env(safe-area-inset-bottom)]">
+      {navItems.map((item) => {
+        const active = pathname === item.href;
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`relative flex flex-col items-center gap-1 px-6 py-2 transition-colors duration-150 ${active ? "text-foreground" : "text-muted-foreground/50 hover:text-muted-foreground"}`}
+          >
+            {active && (
+              <span className="absolute top-0 left-1/2 h-[3px] w-5 -translate-x-1/2 rounded-full bg-primary" />
+            )}
+            <item.icon className={`size-6 transition-transform duration-150 ${active ? "scale-110" : ""}`} />
+            {active && (
+              <span className="text-[10px] font-medium">{item.label}</span>
+            )}
+          </Link>
+        );
+      })}
+    </nav>
+  );
 }
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
