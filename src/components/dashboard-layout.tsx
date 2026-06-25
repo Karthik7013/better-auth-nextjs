@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Home, Search, Heart, Settings, LucideIcon } from "lucide-react";
@@ -17,11 +18,23 @@ type NavItemProps = {
   href: string;
 };
 
-function BottomNavbar({ navItems }: { navItems: NavItemProps[] }) {
+function BottomNavbar({
+  navItems,
+  visible,
+}: {
+  navItems: NavItemProps[];
+  visible: boolean;
+}) {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-md">
+    <nav
+      className={`fixed left-1/2 z-50 w-[90%] max-w-md transition-all duration-300 ease-out ${
+        visible
+          ? "bottom-4 translate-y-0 opacity-100"
+          : "bottom-4 translate-y-[calc(100%+1.5rem)] opacity-0"
+      }`}
+    >
       <div className="flex items-center gap-1 rounded-full bg-background/80 backdrop-blur-xl border border-border/50 shadow-lg px-1.5 py-1.5">
         {navItems.map((item) => {
           const active = pathname === item.href;
@@ -52,12 +65,44 @@ function BottomNavbar({ navItems }: { navItems: NavItemProps[] }) {
 }
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const mainRef = useRef<HTMLDivElement>(null);
+  const [navVisible, setNavVisible] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const main = mainRef.current;
+    if (!main) return;
+
+    let ticking = false;
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollY = main.scrollTop;
+          const delta = scrollY - lastScrollY.current;
+
+          if (delta > 10 && scrollY > 50) {
+            setNavVisible(false);
+          } else if (delta < -10) {
+            setNavVisible(true);
+          }
+
+          lastScrollY.current = scrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    main.addEventListener("scroll", onScroll, { passive: true });
+    return () => main.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
     <div className="relative h-dvh">
-      <main className="h-full overflow-y-auto pb-20">
+      <main ref={mainRef} className="h-full overflow-y-auto pb-20">
         {children}
       </main>
-      <BottomNavbar navItems={navItems} />
+      <BottomNavbar navItems={navItems} visible={navVisible} />
     </div>
   );
 }
