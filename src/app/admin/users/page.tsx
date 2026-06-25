@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState, useRef, useMemo } from "react"
+import { useEffect, useState, useMemo } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { authClient } from "@/lib/auth-client"
 import { useDebounce } from "@/hooks/use-debounce"
@@ -23,14 +24,10 @@ interface User {
 }
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<User[]>([])
-  const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
   const [search, setSearch] = useState("")
   const debouncedSearch = useDebounce(search, 300)
-  const [loading, setLoading] = useState(true)
-  const [version, setVersion] = useState(0)
+  const queryClient = useQueryClient()
 
   const { data: session } = authClient.useSession()
   const currentUserId = session?.user?.id
@@ -39,30 +36,28 @@ export default function AdminUsersPage() {
   const [banTarget, setBanTarget] = useState<User | null>(null)
   const [banReason, setBanReason] = useState("")
 
-  const fetchCount = useRef(0)
+  const limit = 20
 
-  useEffect(() => {
-    const id = ++fetchCount.current
-    const params: Record<string, string | number> = { limit: 20, offset: (page - 1) * 20 }
-    if (debouncedSearch) {
-      params.searchValue = debouncedSearch
-      params.searchField = "email"
-      params.searchOperator = "contains"
-    }
-
-    if (id === 1) setLoading(true)
-    authClient.admin.listUsers({ query: params }).then(({ data, error }) => {
-      if (id !== fetchCount.current) return
-      if (error) throw new Error(error.message || "Failed to fetch")
-      if (data) {
-        setUsers(data.users as User[])
-        setTotal(data.total)
-        setTotalPages(Math.max(1, Math.ceil(data.total / 20)))
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-users", page, debouncedSearch],
+    queryFn: async () => {
+      const params: Record<string, string | number> = { limit, offset: (page - 1) * limit }
+      if (debouncedSearch) {
+        params.searchValue = debouncedSearch
+        params.searchField = "email"
+        params.searchOperator = "contains"
       }
-    }).catch(() => {}).finally(() => {
-      if (id === fetchCount.current) setLoading(false)
-    })
-  }, [page, debouncedSearch, version])
+      const { data, error } = await authClient.admin.listUsers({ query: params })
+      if (error) throw new Error(error.message || "Failed to fetch")
+      return data
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+  })
+
+  const users = (data?.users ?? []) as User[]
+  const total = data?.total ?? 0
+  const totalPages = Math.max(1, Math.ceil(total / limit))
 
   useEffect(() => {
     queueMicrotask(() => { if (debouncedSearch) setPage(1) })
@@ -72,7 +67,7 @@ export default function AdminUsersPage() {
     setActionLoading(userId)
     try {
       await authClient.admin.setRole({ userId, role: role as "user" | "admin" })
-      setVersion((v) => v + 1)
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] })
     } catch {} finally {
       setActionLoading(null)
     }
@@ -85,7 +80,7 @@ export default function AdminUsersPage() {
       await authClient.admin.banUser({ userId: banTarget.id, banReason: banReason || undefined })
       setBanTarget(null)
       setBanReason("")
-      setVersion((v) => v + 1)
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] })
     } catch {} finally {
       setActionLoading(null)
     }
@@ -95,13 +90,12 @@ export default function AdminUsersPage() {
     setActionLoading(userId)
     try {
       await authClient.admin.unbanUser({ userId })
-      setVersion((v) => v + 1)
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] })
     } catch {} finally {
       setActionLoading(null)
     }
   }
 
-  const limit = 20
   const startItem = useMemo(() => (page - 1) * limit + 1, [page])
   const endItem = useMemo(() => Math.min(page * limit, total), [page, total])
 
@@ -122,7 +116,7 @@ export default function AdminUsersPage() {
         <CardContent className="p-0 overflow-auto flex-1 min-h-0">
           <UsersTable
             users={users}
-            loading={loading}
+            loading={isLoading}
             currentUserId={currentUserId}
             actionLoading={actionLoading}
             onSetRole={handleSetRole}

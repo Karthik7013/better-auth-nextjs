@@ -35,6 +35,8 @@ export default function FeaturedMoviesPage() {
       const data = await res.json();
       return data.featured || [];
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
   });
 
   const { data: searchResults = [], isFetching: searching } = useQuery<Movie[]>({

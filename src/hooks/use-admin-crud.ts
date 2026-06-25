@@ -29,6 +29,8 @@ export function useAdminCrud<T>({ baseKey, endpoint, defaultLimit = 20 }: UseAdm
       if (!res.ok) throw new Error("Failed to fetch");
       return res.json() as Promise<{ total: number; totalPages: number } & Record<string, T[]>>;
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
   });
 
   const items: T[] = (data ? Object.values(data).find((v) => Array.isArray(v)) : []) as T[];

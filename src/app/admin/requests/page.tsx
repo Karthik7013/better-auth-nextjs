@@ -71,6 +71,8 @@ export default function AdminRequestsPage() {
       if (!res.ok) throw new Error("Failed to fetch")
       return res.json() as Promise<PaginatedResponse>
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
   })
 
   const requests = data?.requests ?? []
