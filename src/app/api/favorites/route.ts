@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
-import { db } from "@/db";
-import { favorites, movies } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
-
+import { cacheGetOrSet } from "@/lib/cache";
+import { getUserFavorites } from "@/services/favorites";
 
 export async function GET(request: NextRequest) {
   const session = await getCachedSession(request);
@@ -12,19 +10,13 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const result = await db
-      .select({
-        id: movies.id,
-        title: movies.title,
-        slug: movies.slug,
-        thumbnailUrl: movies.thumbnailUrl,
-      })
-      .from(favorites)
-      .innerJoin(movies, eq(favorites.movieId, movies.id))
-      .where(eq(favorites.userId, session.user.id))
-      .orderBy(desc(favorites.createdAt));
+    const moviesList = await cacheGetOrSet(
+      `favorites:${session.user.id}`,
+      120,
+      () => getUserFavorites(session.user.id)
+    );
 
-    return NextResponse.json({ movies: result });
+    return NextResponse.json({ movies: moviesList });
   } catch {
     return NextResponse.json({ error: "Fetch Failed" }, { status: 500 });
   }

@@ -1,0 +1,166 @@
+.np-root {
+  --lb: 9%;
+  --np-bg: var(--background);
+  --np-card: var(--card);
+  --np-popover: var(--popover);
+  --np-fg: var(--foreground);
+  --np-muted: var(--muted-foreground);
+  --np-primary: var(--primary);
+  --np-primary-glow: var(--primary-glow);
+  --np-accent: var(--accent);
+  --np-border: var(--border);
+  --np-shadow-glow: 0 0 40px -8px color-mix(in oklab, var(--primary) 55%, transparent);
+}
+
+.mp-prog-track {
+  transition: height 0.2s ease;
+}
+
+.mp-prog-wrap:hover .mp-prog-track {
+  height: 7px;
+}
+
+.mp-knob {
+  transition: transform 0.2s;
+}
+
+.mp-prog-wrap:hover .mp-knob {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+@keyframes aurora {
+  0% {
+    filter: hue-rotate(0deg) brightness(1);
+  }
+  100% {
+    filter: hue-rotate(15deg) brightness(1.06);
+  }
+}
+
+@keyframes spot {
+  0%,
+  100% {
+    opacity: 0.65;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes cardIn {
+  from {
+    transform: scale(0.96) translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--np-primary) 40%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 12px color-mix(in srgb, var(--np-primary) 0%, transparent);
+  }
+}
+
+@keyframes slideR {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes shim {
+  from {
+    transform: translateX(-150%);
+  }
+  to {
+    transform: translateX(200%);
+  }
+}
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scalein {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mp-btn {
+  background: none;
+  border: none;
+  color: color-mix(in srgb, var(--np-fg) 80%, transparent);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.mp-btn:hover {
+  color: var(--np-fg);
+  background: color-mix(in srgb, var(--np-fg) 8%, transparent);
+  transform: scale(1.12);
+}
+
+.mp-btn:active {
+  transform: scale(0.94);
+}
+
+.mp-rbtn {
+  background: none;
+  border: none;
+  color: color-mix(in srgb, var(--np-fg) 62%, transparent);
+  cursor: pointer;
+  padding: 7px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.18s;
+}
+
+.mp-rbtn:hover {
+  color: var(--np-fg);
+  background: color-mix(in srgb, var(--np-fg) 8%, transparent);
+}
+
+@media (max-width: 640px) {
+  .np-root {
+    --lb: 4%;
+  }
+}

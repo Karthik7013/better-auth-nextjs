@@ -1,0 +1,302 @@
+"use client"
+
+import {
+  MediaPlayButton,
+  MediaMuteButton,
+  MediaVolumeRange,
+  MediaFullscreenButton,
+} from "media-chrome/react"
+import {
+  SkipBack,
+  SkipForward,
+  Subtitles,
+  Settings,
+  LayoutGrid,
+  Keyboard,
+} from "lucide-react"
+import { fmt } from "./use-player-state"
+
+interface PlayerControlsProps {
+  barRef: React.RefObject<HTMLDivElement | null>
+  dur: number
+  prog: number
+  buf: number
+  hov: number | null
+  hovX: number
+  curSec: number
+  totalSec: number
+  hasChapters: boolean
+  chapters?: number[]
+  showVol: boolean
+  videoRef: React.RefObject<HTMLVideoElement | null>
+  nextEpisode?: {
+    title: string
+    onPlay: () => void
+    countdownSeconds?: number
+  }
+  title: string
+  metadata?: { duration?: string }
+  seekTo: (e: React.MouseEvent<HTMLDivElement>) => void
+  onHover: (e: React.MouseEvent<HTMLDivElement>) => void
+  setHov: React.Dispatch<React.SetStateAction<number | null>>
+  setShowVol: React.Dispatch<React.SetStateAction<boolean>>
+  setCountdown: React.Dispatch<React.SetStateAction<number | null>>
+  setShortcuts: React.Dispatch<React.SetStateAction<boolean>>
+}
+
+export function PlayerControls({
+  barRef,
+  dur,
+  prog,
+  buf,
+  hov,
+  hovX,
+  curSec,
+  totalSec,
+  hasChapters,
+  chapters,
+  showVol,
+  videoRef,
+  nextEpisode,
+  title,
+  metadata,
+  seekTo,
+  onHover,
+  setHov,
+  setShowVol,
+  setCountdown,
+  setShortcuts,
+}: PlayerControlsProps) {
+  return (
+    <>
+      {/* Progress bar */}
+      <div
+        ref={barRef}
+        className="mp-prog-wrap relative cursor-pointer mb-[9px]"
+        style={{ padding: "14px 0" }}
+        onClick={seekTo}
+        onMouseMove={onHover}
+        onMouseLeave={() => setHov(null)}
+      >
+        {hov !== null && (
+          <div
+            className="absolute bottom-[32px] -translate-x-1/2 px-[9px] py-[4px] text-[11.5px] font-medium text-foreground whitespace-nowrap rounded-[5px] pointer-events-none z-20 max-sm:hidden"
+            style={{
+              left: `${hovX}px`,
+              background:
+                "color-mix(in srgb, var(--np-card) 95%, transparent)",
+              border:
+                "1px solid color-mix(in srgb, var(--np-primary) 35%, transparent)",
+              backdropFilter: "blur(12px)",
+              letterSpacing: "0.06em",
+            }}
+          >
+            {fmt((hov / 100) * totalSec)}
+          </div>
+        )}
+        <div
+          className="mp-prog-track relative h-[4px] rounded-[4px]"
+          style={{
+            background: "color-mix(in srgb, var(--np-fg) 17%, transparent)",
+          }}
+        >
+          <div
+            className="absolute top-0 left-0 h-full rounded-[4px]"
+            style={{
+              width: `${buf}%`,
+              background: "color-mix(in srgb, var(--np-fg) 26%, transparent)",
+            }}
+          />
+          <div
+            className="absolute top-0 left-0 h-full rounded-[4px]"
+            style={{
+              width: `${prog}%`,
+              background:
+                "linear-gradient(90deg, color-mix(in srgb, var(--np-primary) 80%, var(--np-bg)), var(--np-primary), color-mix(in srgb, var(--np-primary-glow) 80%, var(--np-bg)))",
+            }}
+          />
+          {hasChapters &&
+            chapters?.map((p, i) => (
+              <div
+                key={i}
+                className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-[3px] h-[3px] rounded-full pointer-events-none"
+                style={{
+                  left: `${p}%`,
+                  background:
+                    "color-mix(in srgb, var(--np-fg) 50%, transparent)",
+                }}
+              />
+            ))}
+          <div
+            className="mp-knob absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-[15px] h-[15px] bg-foreground rounded-full pointer-events-none"
+            style={{
+              left: `${prog}%`,
+              transform: "translate(-50%, -50%) scale(0)",
+              boxShadow:
+                "0 0 14px color-mix(in srgb, var(--np-primary) 90%, transparent), 0 2px 8px color-mix(in srgb, var(--np-bg) 50%, transparent)",
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Controls row */}
+      <div className="flex items-center justify-between gap-1">
+        <div className="flex items-center gap-[5px] max-sm:gap-[3px]">
+          <button
+            className="mp-btn max-sm:hidden"
+            onClick={() => {
+              if (videoRef.current)
+                videoRef.current.currentTime = Math.max(
+                  0,
+                  ((prog - 0.9) / 100) * dur,
+                )
+            }}
+            title="Rewind 10s"
+          >
+            <SkipBack size={20} />
+          </button>
+          <MediaPlayButton
+            className="w-[50px] max-sm:w-[38px] max-sm:h-[38px] h-[50px] rounded-full flex items-center justify-center cursor-pointer"
+            style={{
+              border:
+                "2px solid color-mix(in srgb, var(--np-primary) 44%, transparent)",
+              background:
+                "color-mix(in srgb, var(--np-primary) 13%, transparent)",
+              "--media-primary-color": "var(--np-fg)",
+              "--media-button-icon-width": "21px",
+              "--media-button-icon-height": "21px",
+              transition: "all 0.18s",
+            } as React.CSSProperties}
+          />
+          <button
+            className="mp-btn max-sm:hidden"
+            onClick={() => {
+              if (videoRef.current)
+                videoRef.current.currentTime = Math.min(
+                  dur,
+                  ((prog + 0.9) / 100) * dur,
+                )
+            }}
+            title="Forward 10s"
+          >
+            <SkipForward size={20} />
+          </button>
+          <div
+            className="flex items-center gap-[3px] max-sm:hidden"
+            onMouseEnter={() => setShowVol(true)}
+            onMouseLeave={() => setShowVol(false)}
+          >
+            <MediaMuteButton
+              className="mp-btn"
+              style={
+                {
+                  "--media-primary-color":
+                    "color-mix(in srgb, var(--np-fg) 80%, transparent)",
+                  "--media-button-icon-width": "20px",
+                  "--media-button-icon-height": "20px",
+                } as React.CSSProperties
+              }
+            />
+            <div
+              className={`overflow-hidden opacity-0 flex items-center transition-all duration-320 ${showVol ? "max-w-[84px] opacity-100" : "max-w-0"}`}
+            >
+              <MediaVolumeRange
+                className="w-[76px] h-[4px] rounded-[4px] outline-none cursor-pointer ml-[3px]"
+                style={
+                  {
+                    "--media-primary-color": "var(--np-primary)",
+                    "--media-range-track-background":
+                      "color-mix(in srgb, var(--np-fg) 25%, transparent)",
+                  } as React.CSSProperties
+                }
+              />
+            </div>
+          </div>
+          <div
+            className="text-[12.5px] max-sm:text-[10px] font-normal whitespace-nowrap ml-[4px]"
+            style={{
+              color: "color-mix(in srgb, var(--np-fg) 60%, transparent)",
+              letterSpacing: "0.05em",
+            }}
+          >
+            {fmt(curSec)}{" "}
+            <em
+              style={{
+                color: "color-mix(in srgb, var(--np-fg) 30%, transparent)",
+                fontStyle: "normal",
+                margin: "0 3px",
+              }}
+            >
+              /
+            </em>{" "}
+            {metadata?.duration || fmt(dur)}
+          </div>
+        </div>
+        <div
+          className="np-center-title text-[11.5px] font-medium uppercase max-sm:hidden"
+          style={{
+            color: "color-mix(in srgb, var(--np-fg) 38%, transparent)",
+            letterSpacing: "0.15em",
+          }}
+        >
+          {title}
+        </div>
+        <div className="flex items-center gap-[3px] max-sm:gap-[2px]">
+          <button className="mp-rbtn max-sm:hidden" title="Subtitles">
+            <Subtitles size={16} />
+          </button>
+          <button className="mp-rbtn max-sm:hidden" title="Audio Track">
+            <span
+              className="text-[11.5px] font-semibold"
+              style={{ letterSpacing: "0.08em" }}
+            >
+              ENG
+            </span>
+          </button>
+          <button className="mp-rbtn max-sm:hidden" title="Episodes">
+            <LayoutGrid size={16} />
+          </button>
+          {nextEpisode && (
+            <button
+              className="flex items-center gap-[5px] max-sm:gap-1 px-[13px] max-sm:px-2 py-[5px] text-[12px] max-sm:text-[10px] font-semibold text-foreground cursor-pointer rounded-[18px] whitespace-nowrap"
+              style={{
+                background:
+                  "color-mix(in srgb, var(--np-primary) 11%, transparent)",
+                border:
+                  "1px solid color-mix(in srgb, var(--np-primary) 36%, transparent)",
+                letterSpacing: "0.06em",
+                fontFamily: "'DM Sans', sans-serif",
+              }}
+              onClick={() =>
+                setCountdown(nextEpisode.countdownSeconds ?? 30)
+              }
+            >
+              <SkipForward size={12} /> Next
+            </button>
+          )}
+          <button className="mp-rbtn max-sm:hidden" title="Settings">
+            <Settings size={16} />
+          </button>
+          <button
+            className="mp-rbtn max-sm:hidden"
+            title="Keyboard Shortcuts (?)"
+            onClick={() => setShortcuts(true)}
+          >
+            <Keyboard size={16} />
+          </button>
+          <MediaFullscreenButton
+            className="mp-rbtn"
+            style={
+              {
+                "--media-primary-color":
+                  "color-mix(in srgb, var(--np-fg) 62%, transparent)",
+                "--media-button-icon-width": "16px",
+                "--media-button-icon-height": "16px",
+              } as React.CSSProperties
+            }
+          />
+        </div>
+      </div>
+    </>
+  )
+}

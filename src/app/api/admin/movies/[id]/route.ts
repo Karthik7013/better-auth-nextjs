@@ -1,22 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
-import { invalidateCache } from "@/lib/cache";
-import { db } from "@/db";
-import { movies, movieTags } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import { deleteFromIA } from "@/lib/upload-utils";
-
-interface MovieUpdateData {
-  title?: string;
-  slug?: string;
-  description?: string | null;
-  videoUrl?: string | null;
-  thumbnailUrl?: string;
-  backdropUrl?: string | null;
-  durationSeconds?: number | null;
-  releaseDate?: string | null;
-  updatedAt?: Date;
-}
+import { updateMovie, deleteMovie, validateSlug, validateDuration } from "@/services/movies";
 
 export async function PUT(
   request: NextRequest,
@@ -32,69 +16,24 @@ export async function PUT(
 
   try {
     const body = await request.json();
-    const { title, slug, description, videoUrl, thumbnailUrl, backdropUrl, durationSeconds, releaseDate, tagIds } = body;
+    const { slug, durationSeconds } = body;
 
-    if (slug !== undefined && (!/^[a-z0-9-]+$/.test(slug) || slug.length === 0)) {
-      return NextResponse.json({ error: "Slug must contain only lowercase letters, numbers, and hyphens" }, { status: 400 });
+    const slugError = slug !== undefined ? validateSlug(slug) : null;
+    if (slugError) {
+      return NextResponse.json({ error: slugError }, { status: 400 });
     }
 
-    if (durationSeconds !== undefined && (typeof durationSeconds !== "number" || isNaN(durationSeconds) || durationSeconds < 0)) {
-      return NextResponse.json({ error: "Invalid duration" }, { status: 400 });
+    const durationError = validateDuration(durationSeconds);
+    if (durationError) {
+      return NextResponse.json({ error: durationError }, { status: 400 });
     }
 
-    const [existingMovie] = await db.select().from(movies).where(eq(movies.id, movieId)).limit(1);
-    if (!existingMovie) {
-      return NextResponse.json({ error: "Movie Not Found" }, { status: 404 });
-    }
-
-    const oldUrls: string[] = [];
-    if (videoUrl !== undefined && existingMovie.videoUrl && videoUrl !== existingMovie.videoUrl) oldUrls.push(existingMovie.videoUrl);
-    if (thumbnailUrl !== undefined && existingMovie.thumbnailUrl && thumbnailUrl !== existingMovie.thumbnailUrl) oldUrls.push(existingMovie.thumbnailUrl);
-    if (backdropUrl !== undefined && existingMovie.backdropUrl && backdropUrl !== existingMovie.backdropUrl) oldUrls.push(existingMovie.backdropUrl);
-
-    const updateData: MovieUpdateData = {};
-    if (title !== undefined) updateData.title = title;
-    if (slug !== undefined) updateData.slug = slug;
-    if (description !== undefined) updateData.description = description;
-    if (videoUrl !== undefined) updateData.videoUrl = videoUrl;
-    if (thumbnailUrl !== undefined) updateData.thumbnailUrl = thumbnailUrl;
-    if (backdropUrl !== undefined) updateData.backdropUrl = backdropUrl;
-    if (durationSeconds !== undefined) updateData.durationSeconds = durationSeconds;
-    if (releaseDate !== undefined) updateData.releaseDate = releaseDate;
-
-    if (Object.keys(updateData).length > 0) {
-      updateData.updatedAt = new Date();
-      await db.update(movies).set(updateData).where(eq(movies.id, movieId));
-    }
-
-    if (oldUrls.length > 0) {
-      Promise.allSettled(oldUrls.map((url) => deleteFromIA(url)));
-    }
-
-    if (tagIds && Array.isArray(tagIds)) {
-      await db.delete(movieTags).where(eq(movieTags.movieId, movieId));
-
-      if (tagIds.length > 0) {
-        await db.insert(movieTags).values(
-          tagIds.map((tagId: number) => ({
-            movieId,
-            tagId,
-          }))
-        );
-      }
-    }
-
-    const [updatedMovie] = await db
-      .select()
-      .from(movies)
-      .where(eq(movies.id, movieId))
-      .limit(1);
+    const updatedMovie = await updateMovie(movieId, body);
 
     if (!updatedMovie) {
       return NextResponse.json({ error: "Movie Not Found" }, { status: 404 });
     }
 
-    invalidateCache("movies");
     return NextResponse.json(updatedMovie);
   } catch {
     return NextResponse.json({ error: "Update Failed" }, { status: 500 });
@@ -114,18 +53,10 @@ export async function DELETE(
   const movieId = parseInt(id);
 
   try {
-    const [movie] = await db.select().from(movies).where(eq(movies.id, movieId)).limit(1);
-    if (!movie) {
+    const deleted = await deleteMovie(movieId);
+    if (!deleted) {
       return NextResponse.json({ error: "Movie Not Found" }, { status: 404 });
     }
-
-    const urlsToDelete = [movie.videoUrl, movie.thumbnailUrl, movie.backdropUrl].filter(Boolean) as string[];
-    await Promise.allSettled(urlsToDelete.map((url) => deleteFromIA(url)));
-
-    await db.delete(movieTags).where(eq(movieTags.movieId, movieId));
-    await db.delete(movies).where(eq(movies.id, movieId));
-
-    invalidateCache("movies");
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Delete Failed" }, { status: 500 });

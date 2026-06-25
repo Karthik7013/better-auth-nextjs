@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
-import { db } from "@/db";
-import { movieRequests } from "@/db/schema";
-import { eq } from "drizzle-orm";
-
+import { fulfillRequest, deleteRequest } from "@/services/requests";
 
 export async function PATCH(
   request: NextRequest,
@@ -29,17 +26,15 @@ export async function PATCH(
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 
-    const [updated] = await db
-      .update(movieRequests)
-      .set({ status, updatedAt: new Date() })
-      .where(eq(movieRequests.id, requestId))
-      .returning();
-
-    if (!updated) {
-      return NextResponse.json({ error: "Request Not Found" }, { status: 404 });
+    if (status === "fulfilled") {
+      const result = await fulfillRequest(requestId);
+      if ("error" in result) {
+        return NextResponse.json({ error: result.error }, { status: 404 });
+      }
+      return NextResponse.json(result.request);
     }
 
-    return NextResponse.json(updated);
+    return NextResponse.json({ error: "Invalid status transition" }, { status: 400 });
   } catch {
     return NextResponse.json({ error: "Update Failed" }, { status: 500 });
   }
@@ -62,15 +57,10 @@ export async function DELETE(
   }
 
   try {
-    const [deleted] = await db
-      .delete(movieRequests)
-      .where(eq(movieRequests.id, requestId))
-      .returning();
-
+    const deleted = await deleteRequest(requestId);
     if (!deleted) {
       return NextResponse.json({ error: "Request Not Found" }, { status: 404 });
     }
-
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Delete Failed" }, { status: 500 });

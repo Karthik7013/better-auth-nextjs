@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
-import { db } from "@/db";
-import { favorites } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
-
+import { toggleFavorite } from "@/services/favorites";
 
 export async function POST(request: NextRequest) {
   const session = await getCachedSession(request);
@@ -17,34 +14,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const existing = await db
-      .select()
-      .from(favorites)
-      .where(
-        and(
-          eq(favorites.userId, session.user.id),
-          eq(favorites.movieId, movieId)
-        )
-      )
-      .limit(1);
-
-    if (existing.length > 0) {
-      await db
-        .delete(favorites)
-        .where(
-          and(
-            eq(favorites.userId, session.user.id),
-            eq(favorites.movieId, movieId)
-          )
-        );
-      return NextResponse.json({ isFavorited: false });
-    } else {
-      await db.insert(favorites).values({
-        userId: session.user.id,
-        movieId,
-      });
-      return NextResponse.json({ isFavorited: true });
-    }
+    const result = await toggleFavorite(movieId, session.user.id);
+    return NextResponse.json(result);
   } catch {
     return NextResponse.json({ error: "Toggle Failed" }, { status: 500 });
   }

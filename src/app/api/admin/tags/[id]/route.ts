@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
-import { invalidateCache } from "@/lib/cache";
-import { db } from "@/db";
-import { tags } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { updateTag, deleteTag } from "@/services/tags";
 
 export async function PUT(
   request: NextRequest,
@@ -21,28 +18,13 @@ export async function PUT(
     const body = await request.json();
     const { name } = body;
 
-    if (name !== undefined) {
-      if (typeof name !== "string" || !name.trim()) {
-        return NextResponse.json({ error: "Invalid name" }, { status: 400 });
-      }
-      await db
-        .update(tags)
-        .set({ name: name.trim() })
-        .where(eq(tags.id, tagId));
+    const result = await updateTag(tagId, name);
+
+    if ("error" in result) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
-    const [updatedTag] = await db
-      .select()
-      .from(tags)
-      .where(eq(tags.id, tagId))
-      .limit(1);
-
-    if (!updatedTag) {
-      return NextResponse.json({ error: "Tag Not Found" }, { status: 404 });
-    }
-
-    invalidateCache("tags");
-    return NextResponse.json(updatedTag);
+    return NextResponse.json(result.tag);
   } catch {
     return NextResponse.json({ error: "Update Failed" }, { status: 500 });
   }
@@ -61,8 +43,7 @@ export async function DELETE(
   const tagId = parseInt(id);
 
   try {
-    await db.delete(tags).where(eq(tags.id, tagId));
-    invalidateCache("tags");
+    await deleteTag(tagId);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Delete Failed" }, { status: 500 });

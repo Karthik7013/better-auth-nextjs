@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { getCachedSession } from "@/lib/session";
-import { db } from "@/db";
-import { user } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { deleteAccount } from "@/services/users";
 
 export async function DELETE(request: NextRequest) {
   const session = await getCachedSession(request);
@@ -12,8 +9,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    await auth.api.signOut({ headers: request.headers });
-    await db.delete(user).where(eq(user.id, session.user.id));
+    await deleteAccount(session.user.id, request.headers);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Delete Failed" }, { status: 500 });

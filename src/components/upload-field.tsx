@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { Upload, X, Check, Loader2 } from "lucide-react";
+import { useUpload } from "@/hooks/use-upload";
 
 interface UploadFieldProps {
   accept?: string;
@@ -14,65 +15,18 @@ interface UploadFieldProps {
 }
 
 export function UploadField({ accept = "*/*", label, folder = "uploads", maxSize, value, onChange, onRemove }: UploadFieldProps) {
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const { upload, uploading, progress, error } = useUpload({ folder, maxSize });
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (maxSize && file.size > maxSize) {
-      const mb = maxSize / 1024 / 1024;
-      setError(`File too large. Max ${mb >= 1024 ? `${(mb / 1024).toFixed(1)}GB` : `${mb.toFixed(0)}MB`}.`);
-      return;
-    }
-
-    setError(null);
-    setUploading(true);
-    setProgress(0);
-
     try {
-      const params = new URLSearchParams({ fileName: file.name, folder });
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", `/api/upload/file?${params}`);
-
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          setProgress(Math.round((event.loaded / event.total) * 100));
-        }
-      };
-
-      const publicUrl = await new Promise<string>((resolve, reject) => {
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const data = JSON.parse(xhr.responseText);
-              resolve(data.publicUrl);
-            } catch {
-              reject(new Error("Invalid response"));
-            }
-          } else {
-            try {
-              const data = JSON.parse(xhr.responseText);
-              reject(new Error(data.error || `Upload failed (${xhr.status})`));
-            } catch {
-              reject(new Error(`Upload failed (${xhr.status})`));
-            }
-          }
-        };
-        xhr.onerror = () => reject(new Error("Upload failed"));
-        xhr.setRequestHeader("Content-Type", file.type);
-        xhr.send(file);
-      });
-
+      const publicUrl = await upload(file);
       onChange(publicUrl);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
-    } finally {
-      setUploading(false);
-      setProgress(0);
+    } catch {
+      // error is managed by the hook
     }
   };
 

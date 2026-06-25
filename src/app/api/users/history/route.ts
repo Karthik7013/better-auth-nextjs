@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
-import { db } from "@/db";
-import { watchHistory, movies } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
-
+import { cacheGetOrSet } from "@/lib/cache";
+import { getWatchHistory, clearWatchHistory } from "@/services/history";
 
 export async function GET(request: NextRequest) {
   const session = await getCachedSession(request);
@@ -16,31 +14,13 @@ export async function GET(request: NextRequest) {
   const offset = parseInt(searchParams.get("offset") || "0");
 
   try {
-    const items = await db
-      .select({
-        id: watchHistory.id,
-        movieId: watchHistory.movieId,
-        progressSeconds: watchHistory.progressSeconds,
-        isCompleted: watchHistory.isCompleted,
-        watchedAt: watchHistory.watchedAt,
-        title: movies.title,
-        slug: movies.slug,
-        thumbnailUrl: movies.thumbnailUrl,
-        durationSeconds: movies.durationSeconds,
-      })
-      .from(watchHistory)
-      .innerJoin(movies, eq(watchHistory.movieId, movies.id))
-      .where(eq(watchHistory.userId, session.user.id))
-      .orderBy(desc(watchHistory.watchedAt))
-      .limit(limit)
-      .offset(offset);
+    const result = await cacheGetOrSet(
+      `history:${session.user.id}:${offset}:${limit}`,
+      60,
+      () => getWatchHistory({ userId: session.user.id, limit, offset })
+    );
 
-    const [{ count }] = await db
-      .select({ count: db.$count(watchHistory, eq(watchHistory.userId, session.user.id)) })
-      .from(watchHistory)
-      .where(eq(watchHistory.userId, session.user.id));
-
-    return NextResponse.json({ items, total: count, offset, limit });
+    return NextResponse.json({ items: result.items, total: result.total, offset, limit });
   } catch {
     return NextResponse.json({ error: "Fetch Failed" }, { status: 500 });
   }
@@ -53,10 +33,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    await db
-      .delete(watchHistory)
-      .where(eq(watchHistory.userId, session.user.id));
-
+    await clearWatchHistory(session.user.id);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Delete Failed" }, { status: 500 });

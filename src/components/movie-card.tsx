@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 
 interface MovieCardProps {
-  id: number;
   title: string;
   slug: string;
   thumbnailUrl: string;

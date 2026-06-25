@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
-import { db } from "@/db";
-import { movies, watchHistory } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { cacheGetOrSet } from "@/lib/cache";
+import { getContinueWatching } from "@/services/history";
 
 export async function GET(request: NextRequest) {
   const session = await getCachedSession(request);
@@ -11,25 +10,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const continueWatching = await db
-      .select({
-        id: movies.id,
-        title: movies.title,
-        slug: movies.slug,
-        thumbnailUrl: movies.thumbnailUrl,
-        progressSeconds: watchHistory.progressSeconds,
-        durationSeconds: movies.durationSeconds,
-      })
-      .from(watchHistory)
-      .innerJoin(movies, eq(watchHistory.movieId, movies.id))
-      .where(
-        and(
-          eq(watchHistory.userId, session.user.id),
-          eq(watchHistory.isCompleted, false)
-        )
-      )
-      .orderBy(desc(watchHistory.watchedAt))
-      .limit(10);
+    const continueWatching = await cacheGetOrSet(
+      `continue-watching:${session.user.id}`,
+      60,
+      () => getContinueWatching(session.user.id)
+    );
 
     return NextResponse.json({ continueWatching });
   } catch (e) {

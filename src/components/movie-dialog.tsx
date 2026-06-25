@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useRef, useCallback } from "react"
 import { useQuery, useMutation } from "@tanstack/react-query"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -75,9 +75,6 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
   })
 
   const title = watch("title")
-  const slug = watch("slug")
-  const year = (watch("releaseDate") ?? "").split("-")[0]
-
   const watchedTagIds = watch("tagIds")
 
   const { data: allTags } = useQuery<Tag[]>({
@@ -128,11 +125,26 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
     },
   })
 
-  useEffect(() => {
-    const justOpened = open && !prevOpen.current
-    prevOpen.current = open
+  function generateSlug(title: string): string {
+    return title
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+  }
 
-    if (justOpened) {
+  function handleDialogOpen(open: boolean) {
+    if (!open && !justSaved.current) {
+      for (const url of stagedUrls.current) {
+        deleteUploadedFile(url)
+      }
+      stagedUrls.current.clear()
+    }
+
+    if (open && !prevOpen.current) {
       stagedUrls.current = new Set()
       justSaved.current = false
 
@@ -160,34 +172,13 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
         setEditingMovie(null)
       }
     }
-  }, [open, initialData, editMovieId, reset])
 
-  useEffect(() => {
-    if (!slugManuallyEdited && title) {
-      const generatedSlug = title
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9-]/g, "")
-        .replace(/-+/g, "-")
-        .replace(/^-|-$/g, "")
-      setValue("slug", generatedSlug, { shouldValidate: false })
-    }
-  }, [title, slugManuallyEdited, setValue])
+    prevOpen.current = open
+    onOpenChange(open)
+  }
 
   function onSubmit(data: MovieFormData) {
     saveMovie(data)
-  }
-
-  function handleOpenChange(open: boolean) {
-    if (!open && !justSaved.current) {
-      for (const url of stagedUrls.current) {
-        deleteUploadedFile(url)
-      }
-      stagedUrls.current.clear()
-    }
-    onOpenChange(open)
   }
 
   function handleUploadChange(field: "videoUrl" | "thumbnailUrl" | "backdropUrl", url: string) {
@@ -206,7 +197,7 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogOpen}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{editingMovie ? "Edit Movie" : "Add Movie"}</DialogTitle>
@@ -223,6 +214,12 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
                 <label className="text-sm font-medium">Title</label>
                 <Input
                   {...register("title")}
+                  onChange={(e) => {
+                    setValue("title", e.target.value, { shouldValidate: true })
+                    if (!slugManuallyEdited) {
+                      setValue("slug", generateSlug(e.target.value), { shouldValidate: false })
+                    }
+                  }}
                   placeholder="Movie title"
                 />
                 {errors.title && (
@@ -324,7 +321,7 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
             </div>
           </div>
           <DialogFooter className="mt-6">
-            <Button variant="outline" type="button" onClick={() => handleOpenChange(false)}>
+            <Button variant="outline" type="button" onClick={() => handleDialogOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={saving}>

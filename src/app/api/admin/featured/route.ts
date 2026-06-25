@@ -1,31 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
-import { invalidateCache } from "@/lib/cache";
-import { db } from "@/db";
-import { featuredMovies, movies } from "@/db/schema";
-import { eq, asc, sql } from "drizzle-orm";
-
+import { listAdminFeatured, addFeatured } from "@/services/featured";
 
 export async function GET(request: NextRequest) {
+  const session = await getCachedSession(request);
+  if (!session || session.user.role !== "admin") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const session = await getCachedSession(request);
-    if (!session || session.user.role !== "admin") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const result = await db
-      .select({
-        id: featuredMovies.id,
-        movieId: featuredMovies.movieId,
-        displayOrder: featuredMovies.displayOrder,
-        title: movies.title,
-        slug: movies.slug,
-        thumbnailUrl: movies.thumbnailUrl,
-      })
-      .from(featuredMovies)
-      .innerJoin(movies, eq(featuredMovies.movieId, movies.id))
-      .orderBy(asc(featuredMovies.displayOrder));
-
+    const result = await listAdminFeatured();
     return NextResponse.json({ featured: result });
   } catch {
     return NextResponse.json({ error: "Failed to fetch featured movies" }, { status: 500 });
@@ -33,12 +17,12 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const session = await getCachedSession(request);
-    if (!session || session.user.role !== "admin") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const session = await getCachedSession(request);
+  if (!session || session.user.role !== "admin") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
+  try {
     const body = await request.json();
     const { movieId } = body;
 
@@ -46,18 +30,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "movieId is required" }, { status: 400 });
     }
 
-    const [maxResult] = await db
-      .select({ max: sql<number>`COALESCE(MAX(${featuredMovies.displayOrder}), -1)` })
-      .from(featuredMovies);
-
-    const nextOrder = (maxResult?.max ?? -1) + 1;
-
-    const [created] = await db
-      .insert(featuredMovies)
-      .values({ movieId, displayOrder: nextOrder })
-      .returning();
-
-    invalidateCache("featured");
+    const created = await addFeatured(movieId);
     return NextResponse.json({ featured: created }, { status: 201 });
   } catch (error: unknown) {
     const err = error as { message?: string; code?: string };

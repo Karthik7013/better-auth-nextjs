@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
 import { db } from "@/db";
-import { movies, watchHistory } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { movies } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { updateProgress } from "@/services/history";
 
 export async function POST(
   request: NextRequest,
@@ -30,30 +31,12 @@ export async function POST(
   const progressSeconds = body.progressSeconds as number;
   const isCompleted = body.isCompleted as boolean;
 
-  if (typeof progressSeconds !== "number" || progressSeconds < 0) {
-    return NextResponse.json({ error: "Invalid progress" }, { status: 400 });
-  }
-
   try {
-    await db
-      .insert(watchHistory)
-      .values({
-        userId: session.user.id,
-        movieId,
-        progressSeconds,
-        isCompleted: isCompleted ?? false,
-        watchedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: [watchHistory.userId, watchHistory.movieId],
-        set: {
-          progressSeconds: sql`EXCLUDED.progress_seconds`,
-          isCompleted: sql`EXCLUDED.is_completed`,
-          watchedAt: sql`EXCLUDED.watched_at`,
-        },
-      });
-
-    return NextResponse.json({ success: true });
+    const result = await updateProgress({ userId: session.user.id, movieId, progressSeconds, isCompleted });
+    if ("error" in result) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+    return NextResponse.json(result);
   } catch {
     return NextResponse.json({ error: "Update Failed" }, { status: 500 });
   }

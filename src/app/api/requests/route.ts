@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
-import { db } from "@/db";
-import { movieRequests } from "@/db/schema";
-
+import { createRequest } from "@/services/requests";
 
 export async function POST(request: NextRequest) {
   const session = await getCachedSession(request);
@@ -18,21 +16,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { title, description, externalLink } = body;
 
-    if (!title || typeof title !== "string" || title.trim().length === 0) {
-      return NextResponse.json({ error: "Title is required" }, { status: 400 });
+    const result = await createRequest({ userId: session.user.id, title, description, externalLink });
+
+    if ("error" in result) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
-    const [req] = await db
-      .insert(movieRequests)
-      .values({
-        userId: session.user.id,
-        title: title.trim(),
-        description: description || null,
-        externalLink: externalLink || null,
-      })
-      .returning();
-
-    return NextResponse.json(req, { status: 201 });
+    return NextResponse.json(result.request, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Failed to submit request" }, { status: 500 });
   }

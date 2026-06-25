@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
-import { invalidateCache } from "@/lib/cache";
-import { db } from "@/db";
-import { tags, movieTags } from "@/db/schema";
-import { eq, like, count } from "drizzle-orm";
-
+import { listAdminTags, createTag } from "@/services/tags";
 
 export async function GET(request: NextRequest) {
   const session = await getCachedSession(request);
@@ -16,45 +12,10 @@ export async function GET(request: NextRequest) {
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "50");
   const search = searchParams.get("search") || "";
-  const offset = (page - 1) * limit;
 
   try {
-    const conditions = [];
-    if (search) {
-      conditions.push(like(tags.name, `%${search}%`));
-    }
-
-    const whereClause = conditions.length > 0 ? conditions[0] : undefined;
-
-    const [totalResult] = await db
-      .select({ total: count() })
-      .from(tags)
-      .where(whereClause);
-
-    const total = totalResult.total;
-
-    const tagsList = await db
-      .select({
-        id: tags.id,
-        name: tags.name,
-        createdAt: tags.createdAt,
-        movieCount: count(movieTags.movieId),
-      })
-      .from(tags)
-      .leftJoin(movieTags, eq(tags.id, movieTags.tagId))
-      .where(whereClause)
-      .groupBy(tags.id)
-      .orderBy(tags.name)
-      .limit(limit)
-      .offset(offset);
-
-    return NextResponse.json({
-      tags: tagsList,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    });
+    const result = await listAdminTags({ page, limit, search });
+    return NextResponse.json(result);
   } catch {
     return NextResponse.json({ error: "Fetch Failed" }, { status: 500 });
   }
@@ -74,14 +35,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required field: name" }, { status: 400 });
     }
 
-    const trimmedName = name.trim();
-
-    const [createdTag] = await db
-      .insert(tags)
-      .values({ name: trimmedName })
-      .returning();
-
-    invalidateCache("tags");
+    const createdTag = await createTag(name);
     return NextResponse.json(createdTag, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Create Failed" }, { status: 500 });
