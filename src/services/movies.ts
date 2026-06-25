@@ -26,32 +26,33 @@ interface MovieDetail {
 }
 
 export async function getMovieBySlug(slug: string) {
-  const result = await db
-    .select({
-      id: movies.id,
-      title: movies.title,
-      slug: movies.slug,
-      description: movies.description,
-      videoUrl: movies.videoUrl,
-      thumbnailUrl: movies.thumbnailUrl,
-      backdropUrl: movies.backdropUrl,
-      durationSeconds: movies.durationSeconds,
-      releaseDate: movies.releaseDate,
-    })
-    .from(movies)
-    .where(eq(movies.slug, slug))
-    .limit(1);
+  const [movieResult, tagRows] = await Promise.all([
+    db
+      .select({
+        id: movies.id,
+        title: movies.title,
+        slug: movies.slug,
+        description: movies.description,
+        videoUrl: movies.videoUrl,
+        thumbnailUrl: movies.thumbnailUrl,
+        backdropUrl: movies.backdropUrl,
+        durationSeconds: movies.durationSeconds,
+        releaseDate: movies.releaseDate,
+      })
+      .from(movies)
+      .where(eq(movies.slug, slug))
+      .limit(1),
+    db
+      .select({ id: tags.id, name: tags.name })
+      .from(tags)
+      .innerJoin(movieTags, eq(tags.id, movieTags.tagId))
+      .innerJoin(movies, eq(movieTags.movieId, movies.id))
+      .where(eq(movies.slug, slug)),
+  ]);
 
-  if (result.length === 0) return null;
+  if (movieResult.length === 0) return null;
 
-  const row = result[0];
-  const tagRows = await db
-    .select({ id: tags.id, name: tags.name })
-    .from(movieTags)
-    .innerJoin(tags, eq(movieTags.tagId, tags.id))
-    .where(eq(movieTags.movieId, row.id));
-
-  return { ...row, tags: tagRows };
+  return { ...movieResult[0], tags: tagRows };
 }
 
 export async function checkFavorite(movieId: number, userId: string) {
@@ -66,19 +67,22 @@ export async function checkFavorite(movieId: number, userId: string) {
 }
 
 export async function getRelatedMovies(slug: string) {
-  const [movie] = await db
-    .select({ id: movies.id })
-    .from(movies)
-    .where(eq(movies.slug, slug))
-    .limit(1);
+  const [movieResult, tagRows] = await Promise.all([
+    db
+      .select({ id: movies.id })
+      .from(movies)
+      .where(eq(movies.slug, slug))
+      .limit(1),
+    db
+      .select({ id: tags.id })
+      .from(tags)
+      .innerJoin(movieTags, eq(tags.id, movieTags.tagId))
+      .innerJoin(movies, eq(movieTags.movieId, movies.id))
+      .where(eq(movies.slug, slug)),
+  ]);
 
-  if (!movie) return [];
-
-  const tagRows = await db
-    .select({ id: tags.id })
-    .from(movieTags)
-    .innerJoin(tags, eq(movieTags.tagId, tags.id))
-    .where(eq(movieTags.movieId, movie.id));
+  if (movieResult.length === 0) return [];
+  const movie = movieResult[0];
 
   if (tagRows.length === 0) return [];
 
@@ -294,10 +298,12 @@ export async function deleteMovie(movieId: number) {
   if (!movie) return false;
 
   const urlsToDelete = [movie.videoUrl, movie.thumbnailUrl, movie.backdropUrl].filter(Boolean) as string[];
-  await Promise.allSettled(urlsToDelete.map((url) => deleteFromIA(url)));
 
-  await db.delete(movieTags).where(eq(movieTags.movieId, movieId));
-  await db.delete(movies).where(eq(movies.id, movieId));
+  await Promise.all([
+    Promise.allSettled(urlsToDelete.map((url) => deleteFromIA(url))),
+    db.delete(movieTags).where(eq(movieTags.movieId, movieId)),
+    db.delete(movies).where(eq(movies.id, movieId)),
+  ]);
 
   invalidateCache("movies");
   return true;
