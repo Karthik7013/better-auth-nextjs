@@ -106,8 +106,8 @@ export default function AdminUsersPage() {
         <p className="text-muted-foreground mt-1">Manage user accounts and roles.</p>
       </div>
 
-      <Card className="p-0 flex-1 flex flex-col min-h-0">
-        <CardHeader className="pt-4">
+      <Card className="overflow-hidden flex-1 flex flex-col min-h-0">
+        <CardHeader className="border-b bg-muted/10 py-4">
           <div className="flex items-center justify-between">
             <CardTitle>All Users</CardTitle>
             <SearchInput value={search} onChange={setSearch} placeholder="Search by email..." />
@@ -128,16 +128,9 @@ export default function AdminUsersPage() {
             handleBan={handleBan}
           />
         </CardContent>
-        <div className="flex items-center justify-between p-4 border-t bg-muted/5 text-sm text-muted-foreground">
-          <p className="hidden sm:block">
-            Showing <span className="font-medium text-foreground">{startItem}</span> to{" "}
-            <span className="font-medium text-foreground">{endItem}</span> of{" "}
-            <span className="font-medium text-foreground">{total}</span> users
-          </p>
-        </div>
       </Card>
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} label="" />
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} label={`Showing ${startItem}–${endItem} of ${total} users`} />
     </div>
   )
 }

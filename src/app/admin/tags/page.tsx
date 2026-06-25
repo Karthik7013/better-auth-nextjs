@@ -184,8 +184,8 @@ export default function AdminTagsPage() {
         </Button>
       </div>
 
-      <Card className="overflow-hidden flex-1 flex flex-col min-h-0 max-h-125">
-        <CardHeader>
+      <Card className="overflow-hidden flex-1 flex flex-col min-h-0">
+        <CardHeader className="border-b bg-muted/10 py-4">
           <div className="flex items-center justify-between">
             <CardTitle>All Tags</CardTitle>
             <SearchInput value={search} onChange={setSearch} placeholder="Search by name..." />

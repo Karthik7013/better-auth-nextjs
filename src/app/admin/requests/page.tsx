@@ -148,7 +148,7 @@ export default function AdminRequestsPage() {
       </div>
 
       <Card className="overflow-hidden flex-1 flex flex-col min-h-0">
-        <CardHeader>
+        <CardHeader className="border-b bg-muted/10 py-4">
           <CardTitle>{statusFilter ? `${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)} Requests` : "All Requests"}</CardTitle>
         </CardHeader>
         <CardContent className="p-0 overflow-auto flex-1 min-h-0">

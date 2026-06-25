@@ -12,6 +12,7 @@ import { ErrorState } from "@/components/error-state"
 import dynamic from "next/dynamic"
 import { useAdminCrud } from "@/hooks/use-admin-crud"
 import SearchInput from "../search-input"
+import Pagination from "../pagination"
 import MoviesTable from "../movies-table"
 import DeleteMovieDialog from "../delete-movie-dialog"
 
@@ -114,42 +115,23 @@ export default function AdminMoviesPage() {
         isPending={deleteMutation.isPending}
       />
 
-      <Card className="flex flex-1 p-0 flex-col min-w-0 overflow-hidden border-muted/60 shadow-sm">
+      <Card className="overflow-hidden flex-1 flex flex-col min-h-0">
         <CardHeader className="border-b bg-muted/10 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
-            <div>
-              <CardTitle>All Movies</CardTitle>
-              <p className="text-sm text-muted-foreground mt-0.5">{total} movies registered</p>
-            </div>
+          <div className="flex items-center justify-between">
+            <CardTitle>All Movies</CardTitle>
             <SearchInput value={search} onChange={setSearch} placeholder="Search by title..." />
           </div>
         </CardHeader>
-        <CardContent className="p-0 relative min-w-0 overflow-auto">
+        <CardContent className="p-0 overflow-auto flex-1 min-h-0">
           {isError ? (
             <ErrorState message="Failed to load movies." onRetry={refetch} className="py-8" />
           ) : (
-            <div className="w-full">
-              <MoviesTable movies={movies} loading={isLoading} sorting={sorting} onSortingChange={setSorting} onEdit={openEditDialog} onDelete={(m) => { setDeleteTarget(m); setDeleteDialogOpen(true) }} />
-            </div>
+            <MoviesTable movies={movies} loading={isLoading} sorting={sorting} onSortingChange={setSorting} onEdit={openEditDialog} onDelete={(m) => { setDeleteTarget(m); setDeleteDialogOpen(true) }} />
           )}
         </CardContent>
-        <div className="flex items-center justify-between p-4 border-t bg-muted/5 text-sm text-muted-foreground">
-          <p className="hidden sm:block">
-            Showing <span className="font-medium text-foreground">{startItem}</span> to <span className="font-medium text-foreground">{endItem}</span> of <span className="font-medium text-foreground">{total}</span> movies
-          </p>
-        </div>
       </Card>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <span />
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Previous</Button>
-            <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
-            <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Next</Button>
-          </div>
-        </div>
-      )}
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} label={`Showing ${startItem}–${endItem} of ${total} movies`} />
     </div>
   )
 }
