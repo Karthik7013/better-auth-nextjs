@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Film, Tags as TagsIcon, Users, ShieldCheck } from "lucide-react";
 
@@ -8,26 +11,56 @@ const statConfig = [
   { label: "Total Admins", icon: ShieldCheck, color: "bg-rose-500/10 text-rose-600 dark:text-rose-400", border: "border-l-rose-500" },
 ];
 
+function useCountUp(target: number, duration = 600) {
+  const [count, setCount] = useState(0);
+  const prevTarget = useRef(0);
+
+  useEffect(() => {
+    const start = prevTarget.current;
+    const diff = target - start;
+    if (diff === 0) return;
+
+    const startTime = performance.now();
+
+    function animate(now: number) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - (1 - progress) * (1 - progress);
+      setCount(Math.round(start + diff * eased));
+      if (progress < 1) requestAnimationFrame(animate);
+    }
+
+    prevTarget.current = target;
+    requestAnimationFrame(animate);
+  }, [target, duration]);
+
+  return count;
+}
+
+function StatCard({ value, config }: { value: number; config: typeof statConfig[number] }) {
+  const animated = useCountUp(value);
+  const Icon = config.icon;
+  return (
+    <Card className={`border-l-4 ${config.border} overflow-hidden`}>
+      <CardContent className="p-4 md:p-6">
+        <div className="flex items-center justify-between">
+          <div className={`rounded-xl p-3 ${config.color}`}>
+            <Icon className="size-6" />
+          </div>
+          <p className="text-3xl font-bold tabular-nums">{animated}</p>
+        </div>
+        <p className="text-sm text-muted-foreground mt-4">{config.label}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function StatsCards({ stats }: { stats: { value: number }[] }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {stats.map((stat, i) => {
-        const config = statConfig[i];
-        const Icon = config.icon;
-        return (
-          <Card key={i} className={`border-l-4 ${config.border} overflow-hidden`}>
-            <CardContent className="p-4 md:p-6">
-              <div className="flex items-center justify-between">
-                <div className={`rounded-xl p-3 ${config.color}`}>
-                  <Icon className="size-6" />
-                </div>
-                <p className="text-3xl font-bold tabular-nums">{stat.value}</p>
-              </div>
-              <p className="text-sm text-muted-foreground mt-4">{config.label}</p>
-            </CardContent>
-          </Card>
-        );
-      })}
+      {stats.map((stat, i) => (
+        <StatCard key={i} value={stat.value} config={statConfig[i]} />
+      ))}
     </div>
   );
 }

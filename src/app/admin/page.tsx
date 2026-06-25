@@ -24,7 +24,7 @@ interface FavoritedMovie {
 }
 
 export default function AdminDashboard() {
-  const { data: statsData, isLoading: statsLoading, isError: statsError, refetch: statsRefetch } = useQuery({
+  const { data: statsData, isError: statsError, refetch: statsRefetch } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
       const res = await fetch("/api/admin/stats");
@@ -75,15 +75,7 @@ export default function AdminDashboard() {
         <p className="text-muted-foreground mt-1">Overview of your site metrics.</p>
       </div>
 
-      {statsLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-32 rounded-xl" />
-          ))}
-        </div>
-      ) : (
-        <StatsCards stats={statsData ?? []} />
-      )}
+      <StatsCards stats={statsData ?? [{ value: 0 }, { value: 0 }, { value: 0 }, { value: 0 }]} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         {signupsLoading ? (
