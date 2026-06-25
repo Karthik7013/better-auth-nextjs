@@ -2,11 +2,17 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { useDebounce } from "@/hooks/use-debounce";
-import { authClient } from "@/lib/auth-client";
 import SearchBar from "./search-bar";
 import TagFilter from "./tag-filter";
 import MovieGrid from "./movie-grid";
+import SearchModal from "@/components/search-modal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ArrowUpDown, ChevronDown } from "lucide-react";
 
 const SCROLL_KEY = "explore-scroll";
 
@@ -54,30 +60,21 @@ function useScrollRestoration() {
   }, []);
 }
 
-async function fetchTags() {
-  const res = await fetch("/api/tags");
-  if (!res.ok) throw new Error("Failed to fetch tags");
-  return res.json();
-}
-
-async function fetchMovies(params: string) {
-  const res = await fetch(`/api/movies?${params}`);
-  if (!res.ok) throw new Error("Failed to fetch movies");
-  return res.json();
-}
-
 export function ExploreContent() {
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 300);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const { data: session } = authClient.useSession();
-  const isAdmin = session?.user?.role === "admin";
   useScrollRestoration();
 
   const { data: tags, isLoading: tagsLoading } = useQuery({
     queryKey: ["tags"],
-    queryFn: fetchTags,
+    queryFn: async () => {
+      const res = await fetch("/api/tags");
+      if (!res.ok) throw new Error("Failed to fetch tags");
+      return res.json();
+    },
     staleTime: 5 * 60 * 1000,
     refetchOnMount: false,
   });
@@ -90,23 +87,25 @@ export function ExploreContent() {
     isLoading,
     isError,
   } = useInfiniteQuery({
-    queryKey: ["movies", debouncedSearch, selectedTags],
-    queryFn: ({ pageParam }) => {
+    queryKey: ["movies", selectedTags, sortBy, sortDir],
+    queryFn: async ({ pageParam }) => {
       const p = new URLSearchParams();
-      if (debouncedSearch) p.set("q", debouncedSearch);
       if (selectedTags.length > 0) p.set("tags", selectedTags.join(","));
-      if (pageParam) p.set("cursor", String(pageParam));
-      return fetchMovies(p.toString());
+      p.set("page", String(pageParam));
+      p.set("sortBy", sortBy);
+      p.set("sortDir", sortDir);
+      const res = await fetch(`/api/movies?${p.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch movies");
+      return res.json();
     },
-    getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.nextCursor : undefined,
-    initialPageParam: undefined,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.hasMore ? allPages.length + 1 : undefined,
+    initialPageParam: 1,
     staleTime: 5 * 60 * 1000,
     refetchOnMount: false,
   });
 
   const movies = data?.pages.flatMap((p) => p.movies) ?? [];
-  const total = data?.pages[0]?.total ?? 0;
   const loading = isLoading || isFetchingNextPage;
 
   useEffect(() => {
@@ -126,15 +125,58 @@ export function ExploreContent() {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const toggleTag = useCallback((tagId: number) => {
+    if (tagId === -1) {
+      setSelectedTags([]);
+      return;
+    }
     setSelectedTags((prev) =>
       prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]
     );
   }, []);
 
+  const sortOptions: { label: string; value: string; dir: "asc" | "desc" }[] = [
+    { label: "Newest", value: "createdAt", dir: "desc" },
+    { label: "Oldest", value: "createdAt", dir: "asc" },
+    { label: "Title A-Z", value: "title", dir: "asc" },
+    { label: "Title Z-A", value: "title", dir: "desc" },
+    { label: "Shortest", value: "durationSeconds", dir: "asc" },
+    { label: "Longest", value: "durationSeconds", dir: "desc" },
+    { label: "Year ↓", value: "releaseDate", dir: "desc" },
+    { label: "Year ↑", value: "releaseDate", dir: "asc" },
+  ];
+
+  const currentSortLabel =
+    sortOptions.find((o) => o.value === sortBy && o.dir === sortDir)?.label ??
+    "Newest";
+
   return (
     <div className="space-y-6">
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md pb-4 space-y-4 -mx-4 px-4">
-        <SearchBar value={search} onChange={setSearch} />
+        <div className="flex items-center gap-3">
+          <div className="flex-1">
+            <SearchBar onClick={() => setIsSearchOpen(true)} />
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl border border-border/50 bg-muted/50 px-3 text-sm text-muted-foreground hover:bg-muted transition-colors outline-none">
+              <ArrowUpDown className="size-3.5" />
+              <span className="hidden sm:inline">{currentSortLabel}</span>
+              <ChevronDown className="size-3.5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              {sortOptions.map((opt) => (
+                <DropdownMenuItem
+                  key={`${opt.value}-${opt.dir}`}
+                  onClick={() => {
+                    setSortBy(opt.value);
+                    setSortDir(opt.dir);
+                  }}
+                >
+                  {opt.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
         <TagFilter
           tags={tags ?? []}
           selectedTags={selectedTags}
@@ -145,11 +187,14 @@ export function ExploreContent() {
 
       <MovieGrid
         movies={movies}
-        total={total}
         isLoading={loading}
         isError={isError}
-        isAdmin={isAdmin}
         ref={sentinelRef}
+      />
+
+      <SearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
       />
     </div>
   );

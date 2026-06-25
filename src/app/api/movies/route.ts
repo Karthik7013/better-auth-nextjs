@@ -12,32 +12,23 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q") || "";
   const tagsParam = searchParams.get("tags") || undefined;
-  const cursor = parseInt(searchParams.get("cursor") || "0");
-  const limit = parseInt(searchParams.get("limit") || "12");
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+  const limit = Math.max(1, Math.min(50, parseInt(searchParams.get("limit") || "12")));
+  const sortBy = searchParams.get("sortBy") || undefined;
+  const sortDirParam = searchParams.get("sortDir");
+  const sortDir = sortDirParam === "asc" || sortDirParam === "desc" ? sortDirParam : undefined;
 
   try {
-    if (tagsParam) {
-      const result = await searchMovies({ q, tagsParam, cursor, limit });
-      const lastItem = result.movies[result.movies.length - 1];
-      return NextResponse.json({
-        movies: result.movies,
-        total: result.total,
-        nextCursor: lastItem ? lastItem.id : null,
-        hasMore: result.movies.length === limit,
-      });
-    }
-
-    const isDefaultPage = !q && cursor === 0;
+    const isDefaultPage = !q && !tagsParam && page === 1 && !sortBy && !sortDir;
     const result = isDefaultPage
-      ? await cacheGetOrSet(`movies:page1:${limit}`, 300, () => searchMovies({ q, tagsParam, cursor, limit }))
-      : await searchMovies({ q, tagsParam, cursor, limit });
+      ? await cacheGetOrSet(`movies:page1:${limit}`, 300, () => searchMovies({ q, tagsParam, page, limit, sortBy, sortDir }))
+      : await searchMovies({ q, tagsParam, page, limit, sortBy, sortDir });
 
-    const lastItem = result.movies[result.movies.length - 1];
     return NextResponse.json({
       movies: result.movies,
       total: result.total,
-      nextCursor: lastItem ? lastItem.id : null,
-      hasMore: result.movies.length === limit,
+      page,
+      hasMore: page * limit < result.total,
     });
   } catch {
     return NextResponse.json({ error: "Query Failed" }, { status: 500 });

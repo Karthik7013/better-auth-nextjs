@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { movies, movieTags, tags, favorites } from "@/db/schema";
-import { eq, and, ne, inArray, asc, desc, ilike, lt, sql, count } from "drizzle-orm";
+import { eq, and, ne, inArray, asc, desc, ilike, sql, count } from "drizzle-orm";
 import { invalidateCache } from "@/lib/cache";
 import { deleteFromIA } from "@/lib/upload-utils";
 
@@ -121,14 +121,19 @@ export async function attachTags(rows: MovieRow[]) {
 export async function searchMovies(args: {
   q?: string;
   tagsParam?: string;
-  cursor: number;
-  limit: number;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortDir?: "asc" | "desc";
 }) {
-  const { q, tagsParam, cursor, limit } = args;
-  const conditions: any[] = [];
+  const { q, tagsParam, page = 1, limit = 12, sortBy = "createdAt", sortDir = "desc" } = args;
+  const offset = (page - 1) * limit;
 
+  const sortCol = movieSortableColumns[sortBy] || movies.createdAt;
+  const orderDir = sortDir === "asc" ? asc(sortCol) : desc(sortCol);
+
+  const conditions: any[] = [];
   if (q) conditions.push(ilike(movies.title, `%${q}%`));
-  if (cursor > 0) conditions.push(lt(movies.id, cursor));
 
   if (tagsParam) {
     const tagIds = tagsParam.split(",").map(Number);
@@ -149,8 +154,9 @@ export async function searchMovies(args: {
         )
         .groupBy(movies.id)
         .having(sql`count(distinct ${movieTags.tagId}) = ${tagIds.length}`)
-        .orderBy(desc(movies.id))
-        .limit(limit),
+        .orderBy(orderDir)
+        .limit(limit)
+        .offset(offset),
       db
         .select({ value: count() })
         .from(
@@ -187,8 +193,9 @@ export async function searchMovies(args: {
       })
       .from(movies)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(desc(movies.id))
-      .limit(limit),
+      .orderBy(orderDir)
+      .limit(limit)
+      .offset(offset),
     db.select({ value: count() }).from(movies).where(conditions.length > 0 ? and(...conditions) : undefined),
   ]);
 
@@ -310,6 +317,7 @@ export async function deleteMovie(movieId: number) {
 }
 
 const movieSortableColumns: Record<string, any> = {
+  id: movies.id,
   title: movies.title,
   createdAt: movies.createdAt,
   durationSeconds: movies.durationSeconds,
