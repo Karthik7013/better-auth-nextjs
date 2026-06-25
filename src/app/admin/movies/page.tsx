@@ -8,7 +8,15 @@ import { useMutation } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ErrorState } from "@/components/error-state"
-import { MovieDialog } from "@/components/movie-dialog"
+import dynamic from "next/dynamic"
+import { Skeleton } from "@/components/ui/skeleton"
+
+const MovieDialog = dynamic(
+  () => import("@/components/movie-dialog").then((m) => ({ default: m.MovieDialog })),
+  {
+    loading: () => <Skeleton className="h-96 rounded-lg" />,
+  }
+)
 import { useAdminCrud } from "@/hooks/use-admin-crud"
 import SearchInput from "../search-input"
 import MoviesTable from "../movies-table"

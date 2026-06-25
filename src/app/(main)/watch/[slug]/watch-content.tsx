@@ -5,7 +5,15 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, Film, Clock, Calendar, Tag, RefreshCw } from "lucide-react";
-import { StreamflixPlayer } from "@/components/streamflix-player";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const StreamflixPlayer = dynamic(
+  () => import("@/components/streamflix-player").then((m) => ({ default: m.StreamflixPlayer })),
+  {
+    loading: () => <Skeleton className="aspect-video w-full rounded-lg" />,
+  }
+);
 import { BackButton } from "@/components/back-button";
 import { formatMinutes, formatYear } from "@/lib/format";
 
