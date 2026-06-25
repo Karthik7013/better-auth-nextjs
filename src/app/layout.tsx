@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, DM_Sans, DM_Serif_Display } from "next/font/google";
+import { Inter, JetBrains_Mono, DM_Serif_Display } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/toaster";
@@ -13,12 +13,6 @@ const inter = Inter({
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
-  display: "swap",
-});
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  variable: "--font-dm-sans",
   display: "swap",
 });
 
@@ -66,7 +60,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${jetbrainsMono.variable} ${dmSans.variable} ${dmSerifDisplay.variable} h-full antialiased dark`}
+      className={`${inter.variable} ${jetbrainsMono.variable} ${dmSerifDisplay.variable} h-full antialiased dark`}
       suppressHydrationWarning
     >
       <head>
