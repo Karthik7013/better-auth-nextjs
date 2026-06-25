@@ -130,14 +130,15 @@ export function ExploreContent() {
 
   return (
     <div className="space-y-6">
-      <SearchBar value={search} onChange={setSearch} />
-
-      <TagFilter
-        tags={tags ?? []}
-        selectedTags={selectedTags}
-        onToggle={toggleTag}
-        isLoading={tagsLoading}
-      />
+      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md pb-4 space-y-4 -mx-4 px-4">
+        <SearchBar value={search} onChange={setSearch} />
+        <TagFilter
+          tags={tags ?? []}
+          selectedTags={selectedTags}
+          onToggle={toggleTag}
+          isLoading={tagsLoading}
+        />
+      </div>
 
       <MovieGrid
         movies={movies}
