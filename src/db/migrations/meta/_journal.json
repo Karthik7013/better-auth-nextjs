@@ -50,6 +50,13 @@
       "when": 1790000000000,
       "tag": "0006_add_performance_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1782451014813,
+      "tag": "0007_noisy_spiral",
+      "breakpoints": true
     }
   ]
 }

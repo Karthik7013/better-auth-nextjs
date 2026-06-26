@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, Film, Tags, Users, ChevronLeft, Star, ListChecks,
+  LayoutDashboard, Film, Tags, Users, ChevronLeft, Star, ListChecks, Tv,
 } from "lucide-react";
 import {
   Sidebar,
@@ -25,6 +25,7 @@ import {
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/admin" },
   { label: "Movies", icon: Film, href: "/admin/movies" },
+  { label: "Series", icon: Tv, href: "/admin/series" },
   { label: "Featured", icon: Star, href: "/admin/featured" },
   { label: "Requests", icon: ListChecks, href: "/admin/requests" },
   { label: "Tags", icon: Tags, href: "/admin/tags" },

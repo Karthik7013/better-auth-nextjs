@@ -13,6 +13,17 @@ import { PlayerControls } from "./player-controls"
 import { ShortcutsModal } from "./shortcuts-modal"
 import "./player.css"
 
+export interface EpisodeSelectorSeason {
+  seasonNumber: number
+  episodes: {
+    episodeNumber: number
+    title: string
+    slug: string
+    isActive: boolean
+    href: string
+  }[]
+}
+
 export interface NetflixPlayerProps {
   src: string
   poster?: string
@@ -30,9 +41,11 @@ export interface NetflixPlayerProps {
   onSkipIntro?: () => void
   nextEpisode?: {
     title: string
+    thumbnail?: string
     onPlay: () => void
     countdownSeconds?: number
   }
+  episodeSelector?: EpisodeSelectorSeason[]
   className?: string
 }
 
@@ -44,6 +57,7 @@ export function StreamflixPlayer({
   onBack,
   onSkipIntro,
   nextEpisode,
+  episodeSelector,
   className,
 }: NetflixPlayerProps) {
   const {
@@ -296,6 +310,7 @@ export function StreamflixPlayer({
               showVol={showVol}
               videoRef={videoRef}
               nextEpisode={nextEpisode}
+              episodeSelector={episodeSelector}
               title={title}
               metadata={metadata}
               seekTo={seekTo}

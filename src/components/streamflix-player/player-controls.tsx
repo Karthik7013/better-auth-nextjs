@@ -13,8 +13,23 @@ import {
   Settings,
   LayoutGrid,
   Keyboard,
+  ChevronDown,
+  Film,
 } from "lucide-react"
 import { fmt } from "./use-player-state"
+import Link from "next/link"
+import { useState, useRef, useEffect } from "react"
+
+interface EpisodeSelectorSeason {
+  seasonNumber: number
+  episodes: {
+    episodeNumber: number
+    title: string
+    slug: string
+    isActive: boolean
+    href: string
+  }[]
+}
 
 interface PlayerControlsProps {
   barRef: React.RefObject<HTMLDivElement | null>
@@ -34,6 +49,7 @@ interface PlayerControlsProps {
     onPlay: () => void
     countdownSeconds?: number
   }
+  episodeSelector?: EpisodeSelectorSeason[]
   title: string
   metadata?: { duration?: string }
   seekTo: (e: React.MouseEvent<HTMLDivElement>) => void
@@ -58,6 +74,7 @@ export function PlayerControls({
   showVol,
   videoRef,
   nextEpisode,
+  episodeSelector,
   title,
   metadata,
   seekTo,
@@ -253,9 +270,11 @@ export function PlayerControls({
               ENG
             </span>
           </button>
-          <button className="mp-rbtn max-sm:hidden" title="Episodes">
-            <LayoutGrid size={16} />
-          </button>
+          {episodeSelector ? <EpisodeDropdown seasons={episodeSelector} /> : (
+            <button className="mp-rbtn max-sm:hidden" title="Episodes">
+              <LayoutGrid size={16} />
+            </button>
+          )}
           {nextEpisode && (
             <button
               className="flex items-center gap-[5px] max-sm:gap-1 px-[13px] max-sm:px-2 py-[5px] text-[12px] max-sm:text-[10px] font-semibold text-foreground cursor-pointer rounded-[18px] whitespace-nowrap"
@@ -298,5 +317,61 @@ export function PlayerControls({
         </div>
       </div>
     </>
+  )
+}
+
+function EpisodeDropdown({ seasons }: { seasons: EpisodeSelectorSeason[] }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  return (
+    <div ref={ref} className="relative max-sm:hidden">
+      <button
+        className="mp-rbtn"
+        title="Episodes"
+        onClick={() => setOpen(!open)}
+      >
+        <LayoutGrid size={16} />
+      </button>
+      {open && (
+        <div
+          className="absolute bottom-full right-0 mb-2 w-64 max-h-80 overflow-y-auto rounded-lg p-2 z-50"
+          style={{
+            background: "color-mix(in srgb, var(--np-card) 98%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--np-primary) 20%, transparent)",
+            backdropFilter: "blur(16px)",
+          }}
+        >
+          {seasons.map((season) => (
+            <div key={season.seasonNumber}>
+              <div className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--np-fg) 50%, transparent)" }}>
+                Season {season.seasonNumber}
+              </div>
+              {season.episodes.map((ep) => (
+                <Link
+                  key={ep.slug}
+                  href={ep.href}
+                  onClick={() => setOpen(false)}
+                  className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${
+                    ep.isActive ? "bg-primary/20 text-foreground font-medium" : "text-muted-foreground hover:bg-muted/30"
+                  }`}
+                >
+                  <Film size={12} className="shrink-0" />
+                  <span className="truncate">{ep.episodeNumber}. {ep.title}</span>
+                </Link>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }

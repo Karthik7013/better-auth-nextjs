@@ -1,4 +1,5 @@
 import { pgTable, text, timestamp, boolean, uniqueIndex, integer, serial, varchar, date, primaryKey, index } from "drizzle-orm/pg-core";
+import { type InferSelectModel, type InferInsertModel } from "drizzle-orm";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -178,5 +179,65 @@ export const movieRequests = pgTable("movie_requests", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+export const series = pgTable("series", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  description: text("description"),
+  thumbnailUrl: text("thumbnail_url").notNull(),
+  backdropUrl: text("backdrop_url"),
+  releaseDate: date("release_date"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const seasons = pgTable("seasons", {
+  id: serial("id").primaryKey(),
+  seriesId: integer("series_id")
+    .notNull()
+    .references(() => series.id, { onDelete: "cascade" }),
+  seasonNumber: integer("season_number").notNull(),
+  title: varchar("title", { length: 255 }),
+  description: text("description"),
+  thumbnailUrl: text("thumbnail_url"),
+  releaseDate: date("release_date"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => [uniqueIndex("unique_series_season").on(t.seriesId, t.seasonNumber)]);
+
+export const episodes = pgTable("episodes", {
+  id: serial("id").primaryKey(),
+  seasonId: integer("season_id")
+    .notNull()
+    .references(() => seasons.id, { onDelete: "cascade" }),
+  episodeNumber: integer("episode_number").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  description: text("description"),
+  videoUrl: text("video_url"),
+  thumbnailUrl: text("thumbnail_url"),
+  backdropUrl: text("backdrop_url"),
+  durationSeconds: integer("duration_seconds"),
+  releaseDate: date("release_date"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => [uniqueIndex("unique_season_episode").on(t.seasonId, t.episodeNumber)]);
+
+export const seriesTags = pgTable("series_tags", {
+  seriesId: integer("series_id")
+    .notNull()
+    .references(() => series.id, { onDelete: "cascade" }),
+  tagId: integer("tag_id")
+    .notNull()
+    .references(() => tags.id, { onDelete: "cascade" }),
+}, (t) => [primaryKey({ columns: [t.seriesId, t.tagId] })]);
+
+export type Series = InferSelectModel<typeof series>;
+export type SeriesInsert = InferInsertModel<typeof series>;
+export type Season = InferSelectModel<typeof seasons>;
+export type SeasonInsert = InferInsertModel<typeof seasons>;
+export type Episode = InferSelectModel<typeof episodes>;
+export type EpisodeInsert = InferInsertModel<typeof episodes>;
 
 

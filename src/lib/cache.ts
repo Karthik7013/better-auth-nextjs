@@ -43,6 +43,7 @@ const INVALIDATION_KEYS = {
   favorites: ["favorites:*"],
   history: ["history:*", "continue-watching:*"],
   requests: ["requests:*"],
+  series: ["series:*", "series-list:*"],
 } as const;
 
 export async function invalidateCache(

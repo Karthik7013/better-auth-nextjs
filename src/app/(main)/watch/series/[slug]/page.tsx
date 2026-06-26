@@ -1,0 +1,146 @@
+"use client";
+
+import { useParams, useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { StreamflixPlayer } from "@/components/streamflix-player";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { ArrowLeftIcon } from "lucide-react";
+import Link from "next/link";
+
+interface Episode {
+  id: number;
+  seasonId: number;
+  episodeNumber: number;
+  title: string;
+  slug: string;
+  description: string | null;
+  videoUrl: string | null;
+  thumbnailUrl: string | null;
+  backdropUrl: string | null;
+  durationSeconds: number | null;
+}
+
+interface Season {
+  id: number;
+  seasonNumber: number;
+  title: string | null;
+  episodes: Episode[];
+}
+
+interface SeriesDetail {
+  id: number;
+  title: string;
+  slug: string;
+  description: string | null;
+  thumbnailUrl: string;
+  backdropUrl: string | null;
+  releaseDate: string | null;
+  seasons: Season[];
+}
+
+export default function WatchSeriesPage() {
+  const { slug } = useParams<{ slug: string }>();
+  const searchParams = useSearchParams();
+  const seasonParam = parseInt(searchParams.get("season") || "1");
+  const episodeParam = parseInt(searchParams.get("episode") || "1");
+
+  const { data: series, isLoading } = useQuery<SeriesDetail>({
+    queryKey: ["series", slug],
+    queryFn: async () => {
+      const res = await fetch(`/api/series/${slug}`);
+      if (!res.ok) throw new Error("Failed to fetch series");
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const currentEpisode = series?.seasons
+    .find((s) => s.seasonNumber === seasonParam)
+    ?.episodes.find((e) => e.episodeNumber === episodeParam);
+
+  const allEpisodes = series?.seasons.flatMap((s) => s.episodes) ?? [];
+  const currentIndex = currentEpisode
+    ? allEpisodes.findIndex((e) => e.id === currentEpisode.id)
+    : -1;
+  const nextEpisode = currentIndex >= 0 && currentIndex < allEpisodes.length - 1
+    ? allEpisodes[currentIndex + 1]
+    : null;
+
+  function getNextEpisodeUrl(): string | undefined {
+    if (!nextEpisode) return undefined;
+    const season = series?.seasons.find((s) =>
+      s.episodes.some((e) => e.id === nextEpisode.id)
+    );
+    if (!season) return undefined;
+    return `/watch/series/${slug}?season=${season.seasonNumber}&episode=${nextEpisode.episodeNumber}`;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 z-60 bg-black flex items-center justify-center">
+        <Skeleton className="size-16 rounded-full" />
+      </div>
+    );
+  }
+
+  if (!series || !currentEpisode || !currentEpisode.videoUrl) {
+    return (
+      <div className="fixed inset-0 z-60 bg-black flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <p className="text-muted-foreground">
+            {!series
+              ? "Series not found."
+              : !currentEpisode
+                ? "Episode not found."
+                : "This episode isn't available yet."}
+          </p>
+          <Link
+            href={`/series/${slug}`}
+            className="inline-flex items-center gap-1 rounded-md border border-input bg-transparent px-4 h-9 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+          >
+            <ArrowLeftIcon className="size-4" />
+            Back to series
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const episodeTitle = `S${seasonParam}:E${episodeParam} - ${currentEpisode.title}`;
+
+  return (
+    <StreamflixPlayer
+      src={currentEpisode.videoUrl}
+      poster={currentEpisode.thumbnailUrl || currentEpisode.backdropUrl || series.thumbnailUrl}
+      title={episodeTitle}
+      metadata={{
+        year: series.releaseDate ? new Date(series.releaseDate).getFullYear().toString() : undefined,
+        duration: currentEpisode.durationSeconds ? Math.floor(currentEpisode.durationSeconds / 60).toString() : undefined,
+        synopsis: currentEpisode.description || undefined,
+      }}
+      onBack={() => window.history.back()}
+      nextEpisode={nextEpisode ? {
+        title: nextEpisode.title,
+        thumbnail: nextEpisode.thumbnailUrl || undefined,
+        onPlay: () => {
+          const url = getNextEpisodeUrl();
+          if (url) window.location.href = url;
+        },
+      } : undefined}
+      episodeSelector={
+        series.seasons.map((s) => ({
+          seasonNumber: s.seasonNumber,
+          episodes: s.episodes.map((e) => ({
+            episodeNumber: e.episodeNumber,
+            title: e.title,
+            slug: e.slug,
+            isActive: e.id === currentEpisode.id,
+            href: `/watch/series/${slug}?season=${s.seasonNumber}&episode=${e.episodeNumber}`,
+          })),
+        }))
+      }
+    />
+  );
+}
