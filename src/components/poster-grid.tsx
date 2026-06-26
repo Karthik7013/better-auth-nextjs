@@ -30,6 +30,7 @@ const PosterCard = ({ url, index, priority }: PosterCardProps) => (
       fill
       priority={priority}
       fetchPriority={priority ? "high" : "auto"}
+      loading={priority ? "eager" : "lazy"}
       sizes="(max-width: 768px) 20vw, 10vw"
       className="object-cover opacity-80"
     />
