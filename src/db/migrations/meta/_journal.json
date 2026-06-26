@@ -57,6 +57,13 @@
       "when": 1782451014813,
       "tag": "0007_noisy_spiral",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1782473348111,
+      "tag": "0008_drop-watch-history",
+      "breakpoints": true
     }
   ]
 }

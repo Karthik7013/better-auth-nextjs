@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/error-state";
 import type { HeroCarouselItem } from "@/components/hero-carousel";
-import WatchMovies from "./watch-movies";
 import RecentMovies from "./recent-movies";
 import type { HomeMovie } from "./types";
 
@@ -52,7 +51,6 @@ export default function HomeContent() {
       <section className="pb-6">
         <HeroCarousel items={featuredData?.featured ?? []} />
       </section>
-      <WatchMovies />
       <RecentMovies movies={recentData?.recentlyAdded ?? []} />
     </>
   );

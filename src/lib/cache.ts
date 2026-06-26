@@ -41,7 +41,6 @@ const INVALIDATION_KEYS = {
   featured: ["home:featured"],
   tags: ["tags:all", "related:*"],
   favorites: ["favorites:*"],
-  history: ["history:*", "continue-watching:*"],
   requests: ["requests:*"],
   series: ["series:*", "series-list:*"],
 } as const;

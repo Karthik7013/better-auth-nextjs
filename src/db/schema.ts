@@ -141,22 +141,6 @@ export const featuredMovies = pgTable("featured_movies", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const watchHistory = pgTable("watch_history", {
-  id: serial("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  movieId: integer("movie_id")
-    .notNull()
-    .references(() => movies.id, { onDelete: "cascade" }),
-  progressSeconds: integer("progress_seconds").default(0).notNull(),
-  isCompleted: boolean("is_completed").default(false).notNull(),
-  watchedAt: timestamp("watched_at").defaultNow().notNull(),
-}, (t) => [
-  uniqueIndex("unique_user_movie").on(t.userId, t.movieId),
-  index("idx_watch_history_user_recent").on(t.userId, t.watchedAt),
-]);
-
 export const favorites = pgTable("favorites", {
   userId: text("user_id")
     .notNull()
