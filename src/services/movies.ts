@@ -217,8 +217,10 @@ export async function createMovie(data: {
   durationSeconds?: number | null;
   releaseDate?: string | null;
   tagIds?: number[];
+  tmdbId?: number | null;
+  originalLanguage?: string | null;
 }) {
-  const { title, slug, description, videoUrl, thumbnailUrl, backdropUrl, durationSeconds, releaseDate, tagIds } = data;
+  const { title, slug, description, videoUrl, thumbnailUrl, backdropUrl, durationSeconds, releaseDate, tagIds, tmdbId, originalLanguage } = data;
 
   const [createdMovie] = await db
     .insert(movies)
@@ -231,6 +233,8 @@ export async function createMovie(data: {
       backdropUrl: backdropUrl ?? null,
       durationSeconds: durationSeconds ?? null,
       releaseDate: releaseDate ?? null,
+      tmdbId: tmdbId ?? null,
+      originalLanguage: originalLanguage ?? null,
     })
     .returning();
 
@@ -254,9 +258,11 @@ export async function updateMovie(
     durationSeconds?: number | null;
     releaseDate?: string | null;
     tagIds?: number[];
+    tmdbId?: number | null;
+    originalLanguage?: string | null;
   }
 ) {
-  const { title, slug, description, videoUrl, thumbnailUrl, backdropUrl, durationSeconds, releaseDate, tagIds } = data;
+  const { title, slug, description, videoUrl, thumbnailUrl, backdropUrl, durationSeconds, releaseDate, tagIds, tmdbId, originalLanguage } = data;
 
   const [existingMovie] = await db.select().from(movies).where(eq(movies.id, movieId)).limit(1);
   if (!existingMovie) return null;
@@ -278,6 +284,8 @@ export async function updateMovie(
   if (backdropUrl !== undefined) updateData.backdropUrl = backdropUrl;
   if (durationSeconds !== undefined) updateData.durationSeconds = durationSeconds;
   if (releaseDate !== undefined) updateData.releaseDate = releaseDate;
+  if (tmdbId !== undefined) updateData.tmdbId = tmdbId;
+  if (originalLanguage !== undefined) updateData.originalLanguage = originalLanguage;
 
   if (Object.keys(updateData).length > 0) {
     updateData.updatedAt = new Date();

@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { UploadField } from "@/components/upload-field"
+import { TmdbSearch, type TmdbImportResult } from "@/components/tmdb-search"
 import { movieFormSchema, type MovieFormData } from "@/lib/schemas"
 
 interface Tag {
@@ -36,6 +37,7 @@ interface MovieDialogProps {
 export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSuccess }: MovieDialogProps) {
   const [editingMovie, setEditingMovie] = useState<{ id: number } | null>(null)
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false)
+  const [showTmdbSearch, setShowTmdbSearch] = useState(false)
   const prevOpen = useRef(open)
   const stagedUrls = useRef<Set<string>>(new Set())
   const initialUrls = useRef<Set<string>>(new Set())
@@ -71,6 +73,8 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
       durationSeconds: "",
       releaseDate: "",
       tagIds: [],
+      tmdbId: undefined,
+      originalLanguage: "",
     },
   })
 
@@ -147,6 +151,7 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
     if (open && !prevOpen.current) {
       stagedUrls.current = new Set()
       justSaved.current = false
+      setShowTmdbSearch(false)
 
       if (initialData) {
         initialUrls.current = new Set(
@@ -162,6 +167,8 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
           durationSeconds: initialData.durationSeconds ?? "",
           releaseDate: initialData.releaseDate ?? "",
           tagIds: initialData.tagIds ?? [],
+          tmdbId: initialData.tmdbId ?? undefined,
+          originalLanguage: initialData.originalLanguage ?? "",
         })
         setSlugManuallyEdited(!!initialData.slug)
         setEditingMovie(editMovieId ? { id: editMovieId } : null)
@@ -179,6 +186,28 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
 
   function onSubmit(data: MovieFormData) {
     saveMovie(data)
+  }
+
+  function handleTmdbImport(data: TmdbImportResult) {
+    setValue("title", data.title)
+    setValue("slug", generateSlug(data.title))
+    setValue("description", data.overview)
+    setValue("releaseDate", data.releaseDate)
+    setValue("originalLanguage", data.originalLanguage)
+    setValue("tmdbId", data.tmdbId)
+    if (data.durationSeconds) {
+      setValue("durationSeconds", String(data.durationSeconds))
+    }
+    if (data.thumbnailUrl) {
+      setValue("thumbnailUrl", data.thumbnailUrl)
+      stagedUrls.current.add(data.thumbnailUrl)
+    }
+    if (data.backdropUrl) {
+      setValue("backdropUrl", data.backdropUrl)
+      stagedUrls.current.add(data.backdropUrl)
+    }
+    setSlugManuallyEdited(true)
+    setShowTmdbSearch(false)
   }
 
   function handleUploadChange(field: "thumbnailUrl" | "backdropUrl", url: string) {
@@ -209,6 +238,26 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant={showTmdbSearch ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowTmdbSearch(!showTmdbSearch)}
+              >
+                {showTmdbSearch ? "Close TMDB Search" : "Search TMDB"}
+              </Button>
+              {showTmdbSearch && (
+                <p className="text-xs text-muted-foreground">
+                  Import movie data from The Movie Database
+                </p>
+              )}
+            </div>
+            {showTmdbSearch && (
+              <div className="rounded-lg border bg-muted/30 p-3">
+                <TmdbSearch onImport={handleTmdbImport} />
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Title</label>

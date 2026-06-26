@@ -50,6 +50,8 @@ export const movieFormSchema = z.object({
   durationSeconds: z.string().optional().or(z.literal("")),
   releaseDate: z.string().optional().or(z.literal("")),
   tagIds: z.array(z.number()),
+  tmdbId: z.number().optional(),
+  originalLanguage: z.string().optional().or(z.literal("")),
 })
 
 export const deleteAccountSchema = z.object({
