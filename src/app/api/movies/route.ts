@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       total: result.total,
       page,
       hasMore: page * limit < result.total,
-    });
+    }, { headers: { "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600" } });
   } catch {
     return NextResponse.json({ error: "Query Failed" }, { status: 500 });
   }

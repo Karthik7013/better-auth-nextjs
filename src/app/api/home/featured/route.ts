@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const featured = await getFeatured();
-    return NextResponse.json({ featured });
+    return NextResponse.json({ featured }, { headers: { "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600" } });
   } catch (e) {
     console.error("api/home/featured error:", e instanceof Error ? e.message : e);
     return NextResponse.json(

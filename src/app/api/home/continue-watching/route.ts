@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       () => getContinueWatching(session.user.id)
     );
 
-    return NextResponse.json({ continueWatching });
+    return NextResponse.json({ continueWatching }, { headers: { "Cache-Control": "private, max-age=60, s-maxage=0" } });
   } catch (e) {
     console.error("api/home/continue-watching error:", e instanceof Error ? e.message : e);
     return NextResponse.json(
