@@ -3,7 +3,6 @@
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { NavigationProgress } from "@/components/navigation-progress";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 
@@ -48,7 +47,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <NavigationProgress />
         <SessionWatcher>{children}</SessionWatcher>
       </TooltipProvider>
     </QueryClientProvider>
