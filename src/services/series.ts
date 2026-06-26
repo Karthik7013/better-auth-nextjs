@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { series, seasons, episodes, seriesTags, tags } from "@/db/schema";
 import { eq, and, inArray, asc, desc, ilike, sql, count } from "drizzle-orm";
 import { invalidateCache } from "@/lib/cache";
+import { validateSlug } from "@/lib/validation";
 
 export interface SeriesRow {
   id: number;
@@ -79,13 +80,6 @@ const seriesFilterableColumns: Record<string, any> = {
   slug: series.slug,
   description: series.description,
 };
-
-export function validateSlug(slug: string): string | null {
-  if (!/^[a-z0-9-]+$/.test(slug) || slug.length === 0) {
-    return "Slug must contain only lowercase letters, numbers, and hyphens";
-  }
-  return null;
-}
 
 export async function createSeries(data: {
   title: string;

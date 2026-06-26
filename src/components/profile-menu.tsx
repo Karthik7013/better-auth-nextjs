@@ -1,7 +1,7 @@
 "use client";
 
-import { authClient } from "@/lib/auth-client";
 import { useAuthLogout } from "@/lib/use-auth-logout";
+import { useSession } from "@/hooks/use-session";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 
 export function ProfileMenu() {
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending } = useSession();
   const { logout, isLoggingOut } = useAuthLogout();
 
   return (

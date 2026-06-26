@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { getCachedSession } from "@/lib/session";
-import { createSeries, listAdminSeries, validateSlug } from "@/services/series";
+import { createSeries, listAdminSeries } from "@/services/series";
+import { validateSlug } from "@/lib/validation";
+import { parseAdminListParams } from "@/lib/api-utils";
 
 export async function GET(request: NextRequest) {
   const session = await getCachedSession(request);
@@ -9,19 +11,7 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = new URL(request.url);
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "20");
-  const search = searchParams.get("search") || undefined;
-  const sortBy = searchParams.get("sortBy") || undefined;
-  const sortDir = (searchParams.get("sortDir") as "asc" | "desc") || undefined;
-
-  const columnFilters: Record<string, string> = {};
-  for (const [key, val] of searchParams.entries()) {
-    if (!["page", "limit", "search", "sortBy", "sortDir"].includes(key)) {
-      columnFilters[key] = val;
-    }
-  }
-
+  const { page, limit, search, sortBy, sortDir, columnFilters } = parseAdminListParams(searchParams);
   const result = await listAdminSeries({ page, limit, search, sortBy, sortDir, columnFilters });
   return Response.json(result);
 }

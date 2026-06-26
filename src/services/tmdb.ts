@@ -1,4 +1,4 @@
-import { uploadToIA } from "./upload";
+import { uploadToIA } from "@/lib/upload-utils";
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY!;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";

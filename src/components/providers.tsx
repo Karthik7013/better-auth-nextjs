@@ -3,12 +3,12 @@
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
+import { useSession } from "@/hooks/use-session";
 
 function SessionWatcher({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending } = useSession();
   const prevSessionRef = useRef(session);
   const initialisedRef = useRef(false);
 

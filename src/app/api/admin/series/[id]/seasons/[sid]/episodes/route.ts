@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getCachedSession } from "@/lib/session";
-import { getEpisodesBySeasonId, createEpisode, validateSlug } from "@/services/series";
+import { getEpisodesBySeasonId, createEpisode } from "@/services/series";
+import { validateSlug } from "@/lib/validation";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string; sid: string }> }) {
   const session = await getCachedSession(request);

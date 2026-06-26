@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
-import { updateMovie, deleteMovie, validateSlug, validateDuration } from "@/services/movies";
+import { updateMovie, deleteMovie } from "@/services/movies";
+import { validateSlug, validateDuration } from "@/lib/validation";
 
 export async function PUT(
   request: NextRequest,

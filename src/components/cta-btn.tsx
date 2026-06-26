@@ -1,12 +1,12 @@
 "use client"
 
 import { Button } from "@/components/ui/button";
-import { authClient } from "@/lib/auth-client";
 import { ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "@/hooks/use-session";
 
 export default function CtaBtn() {
-    const { data: session, isPending } = authClient.useSession();
+    const { data: session, isPending } = useSession();
 
     return <div className="flex flex-col w-full sm:w-auto gap-4 font-medium sm:flex-row mt-4">
 

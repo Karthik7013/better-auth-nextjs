@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getCachedSession } from "@/lib/session";
-import { getAdminSeriesById, updateSeries, deleteSeries, validateSlug } from "@/services/series";
+import { getAdminSeriesById, updateSeries, deleteSeries } from "@/services/series";
+import { validateSlug } from "@/lib/validation";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getCachedSession(request);

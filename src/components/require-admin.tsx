@@ -1,12 +1,12 @@
 "use client";
 
-import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { useSession } from "@/hooks/use-session";
 
 export function RequireAdmin({ children }: { children: React.ReactNode }) {
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending } = useSession();
   const router = useRouter();
 
   useEffect(() => {

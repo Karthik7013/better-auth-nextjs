@@ -3,7 +3,8 @@ import { movies, movieTags, tags, favorites } from "@/db/schema";
 import { eq, and, ne, inArray, asc, desc, ilike, sql, count } from "drizzle-orm";
 import { invalidateCache } from "@/lib/cache";
 import { deleteFromIA } from "@/lib/upload-utils";
-import { buildIAUrl } from "@/services/upload";
+import { buildIAUrl } from "@/lib/upload-utils";
+import { validateSlug, validateDuration } from "@/lib/validation";
 
 interface MovieRow {
   id: number;
@@ -408,22 +409,7 @@ export async function listAdminMovies(args: {
   };
 }
 
-export function validateSlug(slug: string): string | null {
-  if (!/^[a-z0-9-]+$/.test(slug) || slug.length === 0) {
-    return "Slug must contain only lowercase letters, numbers, and hyphens";
-  }
-  return null;
-}
-
-export function validateDuration(duration: unknown): string | null {
-  if (
-    duration !== undefined &&
-    (typeof duration !== "number" || isNaN(duration) || duration < 0)
-  ) {
-    return "Invalid duration";
-  }
-  return null;
-}
+export { validateSlug, validateDuration };
 
 export function movieDetailToResponse(movie: NonNullable<Awaited<ReturnType<typeof getMovieBySlug>>>, isFavorited: boolean): MovieDetail {
   return { ...movie, isFavorited };
