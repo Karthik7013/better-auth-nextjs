@@ -75,6 +75,7 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
                 alt={item.title}
                 fill
                 priority={i === 0}
+                fetchPriority={i === 0 ? "high" : "auto"}
                 sizes="100vw"
                 className="object-cover md:hidden"
                 referrerPolicy="no-referrer"
@@ -85,6 +86,7 @@ export function HeroCarousel({ items }: HeroCarouselProps) {
                 alt={item.title}
                 fill
                 priority={i === 0}
+                fetchPriority={i === 0 ? "high" : "auto"}
                 sizes="100vw"
                 className="hidden md:block object-cover"
                 referrerPolicy="no-referrer"
