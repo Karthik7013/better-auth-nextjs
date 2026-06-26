@@ -1,9 +1,6 @@
 import { NextRequest } from "next/server";
 import { getCachedSession } from "@/lib/session";
-import { db } from "@/db";
-import { series, seriesTags, tags } from "@/db/schema";
-import { eq, inArray } from "drizzle-orm";
-import { updateSeries, deleteSeries, validateSlug } from "@/services/series";
+import { getAdminSeriesById, updateSeries, deleteSeries, validateSlug } from "@/services/series";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getCachedSession(request);
@@ -15,16 +12,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const seriesId = parseInt(id);
   if (isNaN(seriesId)) return Response.json({ error: "Invalid ID" }, { status: 400 });
 
-  const [seriesRow] = await db.select().from(series).where(eq(series.id, seriesId)).limit(1);
-  if (!seriesRow) return Response.json({ error: "Series not found" }, { status: 404 });
+  const result = await getAdminSeriesById(seriesId);
+  if (!result) return Response.json({ error: "Series not found" }, { status: 404 });
 
-  const tagRows = await db
-    .select({ id: tags.id, name: tags.name })
-    .from(tags)
-    .innerJoin(seriesTags, eq(tags.id, seriesTags.tagId))
-    .where(eq(seriesTags.seriesId, seriesId));
-
-  return Response.json({ ...seriesRow, tags: tagRows });
+  return Response.json(result);
 }
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

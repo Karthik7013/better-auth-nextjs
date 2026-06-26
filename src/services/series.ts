@@ -390,6 +390,50 @@ export async function getSeriesBySlug(slug: string) {
   };
 }
 
+export async function getAdminSeriesById(id: number) {
+  const [seriesRow] = await db.select().from(series).where(eq(series.id, id)).limit(1);
+  if (!seriesRow) return null;
+
+  const tagRows = await db
+    .select({ id: tags.id, name: tags.name })
+    .from(tags)
+    .innerJoin(seriesTags, eq(tags.id, seriesTags.tagId))
+    .where(eq(seriesTags.seriesId, id));
+
+  return { ...seriesRow, tags: tagRows };
+}
+
+export async function getSeasonsBySeriesId(seriesId: number) {
+  const seasonRows = await db
+    .select()
+    .from(seasons)
+    .where(eq(seasons.seriesId, seriesId))
+    .orderBy(asc(seasons.seasonNumber));
+
+  const episodeCounts = await db
+    .select({ seasonId: seasons.id, value: count() })
+    .from(seasons)
+    .leftJoin(episodes, eq(episodes.seasonId, seasons.id))
+    .where(eq(seasons.seriesId, seriesId))
+    .groupBy(seasons.id);
+
+  const countMap: Record<number, number> = {};
+  for (const row of episodeCounts) countMap[row.seasonId] = Number(row.value);
+
+  return seasonRows.map((s) => ({
+    ...s,
+    episodeCount: countMap[s.id] || 0,
+  }));
+}
+
+export async function getEpisodesBySeasonId(seasonId: number) {
+  return db
+    .select()
+    .from(episodes)
+    .where(eq(episodes.seasonId, seasonId))
+    .orderBy(asc(episodes.episodeNumber));
+}
+
 export async function createSeason(seriesId: number, data: {
   seasonNumber?: number;
   title?: string | null;
