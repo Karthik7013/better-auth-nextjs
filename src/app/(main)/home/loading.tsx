@@ -7,11 +7,14 @@ export default function HomeLoading() {
 
         <section className="p-4">
           <Skeleton className="h-6 w-44 mb-4" />
-          <div className="flex gap-4 overflow-x-auto pb-2">
+          <div className="flex gap-4 overflow-x-auto pb-2 pl-8">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="shrink-0 w-48 space-y-2">
-                <Skeleton className="aspect-2/3 rounded-lg" />
-                <Skeleton className="h-4 w-24" />
+              <div key={i} className="shrink-0 w-64 space-y-2">
+                <div className="flex items-start">
+                  <Skeleton className="h-24 w-16 mr-2" />
+                  <Skeleton className="aspect-3/4 flex-1 rounded-lg" />
+                </div>
+                <Skeleton className="h-4 w-32" />
               </div>
             ))}
           </div>

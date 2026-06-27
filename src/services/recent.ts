@@ -12,5 +12,5 @@ export async function getRecentlyAdded() {
     })
     .from(movies)
     .orderBy(desc(movies.createdAt))
-    .limit(12);
+    .limit(10);
 }
