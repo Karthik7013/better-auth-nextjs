@@ -21,6 +21,7 @@ interface MovieDetail {
   videoUrl: string | null;
   thumbnailUrl: string;
   backdropUrl: string | null;
+  trailerUrl: string | null;
   durationSeconds: number | null;
   releaseDate: string | null;
   tags: { id: number; name: string }[];
@@ -38,6 +39,7 @@ export async function getMovieBySlug(slug: string) {
         videoUrl: movies.videoUrl,
         thumbnailUrl: movies.thumbnailUrl,
         backdropUrl: movies.backdropUrl,
+        trailerUrl: movies.trailerUrl,
         durationSeconds: movies.durationSeconds,
         releaseDate: movies.releaseDate,
       })
@@ -216,13 +218,14 @@ export async function createMovie(data: {
   videoUrl?: string | null;
   thumbnailUrl?: string;
   backdropUrl?: string | null;
+  trailerUrl?: string | null;
   durationSeconds?: number | null;
   releaseDate?: string | null;
   tagIds?: number[];
   tmdbId?: number | null;
   originalLanguage?: string | null;
 }) {
-  const { title, slug, description, videoUrl, thumbnailUrl, backdropUrl, durationSeconds, releaseDate, tagIds, tmdbId, originalLanguage } = data;
+  const { title, slug, description, videoUrl, thumbnailUrl, backdropUrl, trailerUrl, durationSeconds, releaseDate, tagIds, tmdbId, originalLanguage } = data;
 
   const computedVideoUrl = videoUrl || (releaseDate
     ? buildIAUrl(`movies/${new Date(releaseDate).getFullYear()}/${slug}/videos/movie.mp4`)
@@ -237,6 +240,7 @@ export async function createMovie(data: {
       videoUrl: computedVideoUrl,
       thumbnailUrl: thumbnailUrl ?? "",
       backdropUrl: backdropUrl ?? null,
+      trailerUrl: trailerUrl ?? null,
       durationSeconds: durationSeconds ?? null,
       releaseDate: releaseDate ?? null,
       tmdbId: tmdbId ?? null,
@@ -261,6 +265,7 @@ export async function updateMovie(
     videoUrl?: string | null;
     thumbnailUrl?: string;
     backdropUrl?: string | null;
+    trailerUrl?: string | null;
     durationSeconds?: number | null;
     releaseDate?: string | null;
     tagIds?: number[];
@@ -268,7 +273,7 @@ export async function updateMovie(
     originalLanguage?: string | null;
   }
 ) {
-  const { title, slug, description, videoUrl, thumbnailUrl, backdropUrl, durationSeconds, releaseDate, tagIds, tmdbId, originalLanguage } = data;
+  const { title, slug, description, videoUrl, thumbnailUrl, backdropUrl, trailerUrl, durationSeconds, releaseDate, tagIds, tmdbId, originalLanguage } = data;
 
   const [existingMovie] = await db.select().from(movies).where(eq(movies.id, movieId)).limit(1);
   if (!existingMovie) return null;
@@ -288,6 +293,7 @@ export async function updateMovie(
   if (videoUrl !== undefined) updateData.videoUrl = videoUrl;
   if (thumbnailUrl !== undefined) updateData.thumbnailUrl = thumbnailUrl;
   if (backdropUrl !== undefined) updateData.backdropUrl = backdropUrl;
+  if (trailerUrl !== undefined) updateData.trailerUrl = trailerUrl;
   if (durationSeconds !== undefined) updateData.durationSeconds = durationSeconds;
   if (releaseDate !== undefined) updateData.releaseDate = releaseDate;
   if (tmdbId !== undefined) updateData.tmdbId = tmdbId;

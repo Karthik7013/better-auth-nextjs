@@ -79,6 +79,7 @@ export const movies = pgTable("movies", {
   tmdbId: integer("tmdb_id").unique(),
   originalLanguage: varchar("original_language", { length: 10 }),
   backdropUrl: text("backdrop_url"),
+  trailerUrl: text("trailer_url"),
 });
 
 export const people = pgTable("people", {

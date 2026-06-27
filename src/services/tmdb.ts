@@ -4,6 +4,22 @@ const TMDB_API_KEY = process.env.TMDB_API_KEY!;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p";
 
+async function fetchWithRetry(url: string, init?: RequestInit, retries = 2): Promise<Response> {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await fetch(url, { ...init, signal: AbortSignal.timeout(15000) });
+    } catch (err) {
+      if (i === retries) throw err;
+      const isRetryable =
+        err instanceof TypeError ||
+        ((err as any)?.code?.startsWith?.("UND_ERR") || (err as any)?.code === "ECONNRESET");
+      if (!isRetryable) throw err;
+      await new Promise((r) => setTimeout(r, 1000 * (i + 1)));
+    }
+  }
+  throw new Error("Unreachable");
+}
+
 interface TMDBMovieResult {
   id: number;
   title: string;
@@ -28,7 +44,7 @@ export interface TMDBMovieDetails {
 }
 
 export async function searchTMDB(query: string): Promise<TMDBMovieResult[]> {
-  const res = await fetch(
+  const res = await fetchWithRetry(
     `${TMDB_BASE_URL}/search/movie?query=${encodeURIComponent(query)}&language=en-US&page=1&api_key=${TMDB_API_KEY}`,
     {
       headers: { accept: "application/json" },
@@ -49,7 +65,7 @@ export async function searchTMDB(query: string): Promise<TMDBMovieResult[]> {
 }
 
 export async function getTMDBMovieDetails(tmdbId: number): Promise<TMDBMovieDetails> {
-  const res = await fetch(`${TMDB_BASE_URL}/movie/${tmdbId}?language=en-US&api_key=${TMDB_API_KEY}`, {
+  const res = await fetchWithRetry(`${TMDB_BASE_URL}/movie/${tmdbId}?language=en-US&api_key=${TMDB_API_KEY}`, {
     headers: { accept: "application/json" },
   });
   if (!res.ok) throw new Error("TMDB details fetch failed");
@@ -67,6 +83,28 @@ export async function getTMDBMovieDetails(tmdbId: number): Promise<TMDBMovieDeta
   };
 }
 
+export async function getTMDBMovieTrailer(tmdbId: number): Promise<string | null> {
+  try {
+    const res = await fetchWithRetry(
+      `${TMDB_BASE_URL}/movie/${tmdbId}/videos?language=en-US&api_key=${TMDB_API_KEY}`,
+      { headers: { accept: "application/json" } },
+      1
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const videos: { site: string; type: string; key: string }[] = data.results ?? [];
+    const trailer = videos.find(
+      (v) => v.site === "YouTube" && v.type === "Trailer"
+    ) ?? videos.find(
+      (v) => v.site === "YouTube" && v.type === "Teaser"
+    );
+    if (!trailer) return null;
+    return `https://www.youtube.com/embed/${trailer.key}`;
+  } catch {
+    return null;
+  }
+}
+
 export async function downloadAndUploadImage(
   tmdbPath: string | null,
   folder: string
@@ -75,7 +113,12 @@ export async function downloadAndUploadImage(
   const size = folder === "backdrops" ? "w1280" : "w500";
   const imageUrl = `${TMDB_IMAGE_BASE}/${size}${tmdbPath}`;
 
-  const imageRes = await fetch(imageUrl);
+  let imageRes: Response;
+  try {
+    imageRes = await fetchWithRetry(imageUrl, undefined, 1);
+  } catch {
+    return null;
+  }
   if (!imageRes.ok) return null;
 
   const buffer = Buffer.from(await imageRes.arrayBuffer());
@@ -83,6 +126,10 @@ export async function downloadAndUploadImage(
   const ext = contentType === "image/png" ? "png" : "jpg";
   const fileName = `tmdb-${Date.now()}.${ext}`;
 
-  const { publicUrl } = await uploadToIA({ fileName, buffer, contentType, folder });
-  return publicUrl;
+  try {
+    const { publicUrl } = await uploadToIA({ fileName, buffer, contentType, folder });
+    return publicUrl;
+  } catch {
+    return null;
+  }
 }

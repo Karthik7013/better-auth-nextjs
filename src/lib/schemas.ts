@@ -47,6 +47,7 @@ export const movieFormSchema = z.object({
   videoUrl: z.string().optional().or(z.literal("")),
   thumbnailUrl: z.string().optional().or(z.literal("")),
   backdropUrl: z.string().optional().or(z.literal("")),
+  trailerUrl: z.string().optional().or(z.literal("")),
   durationSeconds: z.string().optional().or(z.literal("")),
   releaseDate: z.string().optional().or(z.literal("")),
   tagIds: z.array(z.number()),

@@ -17,6 +17,7 @@ export interface TmdbImportResult {
   durationSeconds: number | null
   thumbnailUrl: string | null
   backdropUrl: string | null
+  trailerUrl: string | null
 }
 
 interface TmdbSearchResult {

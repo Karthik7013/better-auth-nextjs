@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter, useParams, notFound } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import { Play, Heart } from "lucide-react";
+import { Play, Heart, Share2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BackButton } from "@/components/back-button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { formatMinutes, formatYear } from "@/lib/format";
 import { RelatedMovies } from "./related-movies";
 
@@ -17,6 +19,7 @@ interface MovieData {
   videoUrl: string | null;
   thumbnailUrl: string;
   backdropUrl: string | null;
+  trailerUrl: string | null;
   durationSeconds: number | null;
   releaseDate: string | null;
   tags: { id: number; name: string }[];
@@ -81,6 +84,8 @@ export function MovieDetailClient() {
       queryClient.invalidateQueries({ queryKey: ["favorites"] });
     },
   });
+
+  const [showTrailer, setShowTrailer] = useState(false);
 
   if (isLoading && !movie) {
     return (
@@ -153,6 +158,12 @@ export function MovieDetailClient() {
   const releaseYear = formatYear(display.releaseDate);
   const isFavorited = movie?.isFavorited ?? false;
 
+  function handleShare() {
+    if (typeof navigator !== "undefined" && navigator.share) {
+      navigator.share({ title: display.title, url: window.location.href }).catch(() => { });
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="relative h-[85vh] min-h-125 w-full overflow-hidden mb-16">
@@ -175,58 +186,107 @@ export function MovieDetailClient() {
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 z-10 p-6 md:p-12 lg:p-16">
-          <div className="max-w-3xl space-y-4">
-            <div className="flex flex-wrap items-center gap-3 text-sm">
-              {releaseYear && (
-                <>
-                  <span className="text-white/90 font-medium">{releaseYear}</span>
-                  <span className="text-white/30">&bull;</span>
-                </>
+          <div className="flex gap-x-10">
+            <div className="relative z-30 hidden sm:block w-28 sm:w-36 md:w-44 aspect-2/3 rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10 group">
+              <Image
+                src={display.thumbnailUrl}
+                alt={display.title}
+                fill
+                className="object-cover"
+                priority
+                sizes="(max-width: 640px) 112px, (max-width: 768px) 144px, 176px"
+              />
+              {display.trailerUrl && (
+                <button
+                  onClick={() => setShowTrailer(true)}
+                  className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                >
+                  <div className="flex size-12 items-center justify-center rounded-full bg-white/10 shadow-lg">
+                    <Play className="ml-0.5 size-6 " />
+                  </div>
+                </button>
               )}
-              {durationMin && (
-                <>
-                  <span className="text-white/90 font-medium">{durationMin} min</span>
-                  <span className="text-white/30">&bull;</span>
-                </>
-              )}
-              {display.tags?.map((tag: { id: number; name: string }) => (
-                <span key={tag.id} className="border border-white/20 px-2 py-0.5 rounded text-xs text-white/80">
-                  {tag.name}
-                </span>
-              ))}
-              <span className="border border-white/20 px-2 py-0.5 rounded text-xs text-white/80 uppercase tracking-wide">
-                HD
-              </span>
             </div>
+            <div className="max-w-3xl space-y-4">
 
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight drop-shadow-lg">
-              {display.title}
-            </h1>
+              <div className="flex flex-wrap items-center gap-3 text-sm">
+                {releaseYear && (
+                  <>
+                    <span className="text-white/90 font-medium">{releaseYear}</span>
+                    <span className="text-white/30">&bull;</span>
+                  </>
+                )}
+                {durationMin && (
+                  <>
+                    <span className="text-white/90 font-medium">{durationMin} min</span>
+                    <span className="text-white/30">&bull;</span>
+                  </>
+                )}
+                {display.tags?.map((tag: { id: number; name: string }) => (
+                  <span key={tag.id} className="border border-white/20 px-2 py-0.5 rounded text-xs text-white/80">
+                    {tag.name}
+                  </span>
+                ))}
+                <span className="border border-white/20 px-2 py-0.5 rounded text-xs text-white/80 uppercase tracking-wide">
+                  HD
+                </span>
+              </div>
 
-            <p className="text-sm md:text-base text-white/80 leading-relaxed line-clamp-2 md:line-clamp-3 max-w-2xl drop-shadow-md">
-              {display.description}
-            </p>
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight drop-shadow-lg">
+                {display.title}
+              </h1>
 
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                onClick={() => router.push(`/watch/${slug}`)}
-                className="flex items-center gap-2 bg-white text-black px-6 py-2.5 rounded font-bold text-sm hover:bg-white/90 transition-all active:scale-95 shadow-lg"
-              >
-                <Play className="size-5 fill-black" />
-                Play
-              </button>
-              <button
-                onClick={() => toggleFavorite.mutate()}
-                className="flex items-center justify-center border-2 border-white/40 text-white rounded-full size-10 hover:border-white hover:bg-white/10 transition-all active:scale-90"
-              >
-                <Heart
-                  className={`size-5 ${isFavorited ? "fill-destructive text-destructive" : "text-white"}`}
-                />
-              </button>
+              <p className="text-sm md:text-base text-white/80 leading-relaxed line-clamp-2 md:line-clamp-3 max-w-2xl drop-shadow-md">
+                {display.description}
+              </p>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  onClick={() => router.push(`/watch/${slug}`)}
+                  className="flex items-center gap-2 bg-white text-black px-6 py-2.5 rounded font-bold text-sm hover:bg-white/90 transition-all active:scale-95 shadow-lg"
+                >
+                  <Play className="size-5 fill-black" />
+                  Play
+                </button>
+                <button
+                  onClick={() => toggleFavorite.mutate()}
+                  className="flex items-center justify-center border-2 border-white/40 text-white rounded-full size-10 hover:border-white hover:bg-white/10 transition-all active:scale-90"
+                >
+                  <Heart
+                    className={`size-5 ${isFavorited ? "fill-destructive text-destructive" : "text-white"}`}
+                  />
+                </button>
+                <button
+                  onClick={handleShare}
+                  className="flex items-center justify-center border-2 border-white/40 text-white rounded-full size-10 hover:border-white hover:bg-white/10 transition-all active:scale-90"
+                >
+                  <Share2 className="size-5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+
+
+
+
+      {display.trailerUrl && (
+      <Dialog open={showTrailer} onOpenChange={setShowTrailer}>
+          <DialogContent className="sm:max-w-4xl p-0 overflow-hidden bg-black">
+          <div className="aspect-video">
+            <iframe
+                src={`${display.trailerUrl}?autoplay=1`}
+                title="Trailer"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="size-full"
+              />
+          </div>
+        </DialogContent>
+      </Dialog>
+      )}
 
       <div className="px-6 md:px-12 lg:px-16 -mt-10 relative z-20">
         <div className="max-w-4xl mx-auto space-y-6 pb-16">

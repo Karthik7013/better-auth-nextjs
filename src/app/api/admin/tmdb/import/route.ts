@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
-import { getTMDBMovieDetails, downloadAndUploadImage } from "@/services/tmdb";
+import { getTMDBMovieDetails, downloadAndUploadImage, getTMDBMovieTrailer } from "@/services/tmdb";
 
 export async function POST(request: NextRequest) {
   const session = await getCachedSession(request);
@@ -16,9 +16,10 @@ export async function POST(request: NextRequest) {
 
     const details = await getTMDBMovieDetails(tmdbId);
 
-    const [thumbnailUrl, backdropUrl] = await Promise.all([
+    const [thumbnailUrl, backdropUrl, trailerUrl] = await Promise.all([
       downloadAndUploadImage(details.poster_path, "thumbnails"),
       downloadAndUploadImage(details.backdrop_path, "backdrops"),
+      getTMDBMovieTrailer(tmdbId),
     ]);
 
     return NextResponse.json({
@@ -30,6 +31,7 @@ export async function POST(request: NextRequest) {
       durationSeconds: details.runtimeMinutes ? details.runtimeMinutes * 60 : null,
       thumbnailUrl,
       backdropUrl,
+      trailerUrl,
     });
   } catch (err) {
     console.error("TMDB import error:", err);

@@ -70,6 +70,7 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
       description: "",
       thumbnailUrl: "",
       backdropUrl: "",
+      trailerUrl: "",
       durationSeconds: "",
       releaseDate: "",
       tagIds: [],
@@ -165,6 +166,7 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
           description: initialData.description ?? "",
           thumbnailUrl: initialData.thumbnailUrl ?? "",
           backdropUrl: initialData.backdropUrl ?? "",
+          trailerUrl: initialData.trailerUrl ?? "",
           durationSeconds: initialData.durationSeconds ?? "",
           releaseDate: initialData.releaseDate ?? "",
           tagIds: initialData.tagIds ?? [],
@@ -207,6 +209,9 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
     if (data.backdropUrl) {
       setValue("backdropUrl", data.backdropUrl)
       stagedUrls.current.add(data.backdropUrl)
+    }
+    if (data.trailerUrl) {
+      setValue("trailerUrl", data.trailerUrl)
     }
     setSlugManuallyEdited(true)
     setShowTmdbSearch(false)
