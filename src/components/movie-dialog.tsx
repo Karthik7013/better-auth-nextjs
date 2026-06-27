@@ -317,7 +317,7 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
               <div className="space-y-1.5">
                 <UploadField
                   label="Thumbnail"
-                  key={computeMoviePath("thumbnails/01.jpg")}
+                  uploadKey={computeMoviePath("thumbnails/01.jpg")}
                   value={watch("thumbnailUrl") ?? ""}
                   onChange={(url) => handleUploadChange("thumbnailUrl", url)}
                   onRemove={handleRemoveUpload}
@@ -326,7 +326,7 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
               <div className="space-y-1.5">
                 <UploadField
                   label="Backdrop"
-                  key={computeMoviePath("backdrops/01.jpg")}
+                  uploadKey={computeMoviePath("backdrops/01.jpg")}
                   value={watch("backdropUrl") ?? ""}
                   onChange={(url) => handleUploadChange("backdropUrl", url)}
                   onRemove={handleRemoveUpload}
