@@ -16,6 +16,12 @@ function extFromContentType(contentType: string): string {
   return EXTENSION_MAP[contentType] || "png";
 }
 
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is not set`);
+  return value;
+}
+
 export async function POST(request: NextRequest) {
   const session = await getCachedSession(request);
   if (!session) {
@@ -35,12 +41,15 @@ export async function POST(request: NextRequest) {
     const ext = extFromContentType(contentType);
     const key = `users/${userId}/profile/${randomUUID()}.${ext}`;
 
-    const { publicUrl } = await uploadToIA({
+    await uploadToIA({
       fileName: `avatar.${ext}`,
       buffer,
       contentType,
       key,
     });
+
+    const bucket = requireEnv("IA_S3_BUCKET");
+    const publicUrl = `https://archive.org/download/${bucket}/${key}`;
 
     return NextResponse.json({ publicUrl });
   } catch (err) {
