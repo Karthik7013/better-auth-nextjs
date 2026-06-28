@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { HomeMovie } from "./types";
 
 export default function RecentMovies({ movies }: { movies: HomeMovie[] }) {
-  if (movies.length === 0) return null;
+  if (movies.length === 0) return <>no recently added movies</>;
 
   return (
     <section className="p-4">

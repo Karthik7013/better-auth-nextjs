@@ -1,10 +1,10 @@
 "use client";
 
 import { authClient } from "@/lib/auth-client";
-import UserProfile from "./user-profile";
-import ChangePassword from "./change-password";
-import AdminNavigation from "./admin-navigation";
-import DangerZone from "./danger-zone";
+import UserProfile from "@/app/(main)/settings/user-profile";
+import ChangePassword from "@/app/(main)/settings/change-password";
+import AdminNavigation from "@/app/(main)/settings/admin-navigation";
+import DangerZone from "@/app/(main)/settings/danger-zone";
 
 export function SettingsContent() {
   const { data: session } = authClient.useSession();

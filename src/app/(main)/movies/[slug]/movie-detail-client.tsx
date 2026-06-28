@@ -37,7 +37,7 @@ export function MovieDetailClient() {
       const res = await fetch(`/api/movies/${slug}`);
       if (res.status === 404) throw new Error("not-found");
       if (!res.ok) throw new Error("fetch-failed");
-      return res.json();
+      return res.json() as Promise<{ durationSeconds: number, releaseDate: string, isFavorited: boolean, trailerUrl: string | null, id: string, title: string, backdropUrl: string, thumbnailUrl: string, tags: [], description: string }>;
     },
     staleTime: 5 * 60 * 1000,
     refetchOnMount: false,
@@ -112,7 +112,7 @@ export function MovieDetailClient() {
                 <Skeleton className="h-3 sm:h-3.5 md:h-4 w-4/5 max-w-lg" />
               </div>
               <div className="flex items-center gap-3 pt-2">
-                <Skeleton className="h-10 w-[100px] rounded" />
+                <Skeleton className="h-10 w-25 rounded" />
                 <Skeleton className="size-10 rounded-full" />
               </div>
             </div>
@@ -124,7 +124,7 @@ export function MovieDetailClient() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="space-y-2">
-                  <Skeleton className="aspect-[2/3] w-full rounded-lg" />
+                  <Skeleton className="aspect-2/3 w-full rounded-lg" />
                   <Skeleton className="h-4 w-3/4" />
                 </div>
               ))}
@@ -267,25 +267,20 @@ export function MovieDetailClient() {
           </div>
         </div>
       </div>
-
-
-
-
-
       {display.trailerUrl && (
-      <Dialog open={showTrailer} onOpenChange={setShowTrailer}>
+        <Dialog open={showTrailer} onOpenChange={setShowTrailer}>
           <DialogContent className="sm:max-w-4xl p-0 overflow-hidden bg-black">
-          <div className="aspect-video">
-            <iframe
+            <div className="aspect-video">
+              <iframe
                 src={`${display.trailerUrl}?autoplay=1`}
                 title="Trailer"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
                 className="size-full"
               />
-          </div>
-        </DialogContent>
-      </Dialog>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       <div className="px-6 md:px-12 lg:px-16 -mt-10 relative z-20">

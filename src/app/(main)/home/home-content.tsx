@@ -1,19 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/error-state";
 import type { HeroCarouselItem } from "@/components/hero-carousel";
 import RecentMovies from "./recent-movies";
+import HeroCarousel from "@/components/hero-carousel";
 import type { HomeMovie } from "./types";
-
-const HeroCarousel = dynamic(
-  () => import("@/components/hero-carousel").then((m) => ({ default: m.HeroCarousel })),
-  {
-    loading: () => <Skeleton className="aspect-video md:aspect-21/9 rounded-xl" />,
-  }
-);
 
 export default function HomeContent() {
   const { data: featuredData, isLoading: featuredLoading, isError: featuredError } = useQuery({
@@ -27,7 +20,7 @@ export default function HomeContent() {
     refetchOnMount: false,
   });
 
-  const { data: recentData } = useQuery({
+  const { data: recentData, isLoading: recentDataLoading, isError: recentdataError } = useQuery({
     queryKey: ["home-recently-added"],
     queryFn: async () => {
       const res = await fetch("/api/home/recently-added");
@@ -49,7 +42,7 @@ export default function HomeContent() {
   return (
     <>
       <section className="pb-6">
-        <HeroCarousel isLoading={featuredLoading} items={featuredData?.featured ?? []} />
+        <HeroCarousel items={featuredData?.featured ?? []} />
       </section>
       <RecentMovies movies={recentData?.recentlyAdded ?? []} />
     </>

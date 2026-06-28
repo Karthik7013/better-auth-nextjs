@@ -12,7 +12,7 @@ export default function CtaBtn() {
 
         <Button
             nativeButton={false}
-            className="rounded-full text-sm sm:text-base h-12 px-8 shadow-lg"
+            className="rounded-full font-bold text-sm sm:text-base h-12 px-8 shadow-lg"
             render={<Link href={session ? "/home" : "/login"} />}
         >
             {session ? " Continue" : "Get Started"}
