@@ -5,22 +5,16 @@ interface NumberSVGProps {
 
 export function NumberSVG({ number, className }: NumberSVGProps) {
   return (
-    <svg
-      viewBox="0 0 200 300"
-      fill="currentColor"
-      className={className}
-      aria-hidden="true"
-      preserveAspectRatio="xMinYMid meet"
+    <span
+      aria-hidden
+      className="select-none font-black leading-none text-background"
+      style={{
+        fontSize: "clamp(140px, 18vw, 230px)",
+        WebkitTextStroke: "4px var(--color-foreground)",
+        transform: "translateY(0px)",
+      }}
     >
-      <text
-        x="0"
-        y="260"
-        fontSize="320"
-        fontWeight="900"
-        fontFamily="ui-sans-serif, system-ui, sans-serif"
-      >
-        {number}
-      </text>
-    </svg>
+      {number}
+    </span>
   );
 }
