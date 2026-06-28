@@ -46,7 +46,7 @@ function BottomNavbar({
               className={`relative flex flex-1 flex-col items-center gap-0.5 rounded-full py-2 px-3 transition-all duration-200 active:scale-90 ${
                 active
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground/60 hover:text-muted-foreground/80"
+                  : "text-muted-foreground/60 hover:text-primary hover:bg-accent/50"
               }`}
             >
               <item.icon

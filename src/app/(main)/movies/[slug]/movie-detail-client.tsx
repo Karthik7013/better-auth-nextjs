@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter, useParams, notFound } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import { Play, Heart, Share2 } from "lucide-react";
+import { Play, Heart, Share2, Download } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BackButton } from "@/components/back-button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -37,7 +37,7 @@ export function MovieDetailClient() {
       const res = await fetch(`/api/movies/${slug}`);
       if (res.status === 404) throw new Error("not-found");
       if (!res.ok) throw new Error("fetch-failed");
-      return res.json() as Promise<{ durationSeconds: number, releaseDate: string, isFavorited: boolean, trailerUrl: string | null, id: string, title: string, backdropUrl: string, thumbnailUrl: string, tags: [], description: string }>;
+      return res.json() as Promise<{ durationSeconds: number, releaseDate: string, isFavorited: boolean, trailerUrl: string | null, videoUrl: string | null, id: string, title: string, backdropUrl: string, thumbnailUrl: string, tags: [], description: string }>;
     },
     staleTime: 5 * 60 * 1000,
     refetchOnMount: false,
@@ -164,6 +164,14 @@ export function MovieDetailClient() {
     }
   }
 
+  function handleDownload() {
+    if (!display.videoUrl) return;
+    const a = document.createElement("a");
+    a.href = display.videoUrl;
+    a.download = `${display.title}.mp4`;
+    a.click();
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="relative h-[85vh] min-h-125 w-full overflow-hidden mb-16">
@@ -262,6 +270,14 @@ export function MovieDetailClient() {
                 >
                   <Share2 className="size-5" />
                 </button>
+                {display.videoUrl && (
+                  <button
+                    onClick={handleDownload}
+                    className="flex items-center justify-center border-2 border-white/40 text-white rounded-full size-10 hover:border-white hover:bg-white/10 transition-all active:scale-90"
+                  >
+                    <Download className="size-5" />
+                  </button>
+                )}
               </div>
             </div>
           </div>

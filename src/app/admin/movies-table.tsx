@@ -110,6 +110,19 @@ export default function MoviesTable({
         ),
       },
       {
+        id: "createdAt",
+        header: "Created",
+        accessorKey: "createdAt",
+        enableSorting: true,
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground whitespace-nowrap">
+            {row.original.createdAt
+              ? new Date(row.original.createdAt).toLocaleDateString()
+              : "—"}
+          </span>
+        ),
+      },
+      {
         id: "tags",
         header: "Tags",
         cell: ({ row }) => (

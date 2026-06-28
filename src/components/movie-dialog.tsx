@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react"
 import { useQuery, useMutation } from "@tanstack/react-query"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2Icon } from "lucide-react"
+import { Loader2Icon, Copy, Check } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -224,6 +224,8 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
     return `movies/${year}/${slug}/${suffix}`
   }
 
+  const [copied, setCopied] = useState(false);
+
   function handleUploadChange(field: "thumbnailUrl" | "backdropUrl", url: string) {
     if (url && !initialUrls.current.has(url)) {
       stagedUrls.current.add(url)
@@ -313,7 +315,20 @@ export function MovieDialog({ open, onOpenChange, initialData, editMovieId, onSu
               />
             </div>
             <div className="space-y-1.5 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/20 px-3 py-2.5">
-              <p className="text-xs font-medium text-muted-foreground">Video Upload</p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium text-muted-foreground">Video Upload</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`transcode-ia /path/to/file.mp4 --key ${computeMoviePath("videos/movie.mp4")}`);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="rounded p-1 transition-colors hover:bg-white/10"
+                >
+                  {copied ? <Check className="size-3.5 text-green-500" /> : <Copy className="size-3.5 text-muted-foreground" />}
+                </button>
+              </div>
               <p className="text-xs text-muted-foreground">
                 After saving, run: <code className="rounded bg-muted px-1 py-0.5 font-mono text-[10px]">transcode-ia /path/to/file.mp4 --key {computeMoviePath("videos/movie.mp4")}</code>
               </p>
