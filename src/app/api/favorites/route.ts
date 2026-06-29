@@ -16,7 +16,9 @@ export async function GET(request: NextRequest) {
       () => getUserFavorites(session.user.id)
     );
 
-    return NextResponse.json({ movies: moviesList });
+    return NextResponse.json({ movies: moviesList }, {
+      headers: { "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600" }
+    });
   } catch {
     return NextResponse.json({ error: "Fetch Failed" }, { status: 500 });
   }

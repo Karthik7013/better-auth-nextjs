@@ -17,5 +17,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   if (!result) return Response.json({ error: "Series not found" }, { status: 404 });
 
-  return Response.json(result);
+  return Response.json(result, {
+    headers: { "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600" }
+  });
 }

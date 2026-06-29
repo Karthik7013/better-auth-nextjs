@@ -10,7 +10,9 @@ export async function GET(request: NextRequest) {
 
   try {
     const stats = await getAdminStats();
-    return NextResponse.json({ stats });
+    return NextResponse.json({ stats }, {
+      headers: { "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600" }
+    });
   } catch (e) {
     console.error("api/admin/stats error:", e instanceof Error ? e.message : e);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

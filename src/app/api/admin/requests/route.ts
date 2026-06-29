@@ -16,7 +16,9 @@ export async function GET(request: NextRequest) {
 
   try {
     const result = await listAdminRequests({ page, limit, status, search, sortBy, sortDir, columnFilters });
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      headers: { "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600" }
+    });
   } catch {
     return NextResponse.json({ error: "Failed to fetch requests" }, { status: 500 });
   }

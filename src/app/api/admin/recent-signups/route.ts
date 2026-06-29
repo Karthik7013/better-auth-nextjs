@@ -10,7 +10,9 @@ export async function GET(request: NextRequest) {
 
   try {
     const recentSignups = await getRecentSignups();
-    return NextResponse.json({ recentSignups });
+    return NextResponse.json({ recentSignups }, {
+      headers: { "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600" }
+    });
   } catch (e) {
     console.error("api/admin/recent-signups error:", e instanceof Error ? e.message : e);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

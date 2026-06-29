@@ -21,9 +21,13 @@ export async function GET(request: NextRequest) {
       300,
       () => listSeries({ page, limit })
     );
-    return Response.json(cached);
+    return Response.json(cached, {
+      headers: { "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600" }
+    });
   }
 
   const result = await listSeries({ q, tagsParam, page, limit, sortBy, sortDir });
-  return Response.json(result);
+  return Response.json(result, {
+    headers: { "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600" }
+  });
 }
