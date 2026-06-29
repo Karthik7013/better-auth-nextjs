@@ -23,7 +23,16 @@ import {
 import { Loader2Icon } from "lucide-react"
 import SearchInput from "../search-input"
 import Pagination from "../pagination"
-import RequestsTable from "../requests-table"
+
+const RequestsTable = dynamic(() => import("../requests-table"), {
+  loading: () => (
+    <div className="divide-y">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Skeleton key={i} className="h-16 w-full rounded-none" />
+      ))}
+    </div>
+  ),
+})
 
 interface RequestUser {
   name: string

@@ -9,9 +9,20 @@ import { type SortingState } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import dynamic from "next/dynamic"
 import SearchInput from "../search-input"
 import Pagination from "../pagination"
-import TagsTable from "../tags-table"
+
+const TagsTable = dynamic(() => import("../tags-table"), {
+  loading: () => (
+    <div className="divide-y">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Skeleton key={i} className="h-16 w-full rounded-none" />
+      ))}
+    </div>
+  ),
+})
 
 interface Tag {
   id: number

@@ -10,8 +10,17 @@ import dynamic from "next/dynamic"
 import { useAdminCrud } from "@/hooks/use-admin-crud"
 import SearchInput from "../search-input"
 import Pagination from "../pagination"
-import SeriesTable from "../series-table"
 import DeleteSeriesDialog from "../delete-series-dialog"
+
+const SeriesTable = dynamic(() => import("../series-table"), {
+  loading: () => (
+    <div className="divide-y">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Skeleton key={i} className="h-16 w-full rounded-none" />
+      ))}
+    </div>
+  ),
+})
 
 const SeriesDialog = dynamic(
   () => import("../series-dialog").then((m) => ({ default: m.SeriesDialog })),

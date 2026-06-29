@@ -3,11 +3,22 @@
 import { useEffect, useState, useMemo } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import { authClient } from "@/lib/auth-client"
 import { useDebounce } from "@/hooks/use-debounce"
+import dynamic from "next/dynamic"
 import SearchInput from "../search-input"
 import Pagination from "../pagination"
-import UsersTable from "../users-table"
+
+const UsersTable = dynamic(() => import("../users-table"), {
+  loading: () => (
+    <div className="divide-y">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Skeleton key={i} className="h-16 w-full rounded-none" />
+      ))}
+    </div>
+  ),
+})
 
 interface User {
   id: string
