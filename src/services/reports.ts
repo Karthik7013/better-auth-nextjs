@@ -14,12 +14,16 @@ const reportFilterableColumns: Record<string, any> = {
 };
 
 export async function createReport(movieId: number, userId: string, description: string) {
+  if (!description || typeof description !== "string" || description.trim().length === 0) {
+    return { error: "Description is required" };
+  }
+
   const [report] = await db
     .insert(videoReports)
-    .values({ movieId, userId, description })
+    .values({ movieId, userId, description: description.trim() })
     .returning();
   invalidateCache("reports");
-  return report;
+  return { report };
 }
 
 export async function listAdminReports(args: {
