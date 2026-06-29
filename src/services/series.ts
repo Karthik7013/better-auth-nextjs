@@ -197,7 +197,17 @@ export async function listAdminSeries(args: {
   const total = totalResult.total;
 
   const seriesList = await db
-    .select()
+    .select({
+      id: series.id,
+      title: series.title,
+      slug: series.slug,
+      description: series.description,
+      thumbnailUrl: series.thumbnailUrl,
+      backdropUrl: series.backdropUrl,
+      releaseDate: series.releaseDate,
+      createdAt: series.createdAt,
+      updatedAt: series.updatedAt,
+    })
     .from(series)
     .where(whereClause)
     .orderBy(orderBy)
@@ -467,9 +477,6 @@ export async function updateSeason(seasonId: number, data: {
   thumbnailUrl?: string | null;
   releaseDate?: string | null;
 }) {
-  const [existing] = await db.select().from(seasons).where(eq(seasons.id, seasonId)).limit(1);
-  if (!existing) return null;
-
   const updateData: Record<string, unknown> = {};
   if (data.seasonNumber !== undefined) updateData.seasonNumber = data.seasonNumber;
   if (data.title !== undefined) updateData.title = data.title;
@@ -477,18 +484,19 @@ export async function updateSeason(seasonId: number, data: {
   if (data.thumbnailUrl !== undefined) updateData.thumbnailUrl = data.thumbnailUrl;
   if (data.releaseDate !== undefined) updateData.releaseDate = data.releaseDate;
 
-  if (Object.keys(updateData).length > 0) {
-    updateData.updatedAt = new Date();
-    await db.update(seasons).set(updateData).where(eq(seasons.id, seasonId));
-  }
+  if (Object.keys(updateData).length === 0) return null;
 
-  const [updated] = await db.select().from(seasons).where(eq(seasons.id, seasonId)).limit(1);
+  updateData.updatedAt = new Date();
+  const [updated] = await db.update(seasons).set(updateData).where(eq(seasons.id, seasonId)).returning();
+  if (!updated) return null;
+
   invalidateCache("series");
   return updated;
 }
 
 export async function deleteSeason(seasonId: number) {
-  await db.delete(seasons).where(eq(seasons.id, seasonId));
+  const [deleted] = await db.delete(seasons).where(eq(seasons.id, seasonId)).returning();
+  if (!deleted) return false;
   invalidateCache("series");
   return true;
 }
@@ -544,9 +552,6 @@ export async function updateEpisode(episodeId: number, data: {
   durationSeconds?: number | null;
   releaseDate?: string | null;
 }) {
-  const [existing] = await db.select().from(episodes).where(eq(episodes.id, episodeId)).limit(1);
-  if (!existing) return null;
-
   const updateData: Record<string, unknown> = {};
   if (data.episodeNumber !== undefined) updateData.episodeNumber = data.episodeNumber;
   if (data.title !== undefined) updateData.title = data.title;
@@ -558,18 +563,19 @@ export async function updateEpisode(episodeId: number, data: {
   if (data.durationSeconds !== undefined) updateData.durationSeconds = data.durationSeconds;
   if (data.releaseDate !== undefined) updateData.releaseDate = data.releaseDate;
 
-  if (Object.keys(updateData).length > 0) {
-    updateData.updatedAt = new Date();
-    await db.update(episodes).set(updateData).where(eq(episodes.id, episodeId));
-  }
+  if (Object.keys(updateData).length === 0) return null;
 
-  const [updated] = await db.select().from(episodes).where(eq(episodes.id, episodeId)).limit(1);
+  updateData.updatedAt = new Date();
+  const [updated] = await db.update(episodes).set(updateData).where(eq(episodes.id, episodeId)).returning();
+  if (!updated) return null;
+
   invalidateCache("series");
   return updated;
 }
 
 export async function deleteEpisode(episodeId: number) {
-  await db.delete(episodes).where(eq(episodes.id, episodeId));
+  const [deleted] = await db.delete(episodes).where(eq(episodes.id, episodeId)).returning();
+  if (!deleted) return false;
   invalidateCache("series");
   return true;
 }
