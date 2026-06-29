@@ -139,7 +139,8 @@ export function CommentsSection({ movieSlug }: CommentsSectionProps) {
       ) : isError ? (
         <div className="text-center py-4 space-y-2">
           <p className="text-sm text-muted-foreground">
-            Failed to load comments. {(error as Error)?.message?.includes("(") && `(${(error as Error).message.match(/\((\d+)\)/)?.[1] || ""})`}
+            Failed to load comments
+            {(error as Error)?.message && <span className="block text-xs mt-1 opacity-70">{(error as Error).message}</span>}
           </p>
           <button onClick={() => refetch()} className="text-xs text-primary hover:underline">
             Try again
