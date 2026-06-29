@@ -230,7 +230,6 @@ export const episodes = pgTable("episodes", {
   uniqueIndex("unique_season_episode").on(t.seasonId, t.episodeNumber),
   index("idx_episodes_season_id").on(t.seasonId),
 ]);
-
 export const seriesTags = pgTable("series_tags", {
   seriesId: integer("series_id")
     .notNull()
@@ -239,8 +238,6 @@ export const seriesTags = pgTable("series_tags", {
     .notNull()
     .references(() => tags.id, { onDelete: "cascade" }),
 }, (t) => [primaryKey({ columns: [t.seriesId, t.tagId] })]);
-
-export const pgTrgmExtension = sql`CREATE EXTENSION IF NOT EXISTS pg_trgm`;
 
 export type Series = InferSelectModel<typeof series>;
 export type SeriesInsert = InferInsertModel<typeof series>;

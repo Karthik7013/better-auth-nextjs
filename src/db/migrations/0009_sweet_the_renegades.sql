@@ -1,4 +1,3 @@
-CREATE EXTENSION IF NOT EXISTS pg_trgm;--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_episodes_season_id" ON "episodes" USING btree ("season_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_favorites_user_id" ON "favorites" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_favorites_movie_id" ON "favorites" USING btree ("movie_id");--> statement-breakpoint
