@@ -70,10 +70,13 @@ export function CommentsSection({ movieSlug }: CommentsSectionProps) {
       if (!res.ok) throw new Error("Failed");
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       setNewComment("");
       setPage(1);
-      queryClient.invalidateQueries({ queryKey: ["comments", movieSlug] });
+      queryClient.setQueryData(["comments", movieSlug, 1], (old: any) => {
+        if (!old) return { comments: [data.comment], total: 1, page: 1, hasMore: false };
+        return { ...old, comments: [data.comment, ...old.comments], total: old.total + 1 };
+      });
       toast.success("Comment posted!");
     },
     onError: () => {

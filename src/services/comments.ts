@@ -63,10 +63,24 @@ export async function createComment(movieSlug: string, userId: string, content: 
   const movieId = await getMovieIdBySlug(movieSlug);
   if (!movieId) return { error: "Movie Not Found" };
 
-  const [comment] = await db
+  const [inserted] = await db
     .insert(movieComments)
     .values({ movieId, userId, content: content.trim() })
     .returning();
+
+  const [userRow] = await db
+    .select({ id: user.id, name: user.name, image: user.image })
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1);
+
   invalidateCache("comments");
-  return { comment };
+  return {
+    comment: {
+      id: inserted.id,
+      content: inserted.content,
+      createdAt: inserted.createdAt,
+      user: userRow || { id: userId, name: "Unknown", image: null },
+    },
+  };
 }
