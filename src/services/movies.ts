@@ -141,7 +141,54 @@ export async function searchMovies(args: {
 
   if (tagsParam) {
     const tagIds = tagsParam.split(",").map(Number);
-    const settled = await Promise.allSettled([
+    try {
+      const [movieRows, totalRows] = await Promise.all([
+        db
+          .select({
+            id: movies.id,
+            title: movies.title,
+            slug: movies.slug,
+            thumbnailUrl: movies.thumbnailUrl,
+          })
+          .from(movies)
+          .innerJoin(movieTags, eq(movies.id, movieTags.movieId))
+          .where(
+            conditions.length > 0
+              ? and(...conditions, inArray(movieTags.tagId, tagIds))
+              : inArray(movieTags.tagId, tagIds)
+          )
+          .groupBy(movies.id)
+          .having(sql`count(distinct ${movieTags.tagId}) = ${tagIds.length}`)
+          .orderBy(orderDir)
+          .limit(limit)
+          .offset(offset),
+        db
+          .select({ value: count() })
+          .from(
+            db
+              .select({ id: movies.id })
+              .from(movies)
+              .innerJoin(movieTags, eq(movies.id, movieTags.movieId))
+              .where(
+                conditions.length > 0
+                  ? and(...conditions, inArray(movieTags.tagId, tagIds))
+                  : inArray(movieTags.tagId, tagIds)
+              )
+              .groupBy(movies.id)
+              .having(sql`count(distinct ${movieTags.tagId}) = ${tagIds.length}`)
+              .as("filtered")
+          ),
+      ]);
+      const result = await attachTags(movieRows);
+      return { movies: result, total: totalRows[0].value };
+    } catch (err) {
+      console.error("[searchMovies] DB error:", err);
+      return { movies: [], total: 0 };
+    }
+  }
+
+  try {
+    const [movieRows, totalRows] = await Promise.all([
       db
         .select({
           id: movies.id,
@@ -150,65 +197,18 @@ export async function searchMovies(args: {
           thumbnailUrl: movies.thumbnailUrl,
         })
         .from(movies)
-        .innerJoin(movieTags, eq(movies.id, movieTags.movieId))
-        .where(
-          conditions.length > 0
-            ? and(...conditions, inArray(movieTags.tagId, tagIds))
-            : inArray(movieTags.tagId, tagIds)
-        )
-        .groupBy(movies.id)
-        .having(sql`count(distinct ${movieTags.tagId}) = ${tagIds.length}`)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(orderDir)
         .limit(limit)
         .offset(offset),
-      db
-        .select({ value: count() })
-        .from(
-          db
-            .select({ id: movies.id })
-            .from(movies)
-            .innerJoin(movieTags, eq(movies.id, movieTags.movieId))
-            .where(
-              conditions.length > 0
-                ? and(...conditions, inArray(movieTags.tagId, tagIds))
-                : inArray(movieTags.tagId, tagIds)
-            )
-            .groupBy(movies.id)
-            .having(sql`count(distinct ${movieTags.tagId}) = ${tagIds.length}`)
-            .as("filtered")
-        ),
+      db.select({ value: count() }).from(movies).where(conditions.length > 0 ? and(...conditions) : undefined),
     ]);
-
-    if (settled.some((r) => r.status === "rejected")) return { movies: [], total: 0 };
-
-    const r0 = settled[0] as PromiseFulfilledResult<MovieRow[]>;
-    const r1 = settled[1] as PromiseFulfilledResult<{ value: number }[]>;
-    const result = await attachTags(r0.value);
-    return { movies: result, total: r1.value[0].value };
+    const result = await attachTags(movieRows);
+    return { movies: result, total: totalRows[0].value };
+  } catch (err) {
+    console.error("[searchMovies] DB error:", err);
+    return { movies: [], total: 0 };
   }
-
-  const settled = await Promise.allSettled([
-    db
-      .select({
-        id: movies.id,
-        title: movies.title,
-        slug: movies.slug,
-        thumbnailUrl: movies.thumbnailUrl,
-      })
-      .from(movies)
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(orderDir)
-      .limit(limit)
-      .offset(offset),
-    db.select({ value: count() }).from(movies).where(conditions.length > 0 ? and(...conditions) : undefined),
-  ]);
-
-  if (settled.some((r) => r.status === "rejected")) return { movies: [], total: 0 };
-
-  const r0 = settled[0] as PromiseFulfilledResult<MovieRow[]>;
-  const r1 = settled[1] as PromiseFulfilledResult<{ value: number }[]>;
-  const result = await attachTags(r0.value);
-  return { movies: result, total: r1.value[0].value };
 }
 
 export async function createMovie(data: {
@@ -301,11 +301,21 @@ export async function updateMovie(
 
   if (Object.keys(updateData).length > 0) {
     updateData.updatedAt = new Date();
-    await db.update(movies).set(updateData).where(eq(movies.id, movieId));
-  }
+    const [updatedMovie] = await db.update(movies).set(updateData).where(eq(movies.id, movieId)).returning();
 
-  if (oldUrls.length > 0) {
-    Promise.allSettled(oldUrls.map((url) => deleteFromIA(url)));
+    if (oldUrls.length > 0) {
+      Promise.allSettled(oldUrls.map((url) => deleteFromIA(url)));
+    }
+
+    if (tagIds && Array.isArray(tagIds)) {
+      await db.delete(movieTags).where(eq(movieTags.movieId, movieId));
+      if (tagIds.length > 0) {
+        await db.insert(movieTags).values(tagIds.map((tagId) => ({ movieId, tagId })));
+      }
+    }
+
+    invalidateCache("movies");
+    return updatedMovie;
   }
 
   if (tagIds && Array.isArray(tagIds)) {
@@ -315,13 +325,16 @@ export async function updateMovie(
     }
   }
 
-  const [updatedMovie] = await db.select().from(movies).where(eq(movies.id, movieId)).limit(1);
   invalidateCache("movies");
-  return updatedMovie;
+  return existingMovie;
 }
 
 export async function deleteMovie(movieId: number) {
-  const [movie] = await db.select().from(movies).where(eq(movies.id, movieId)).limit(1);
+  const [movie] = await db
+    .select({ videoUrl: movies.videoUrl, thumbnailUrl: movies.thumbnailUrl, backdropUrl: movies.backdropUrl })
+    .from(movies)
+    .where(eq(movies.id, movieId))
+    .limit(1);
   if (!movie) return false;
 
   const urlsToDelete = [movie.videoUrl, movie.thumbnailUrl, movie.backdropUrl].filter(Boolean) as string[];
@@ -381,7 +394,16 @@ export async function listAdminMovies(args: {
   const total = totalResult.total;
 
   const moviesList = await db
-    .select()
+    .select({
+      id: movies.id,
+      title: movies.title,
+      slug: movies.slug,
+      thumbnailUrl: movies.thumbnailUrl,
+      durationSeconds: movies.durationSeconds,
+      releaseDate: movies.releaseDate,
+      createdAt: movies.createdAt,
+      updatedAt: movies.updatedAt,
+    })
     .from(movies)
     .where(whereClause)
     .orderBy(orderBy)
