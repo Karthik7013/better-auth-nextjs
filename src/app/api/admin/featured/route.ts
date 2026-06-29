@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   try {
     const result = await listAdminFeatured();
     return NextResponse.json({ featured: result }, {
-      headers: { "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600" }
+      headers: { "Cache-Control": "private, max-age=60, s-maxage=300, stale-while-revalidate=600" }
     });
   } catch {
     return NextResponse.json({ error: "Failed to fetch featured movies" }, { status: 500 });

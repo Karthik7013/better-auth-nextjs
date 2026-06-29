@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   const { page, limit, search, sortBy, sortDir, columnFilters } = parseAdminListParams(searchParams);
   const result = await listAdminSeries({ page, limit, search, sortBy, sortDir, columnFilters });
   return Response.json(result, {
-    headers: { "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600" }
+    headers: { "Cache-Control": "private, max-age=60, s-maxage=300, stale-while-revalidate=600" }
   });
 }
 

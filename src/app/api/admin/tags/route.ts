@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const { page, limit, search, sortBy, sortDir, columnFilters } = parseAdminListParams(searchParams, { page: "1", limit: "50" });
     const result = await listAdminTags({ page, limit, search: search ?? "", sortBy, sortDir, columnFilters });
     return NextResponse.json(result, {
-      headers: { "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600" }
+      headers: { "Cache-Control": "private, max-age=60, s-maxage=300, stale-while-revalidate=600" }
     });
   } catch {
     return NextResponse.json({ error: "Fetch Failed" }, { status: 500 });

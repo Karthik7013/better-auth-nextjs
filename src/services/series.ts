@@ -278,7 +278,53 @@ export async function listSeries(args: {
 
   if (tagsParam) {
     const tagIds = tagsParam.split(",").map(Number);
-    const settled = await Promise.allSettled([
+    try {
+      const [seriesRows, totalRows] = await Promise.all([
+        db
+          .select({
+            id: series.id,
+            title: series.title,
+            slug: series.slug,
+            thumbnailUrl: series.thumbnailUrl,
+          })
+          .from(series)
+          .innerJoin(seriesTags, eq(series.id, seriesTags.seriesId))
+          .where(
+            conditions.length > 0
+              ? and(...conditions, inArray(seriesTags.tagId, tagIds))
+              : inArray(seriesTags.tagId, tagIds)
+          )
+          .groupBy(series.id)
+          .having(sql`count(distinct ${seriesTags.tagId}) = ${tagIds.length}`)
+          .orderBy(orderDir)
+          .limit(limit)
+          .offset(offset),
+        db
+          .select({ value: count() })
+          .from(
+            db
+              .select({ id: series.id })
+              .from(series)
+              .innerJoin(seriesTags, eq(series.id, seriesTags.seriesId))
+              .where(
+                conditions.length > 0
+                  ? and(...conditions, inArray(seriesTags.tagId, tagIds))
+                  : inArray(seriesTags.tagId, tagIds)
+              )
+              .groupBy(series.id)
+              .having(sql`count(distinct ${seriesTags.tagId}) = ${tagIds.length}`)
+              .as("filtered")
+          ),
+      ]);
+      return { series: seriesRows, total: totalRows[0].value };
+    } catch (err) {
+      console.error("[listSeries] DB error:", err);
+      return { series: [], total: 0 };
+    }
+  }
+
+  try {
+    const [seriesRows, totalRows] = await Promise.all([
       db
         .select({
           id: series.id,
@@ -287,64 +333,20 @@ export async function listSeries(args: {
           thumbnailUrl: series.thumbnailUrl,
         })
         .from(series)
-        .innerJoin(seriesTags, eq(series.id, seriesTags.seriesId))
-        .where(
-          conditions.length > 0
-            ? and(...conditions, inArray(seriesTags.tagId, tagIds))
-            : inArray(seriesTags.tagId, tagIds)
-        )
-        .groupBy(series.id)
-        .having(sql`count(distinct ${seriesTags.tagId}) = ${tagIds.length}`)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(orderDir)
         .limit(limit)
         .offset(offset),
       db
         .select({ value: count() })
-        .from(
-          db
-            .select({ id: series.id })
-            .from(series)
-            .innerJoin(seriesTags, eq(series.id, seriesTags.seriesId))
-            .where(
-              conditions.length > 0
-                ? and(...conditions, inArray(seriesTags.tagId, tagIds))
-                : inArray(seriesTags.tagId, tagIds)
-            )
-            .groupBy(series.id)
-            .having(sql`count(distinct ${seriesTags.tagId}) = ${tagIds.length}`)
-            .as("filtered")
-        ),
+        .from(series)
+        .where(conditions.length > 0 ? and(...conditions) : undefined),
     ]);
-
-    if (settled.some((r) => r.status === "rejected")) return { series: [], total: 0 };
-    const r0 = settled[0] as PromiseFulfilledResult<any[]>;
-    const r1 = settled[1] as PromiseFulfilledResult<{ value: number }[]>;
-    return { series: r0.value, total: r1.value[0].value };
+    return { series: seriesRows, total: totalRows[0].value };
+  } catch (err) {
+    console.error("[listSeries] DB error:", err);
+    return { series: [], total: 0 };
   }
-
-  const settled = await Promise.allSettled([
-    db
-      .select({
-        id: series.id,
-        title: series.title,
-        slug: series.slug,
-        thumbnailUrl: series.thumbnailUrl,
-      })
-      .from(series)
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(orderDir)
-      .limit(limit)
-      .offset(offset),
-    db
-      .select({ value: count() })
-      .from(series)
-      .where(conditions.length > 0 ? and(...conditions) : undefined),
-  ]);
-
-  if (settled.some((r) => r.status === "rejected")) return { series: [], total: 0 };
-  const r0 = settled[0] as PromiseFulfilledResult<any[]>;
-  const r1 = settled[1] as PromiseFulfilledResult<{ value: number }[]>;
-  return { series: r0.value, total: r1.value[0].value };
 }
 
 export async function getSeriesBySlug(slug: string) {

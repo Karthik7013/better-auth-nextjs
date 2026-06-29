@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   try {
     const mostFavorited = await getMostFavorited();
     return NextResponse.json({ mostFavorited }, {
-      headers: { "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600" }
+      headers: { "Cache-Control": "private, max-age=60, s-maxage=300, stale-while-revalidate=600" }
     });
   } catch (e) {
     console.error("api/admin/most-favorited error:", e instanceof Error ? e.message : e);
