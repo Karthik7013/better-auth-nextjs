@@ -13,8 +13,10 @@ export async function GET(
 
   const { slug } = await params;
   const { searchParams } = new URL(request.url);
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
-  const limit = Math.max(1, Math.min(50, parseInt(searchParams.get("limit") || "20")));
+  const rawPage = parseInt(searchParams.get("page") || "1");
+  const rawLimit = parseInt(searchParams.get("limit") || "20");
+  const page = Number.isNaN(rawPage) ? 1 : Math.max(1, rawPage);
+  const limit = Number.isNaN(rawLimit) ? 20 : Math.max(1, Math.min(50, rawLimit));
 
   try {
     const result = await getCommentsByMovieSlug(slug, { page, limit });
