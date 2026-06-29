@@ -1,5 +1,5 @@
 import { pgTable, text, timestamp, boolean, uniqueIndex, integer, serial, varchar, date, primaryKey, index } from "drizzle-orm/pg-core";
-import { type InferSelectModel, type InferInsertModel } from "drizzle-orm";
+import { sql, type InferSelectModel, type InferInsertModel } from "drizzle-orm";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -13,7 +13,9 @@ export const user = pgTable("user", {
   banExpires: timestamp("ban_expires"),
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
-});
+}, (t) => [
+  index("idx_user_role").on(t.role),
+]);
 
 export const session = pgTable("session", {
   id: text("id").primaryKey(),
@@ -80,13 +82,19 @@ export const movies = pgTable("movies", {
   originalLanguage: varchar("original_language", { length: 10 }),
   backdropUrl: text("backdrop_url"),
   trailerUrl: text("trailer_url"),
-});
+}, (t) => [
+  index("idx_movies_title_trgm").using("gin", sql`${t.title} gin_trgm_ops`),
+  index("idx_movies_created_at").on(t.createdAt),
+  index("idx_movies_release_date").on(t.releaseDate),
+]);
 
 export const people = pgTable("people", {
   id: integer("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   profileUrl: text("profile_url"),
-});
+}, (t) => [
+  index("idx_people_name").on(t.name),
+]);
 
 export const movieCast = pgTable("movie_cast", {
   movieId: integer("movie_id")
@@ -130,6 +138,7 @@ export const movieTags = pgTable("movie_tags", {
 }, (t) => [
   primaryKey({ columns: [t.movieId, t.tagId] }),
   index("idx_movie_tags_tag_id").on(t.tagId),
+  index("idx_movie_tags_movie_id").on(t.movieId),
 ]);
 
 export const featuredMovies = pgTable("featured_movies", {
@@ -150,7 +159,11 @@ export const favorites = pgTable("favorites", {
     .notNull()
     .references(() => movies.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-}, (t) => [primaryKey({ columns: [t.userId, t.movieId] })]);
+}, (t) => [
+  primaryKey({ columns: [t.userId, t.movieId] }),
+  index("idx_favorites_user_id").on(t.userId),
+  index("idx_favorites_movie_id").on(t.movieId),
+]);
 
 export const movieRequests = pgTable("movie_requests", {
   id: serial("id").primaryKey(),
@@ -163,7 +176,10 @@ export const movieRequests = pgTable("movie_requests", {
   status: varchar("status", { length: 20 }).default("pending").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (t) => [
+  index("idx_movie_requests_user_id").on(t.userId),
+  index("idx_movie_requests_status").on(t.status),
+]);
 
 export const series = pgTable("series", {
   id: serial("id").primaryKey(),
@@ -189,7 +205,10 @@ export const seasons = pgTable("seasons", {
   releaseDate: date("release_date"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-}, (t) => [uniqueIndex("unique_series_season").on(t.seriesId, t.seasonNumber)]);
+}, (t) => [
+  uniqueIndex("unique_series_season").on(t.seriesId, t.seasonNumber),
+  index("idx_seasons_series_id").on(t.seriesId),
+]);
 
 export const episodes = pgTable("episodes", {
   id: serial("id").primaryKey(),
@@ -207,7 +226,10 @@ export const episodes = pgTable("episodes", {
   releaseDate: date("release_date"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-}, (t) => [uniqueIndex("unique_season_episode").on(t.seasonId, t.episodeNumber)]);
+}, (t) => [
+  uniqueIndex("unique_season_episode").on(t.seasonId, t.episodeNumber),
+  index("idx_episodes_season_id").on(t.seasonId),
+]);
 
 export const seriesTags = pgTable("series_tags", {
   seriesId: integer("series_id")
@@ -217,6 +239,8 @@ export const seriesTags = pgTable("series_tags", {
     .notNull()
     .references(() => tags.id, { onDelete: "cascade" }),
 }, (t) => [primaryKey({ columns: [t.seriesId, t.tagId] })]);
+
+export const pgTrgmExtension = sql`CREATE EXTENSION IF NOT EXISTS pg_trgm`;
 
 export type Series = InferSelectModel<typeof series>;
 export type SeriesInsert = InferInsertModel<typeof series>;

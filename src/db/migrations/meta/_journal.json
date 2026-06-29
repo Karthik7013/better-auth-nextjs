@@ -64,6 +64,13 @@
       "when": 1782473348111,
       "tag": "0008_drop-watch-history",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1782700563322,
+      "tag": "0009_sweet_the_renegades",
+      "breakpoints": true
     }
   ]
 }
