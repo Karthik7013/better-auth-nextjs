@@ -10,6 +10,8 @@ import { BackButton } from "@/components/back-button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { formatMinutes, formatYear } from "@/lib/format";
 import { RelatedMovies } from "./related-movies";
+import { ReportSection } from "@/components/report-section";
+import { CommentsSection } from "@/components/comments-section";
 
 interface MovieData {
   id: number;
@@ -302,6 +304,10 @@ export function MovieDetailClient() {
       <div className="px-6 md:px-12 lg:px-16 -mt-10 relative z-20">
         <div className="max-w-4xl mx-auto space-y-6 pb-16">
           <RelatedMovies related={relatedMovies ?? []} />
+          <div className="space-y-6 pt-4 border-t border-border">
+            <ReportSection movieSlug={slug} />
+            <CommentsSection movieSlug={slug} />
+          </div>
         </div>
       </div>
     </div>
