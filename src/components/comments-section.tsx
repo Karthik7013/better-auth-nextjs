@@ -42,11 +42,14 @@ export function CommentsSection({ movieSlug }: CommentsSectionProps) {
   const [page, setPage] = useState(1);
   const [newComment, setNewComment] = useState("");
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["comments", movieSlug, page],
     queryFn: async () => {
       const res = await fetch(`/api/movies/${movieSlug}/comments?page=${page}&limit=20`);
-      if (!res.ok) throw new Error("Failed to fetch comments");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Request failed (${res.status})`);
+      }
       return res.json() as Promise<{
         comments: Comment[];
         total: number;
@@ -134,9 +137,14 @@ export function CommentsSection({ movieSlug }: CommentsSectionProps) {
           ))}
         </div>
       ) : isError ? (
-        <p className="text-sm text-muted-foreground text-center py-4">
-          Failed to load comments.
-        </p>
+        <div className="text-center py-4 space-y-2">
+          <p className="text-sm text-muted-foreground">
+            Failed to load comments. {(error as Error)?.message?.includes("(") && `(${(error as Error).message.match(/\((\d+)\)/)?.[1] || ""})`}
+          </p>
+          <button onClick={() => refetch()} className="text-xs text-primary hover:underline">
+            Try again
+          </button>
+        </div>
       ) : comments.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-4">
           No comments yet. Be the first to share your thoughts!
