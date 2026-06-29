@@ -3,6 +3,15 @@ import { movieComments, user, movies } from "@/db/schema";
 import { eq, desc, count } from "drizzle-orm";
 import { invalidateCache } from "@/lib/cache";
 
+async function getMovieIdBySlug(slug: string): Promise<number | null> {
+  const [movieResult] = await db
+    .select({ id: movies.id })
+    .from(movies)
+    .where(eq(movies.slug, slug))
+    .limit(1);
+  return movieResult ? movieResult.id : null;
+}
+
 export async function getCommentsByMovieSlug(
   slug: string,
   args: { page: number; limit: number }
@@ -10,12 +19,8 @@ export async function getCommentsByMovieSlug(
   const { page, limit } = args;
   const offset = (page - 1) * limit;
 
-  const [movieResult] = await db
-    .select({ id: movies.id })
-    .from(movies)
-    .where(eq(movies.slug, slug))
-    .limit(1);
-  if (!movieResult) return { comments: [], total: 0, page, hasMore: false };
+  const movieId = await getMovieIdBySlug(slug);
+  if (!movieId) return { comments: [], total: 0, page, hasMore: false };
 
   const movieId = movieResult.id;
 
@@ -53,17 +58,16 @@ export async function createComment(movieSlug: string, userId: string, content: 
   if (!content || typeof content !== "string" || content.trim().length === 0) {
     return { error: "Content is required" };
   }
+  if (!userId || typeof userId !== "string" || userId.trim().length === 0) {
+    return { error: "User ID is required" };
+  }
 
-  const [movieResult] = await db
-    .select({ id: movies.id })
-    .from(movies)
-    .where(eq(movies.slug, movieSlug))
-    .limit(1);
-  if (!movieResult) return { error: "Movie Not Found" };
+  const movieId = await getMovieIdBySlug(movieSlug);
+  if (!movieId) return { error: "Movie Not Found" };
 
   const [comment] = await db
     .insert(movieComments)
-    .values({ movieId: movieResult.id, userId, content: content.trim() })
+    .values({ movieId, userId, content: content.trim() })
     .returning();
   invalidateCache("comments");
   return { comment };
