@@ -95,10 +95,11 @@ export default function HeroCarousel({
                 </div>
               )}
 
-              {/* Mobile gradient: bottom fade */}
-              <div className="absolute inset-0 bg-linear-to-t from-black/95 via-black/40 via-40% to-transparent" />
+              {/* Bottom fade — blends sharp poster edges into background */}
+              <div className="absolute
+              bottom-0 left-0 right-0 h-2/5 bg-linear-to-b from-background/0 to-background" />
               {/* Desktop extra: bottom fade for text */}
-              <div className="absolute inset-0 hidden md:block bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 h-1/3 hidden md:block bg-linear-to-t from-black/60 via-black/10 to-transparent" />
 
 
               <div className="absolute bottom-0 left-0 right-0 p-6 pb-10 md:p-10 lg:p-14">
