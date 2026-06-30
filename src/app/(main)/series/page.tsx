@@ -1,9 +1,5 @@
-import { SeriesContent } from "./series-content";
+import SeriesHomeContent from "./series-home-content";
 
 export default function SeriesPage() {
-  return (
-    <div className="p-4">
-      <SeriesContent />
-    </div>
-  );
+  return <SeriesHomeContent />;
 }

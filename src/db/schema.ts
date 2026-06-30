@@ -239,6 +239,20 @@ export const seriesTags = pgTable("series_tags", {
     .references(() => tags.id, { onDelete: "cascade" }),
 }, (t) => [primaryKey({ columns: [t.seriesId, t.tagId] })]);
 
+export const featuredSeries = pgTable("featured_series", {
+  id: serial("id").primaryKey(),
+  seriesId: integer("series_id")
+    .notNull()
+    .references(() => series.id, { onDelete: "cascade" }),
+  displayOrder: integer("display_order").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex("idx_featured_series_series_id").on(t.seriesId),
+]);
+
+export type FeaturedSeries = InferSelectModel<typeof featuredSeries>;
+export type FeaturedSeriesInsert = InferInsertModel<typeof featuredSeries>;
+
 export type Series = InferSelectModel<typeof series>;
 export type SeriesInsert = InferInsertModel<typeof series>;
 export type Season = InferSelectModel<typeof seasons>;

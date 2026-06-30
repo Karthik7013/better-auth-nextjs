@@ -27,6 +27,7 @@ const navItems = [
   { label: "Movies", icon: Film, href: "/admin/movies" },
   { label: "Series", icon: Tv, href: "/admin/series" },
   { label: "Featured", icon: Star, href: "/admin/featured" },
+  { label: "Featured Series", icon: Tv, href: "/admin/featured-series" },
   { label: "Requests", icon: ListChecks, href: "/admin/requests" },
   { label: "Reports", icon: Flag, href: "/admin/reports" },
   { label: "Tags", icon: Tags, href: "/admin/tags" },

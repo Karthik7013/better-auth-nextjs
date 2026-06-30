@@ -1,0 +1,140 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { Search } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { ErrorState } from "@/components/error-state";
+import HeroCarousel from "@/components/hero-carousel";
+import { NumberSVG } from "@/components/number-svg";
+import { SeriesCard } from "@/components/series-card";
+import type { SeriesHeroItem } from "@/services/featured-series";
+import type { SeriesCardItem } from "@/services/series-recent";
+
+export default function SeriesHomeContent() {
+  const router = useRouter();
+
+  const {
+    data: featuredData,
+    isLoading: featuredLoading,
+    isError: featuredError,
+    refetch: refetchFeatured,
+  } = useQuery({
+    queryKey: ["series-featured"],
+    queryFn: async () => {
+      const res = await fetch("/api/series/featured");
+      if (!res.ok) throw new Error("Failed to load featured series.");
+      return res.json() as Promise<{ featured: SeriesHeroItem[] }>;
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+  });
+
+  const {
+    data: top10Data,
+    isLoading: top10Loading,
+    isError: top10Error,
+    refetch: refetchTop10,
+  } = useQuery({
+    queryKey: ["series-top-10"],
+    queryFn: async () => {
+      const res = await fetch("/api/series/top-10");
+      if (!res.ok) throw new Error("Failed to load top 10 series.");
+      return res.json() as Promise<{ top10: SeriesCardItem[] }>;
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+  });
+
+  const featured = featuredData?.featured ?? [];
+  const top10 = top10Data?.top10 ?? [];
+
+  function handleSearch(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const q = formData.get("q") as string;
+    if (q?.trim()) {
+      router.push(`/series/explore?q=${encodeURIComponent(q.trim())}`);
+    }
+  }
+
+  if (featuredLoading || top10Loading) {
+    return (
+      <div className="flex h-full flex-col">
+        <div className="flex-1 overflow-y-auto space-y-12">
+          <div>
+            <Skeleton className="h-[75vh] w-full rounded-lg" />
+          </div>
+          <div className="px-4">
+            <Skeleton className="h-6 w-40 mb-4" />
+            <div className="flex gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="shrink-0 w-48 space-y-2">
+                  <Skeleton className="aspect-2/3 rounded-lg" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (featuredError || top10Error) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 p-12">
+        <ErrorState
+          message={
+            featuredError && top10Error
+              ? "Failed to load series. Check your connection."
+              : featuredError
+                ? "Failed to load featured series."
+                : "Failed to load top 10 series."
+          }
+          onRetry={() => { refetchFeatured(); refetchTop10(); }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <section>
+        <HeroCarousel items={featured} />
+      </section>
+
+      <section className="px-4 md:px-8 lg:px-12 pb-8">
+        <h2 className="text-xl font-semibold mb-4">Trending Now · Top 10</h2>
+        {top10.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <p className="text-sm text-muted-foreground">No series added yet.</p>
+          </div>
+        ) : (
+          <div className="flex gap-2 overflow-x-auto overflow-y-hidden py-4 snap-x snap-mandatory scroll-pl-4">
+            {top10.map((s, index) => (
+              <div key={s.id} className="group shrink-0 snap-start">
+                <div className="flex items-center">
+                  <NumberSVG number={index + 1} />
+                  <div className={`relative z-10 w-44 shrink-0 ${index > 0 ? "-ml-16" : "-ml-4"}`}>
+                    <SeriesCard title={s.title} slug={s.slug} thumbnailUrl={s.thumbnailUrl} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <div className="px-4 md:px-8 lg:px-12 pb-8">
+        <button
+          onClick={() => router.push("/series/explore")}
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Browse All Series →
+        </button>
+      </div>
+    </>
+  );
+}

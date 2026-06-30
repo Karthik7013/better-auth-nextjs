@@ -54,29 +54,36 @@
     {
       "idx": 7,
       "version": "7",
-      "when": 1782451014813,
+      "when": 1790000000001,
       "tag": "0007_noisy_spiral",
       "breakpoints": true
     },
     {
       "idx": 8,
       "version": "7",
-      "when": 1782473348111,
+      "when": 1790000000002,
       "tag": "0008_drop-watch-history",
       "breakpoints": true
     },
     {
       "idx": 9,
       "version": "7",
-      "when": 1782700563322,
+      "when": 1790000000003,
       "tag": "0009_sweet_the_renegades",
       "breakpoints": true
     },
     {
       "idx": 10,
       "version": "7",
-      "when": 1782719934562,
+      "when": 1790000000004,
       "tag": "0010_eager_ego",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790000000005,
+      "tag": "0011_spicy_valkyrie",
       "breakpoints": true
     }
   ]
