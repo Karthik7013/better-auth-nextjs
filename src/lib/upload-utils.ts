@@ -82,9 +82,9 @@ export async function uploadToIA(data: {
       "x-amz-auto-make-bucket": "1",
       "x-archive-meta-mediatype": contentType.startsWith("video/") ? "movies" : "image",
       "x-archive-meta-collection": "opensource",
-    "Content-Type": contentType,
-  },
-  body: new Uint8Array(buffer),
+      "Content-Type": contentType,
+    },
+    body: new Uint8Array(buffer),
   });
 
   if (!res.ok) {
@@ -97,9 +97,8 @@ export async function uploadToIA(data: {
 
 export function buildIAUrl(key: string): string {
   const bucket = requireEnv("IA_S3_BUCKET");
-  const endpoint = requireEnv("IA_S3_ENDPOINT");
   const encodedKey = encodeURIComponent(key).replace(/%2F/g, "/");
-  return `${endpoint}/${bucket}/${encodedKey}`;
+  return `https://archive.org/download/${bucket}/${encodedKey}`;
 }
 
 export async function deleteFile(url: string): Promise<void> {
