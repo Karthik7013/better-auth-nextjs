@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter, useParams, notFound } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Image from "next/image";
+import { ShimmerImage } from "@/components/shimmer-image";
 import { Play, Heart, Share2, Download } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BackButton } from "@/components/back-button";
@@ -178,13 +178,14 @@ export function MovieDetailClient() {
     <div className="min-h-screen bg-background">
       <div className="relative h-[85vh] min-h-125 w-full overflow-hidden mb-16">
         <div className="absolute inset-0 bg-muted">
-          <Image
+          <ShimmerImage
             src={display.backdropUrl || display.thumbnailUrl}
             alt=""
             fill
             priority
             sizes="100vw"
-            className="object-cover object-position-[50%_25%]"
+            imgClassName="object-cover object-position-[50%_25%]"
+            wrapperClassName="absolute inset-0"
             referrerPolicy="no-referrer"
           />
           <div className="absolute inset-0 bg-linear-to-t from-background via-background/50 to-transparent" />
@@ -198,11 +199,12 @@ export function MovieDetailClient() {
         <div className="absolute bottom-0 left-0 right-0 z-10 p-6 md:p-12 lg:p-16">
           <div className="flex gap-x-10">
             <div className="relative z-30 hidden sm:block w-28 sm:w-36 md:w-44 aspect-2/3 rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10 group">
-              <Image
+              <ShimmerImage
                 src={display.thumbnailUrl}
                 alt={display.title}
                 fill
-                className="object-cover"
+                imgClassName="object-cover"
+                wrapperClassName="absolute inset-0"
                 priority
                 sizes="(max-width: 640px) 112px, (max-width: 768px) 144px, 176px"
               />

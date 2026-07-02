@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
-import { searchTMDB } from "@/services/tmdb";
+import { searchTMDB, searchTMDBTV } from "@/services/tmdb";
 
 export async function POST(request: NextRequest) {
   const session = await getCachedSession(request);
@@ -9,12 +9,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { query } = await request.json();
+    const { query, mediaType = "movie" } = await request.json();
     if (!query || typeof query !== "string") {
       return NextResponse.json({ error: "query is required" }, { status: 400 });
     }
 
-    const results = await searchTMDB(query);
+    const results = mediaType === "tv" ? await searchTMDBTV(query) : await searchTMDB(query);
     return NextResponse.json({ results });
   } catch {
     return NextResponse.json({ error: "TMDB search failed" }, { status: 500 });

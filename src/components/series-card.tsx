@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { ShimmerImage } from "@/components/shimmer-image";
 
 interface SeriesCardProps {
   title: string;
@@ -11,13 +11,14 @@ interface SeriesCardProps {
 export function SeriesCard({ title, slug, thumbnailUrl, seasonCount }: SeriesCardProps) {
   return (
     <Link href={`/series/${slug}`} className="group block">
-      <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-muted">
-        <Image
+      <div className="relative aspect-2/3 overflow-hidden rounded-lg bg-muted">
+        <ShimmerImage
           src={thumbnailUrl}
           alt={title}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
-          className="object-cover transition-transform group-hover:scale-105"
+          imgClassName="object-cover transition-transform group-hover:scale-105"
+          wrapperClassName="absolute inset-0"
           referrerPolicy="no-referrer"
         />
         {seasonCount !== undefined && (

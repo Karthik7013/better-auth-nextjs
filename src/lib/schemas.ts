@@ -55,6 +55,19 @@ export const movieFormSchema = z.object({
   originalLanguage: z.string().optional().or(z.literal("")),
 })
 
+export const seriesFormSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  slug: z.string().min(1, "Slug is required"),
+  description: z.string().optional().or(z.literal("")),
+  thumbnailUrl: z.string().optional().or(z.literal("")),
+  backdropUrl: z.string().optional().or(z.literal("")),
+  trailerUrl: z.string().optional().or(z.literal("")),
+  releaseDate: z.string().optional().or(z.literal("")),
+  tagIds: z.array(z.number()),
+  tmdbId: z.number().optional(),
+  originalLanguage: z.string().optional().or(z.literal("")),
+})
+
 export const deleteAccountSchema = z.object({
   confirmText: z.string(),
 })
@@ -72,3 +85,4 @@ export type RequestFormData = z.infer<typeof requestFormSchema>
 export type MovieFormData = z.infer<typeof movieFormSchema>
 export type DeleteAccountFormData = z.infer<typeof deleteAccountSchema>
 export type TagFormData = z.infer<typeof tagSchema>
+export type SeriesFormData = z.infer<typeof seriesFormSchema>

@@ -188,9 +188,12 @@ export const series = pgTable("series", {
   description: text("description"),
   thumbnailUrl: text("thumbnail_url").notNull(),
   backdropUrl: text("backdrop_url"),
+  trailerUrl: text("trailer_url"),
   releaseDate: date("release_date"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  tmdbId: integer("tmdb_id").unique(),
+  originalLanguage: varchar("original_language", { length: 10 }),
 });
 
 export const seasons = pgTable("seasons", {

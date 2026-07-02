@@ -11,7 +11,10 @@ export interface SeriesRow {
   description: string | null;
   thumbnailUrl: string;
   backdropUrl: string | null;
+  trailerUrl: string | null;
   releaseDate: string | null;
+  tmdbId: number | null;
+  originalLanguage: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -47,7 +50,10 @@ interface SeriesDetail {
   description: string | null;
   thumbnailUrl: string;
   backdropUrl: string | null;
+  trailerUrl: string | null;
   releaseDate: string | null;
+  tmdbId: number | null;
+  originalLanguage: string | null;
   tags: { id: number; name: string }[];
   seasons: {
     id: number;
@@ -87,8 +93,11 @@ export async function createSeries(data: {
   description?: string | null;
   thumbnailUrl?: string;
   backdropUrl?: string | null;
+  trailerUrl?: string | null;
   releaseDate?: string | null;
   tagIds?: number[];
+  tmdbId?: number | null;
+  originalLanguage?: string | null;
 }) {
   const [createdSeries] = await db
     .insert(series)
@@ -98,7 +107,10 @@ export async function createSeries(data: {
       description: data.description ?? null,
       thumbnailUrl: data.thumbnailUrl ?? "",
       backdropUrl: data.backdropUrl ?? null,
+      trailerUrl: data.trailerUrl ?? null,
       releaseDate: data.releaseDate ?? null,
+      tmdbId: data.tmdbId ?? null,
+      originalLanguage: data.originalLanguage ?? null,
     })
     .returning();
 
@@ -120,8 +132,11 @@ export async function updateSeries(
     description?: string | null;
     thumbnailUrl?: string;
     backdropUrl?: string | null;
+    trailerUrl?: string | null;
     releaseDate?: string | null;
     tagIds?: number[];
+    tmdbId?: number | null;
+    originalLanguage?: string | null;
   }
 ) {
   const [existingSeries] = await db.select().from(series).where(eq(series.id, id)).limit(1);
@@ -133,7 +148,10 @@ export async function updateSeries(
   if (data.description !== undefined) updateData.description = data.description;
   if (data.thumbnailUrl !== undefined) updateData.thumbnailUrl = data.thumbnailUrl;
   if (data.backdropUrl !== undefined) updateData.backdropUrl = data.backdropUrl;
+  if (data.trailerUrl !== undefined) updateData.trailerUrl = data.trailerUrl;
   if (data.releaseDate !== undefined) updateData.releaseDate = data.releaseDate;
+  if (data.tmdbId !== undefined) updateData.tmdbId = data.tmdbId;
+  if (data.originalLanguage !== undefined) updateData.originalLanguage = data.originalLanguage;
 
   if (Object.keys(updateData).length > 0) {
     updateData.updatedAt = new Date();
@@ -205,6 +223,9 @@ export async function listAdminSeries(args: {
       thumbnailUrl: series.thumbnailUrl,
       backdropUrl: series.backdropUrl,
       releaseDate: series.releaseDate,
+      trailerUrl: series.trailerUrl,
+      tmdbId: series.tmdbId,
+      originalLanguage: series.originalLanguage,
       createdAt: series.createdAt,
       updatedAt: series.updatedAt,
     })

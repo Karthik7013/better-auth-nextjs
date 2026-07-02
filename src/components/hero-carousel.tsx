@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { ShimmerImage } from "@/components/shimmer-image";
 import { Play, Info } from "lucide-react";
 import { formatDuration, formatYear } from "@/lib/format";
 
@@ -71,25 +71,27 @@ export default function HeroCarousel({
               {isActive && (
                 <div className="absolute inset-0 transition-transform duration-8000 ease-linear scale-110">
                   {/* Poster image — visible on mobile only */}
-                  <Image
+                  <ShimmerImage
                     src={item.thumbnailUrl}
                     alt={item.title}
                     fill
                     priority={i === 0}
                     fetchPriority={i === 0 ? "high" : "auto"}
                     sizes="100vw"
-                    className="object-cover md:hidden object-position-[50%_25%]"
+                    imgClassName="object-cover md:hidden object-position-[50%_25%]"
+                    wrapperClassName="absolute inset-0"
                     referrerPolicy="no-referrer"
                   />
                   {/* Backdrop image — visible on md+ */}
-                  <Image
+                  <ShimmerImage
                     src={item.backdropUrl || item.thumbnailUrl}
                     alt={item.title}
                     fill
                     priority={i === 0}
                     fetchPriority={i === 0 ? "high" : "auto"}
                     sizes="100vw"
-                    className="hidden md:block object-cover object-position-[50%_25%]"
+                    imgClassName="hidden md:block object-cover object-position-[50%_25%]"
+                    wrapperClassName="absolute inset-0"
                     referrerPolicy="no-referrer"
                   />
                 </div>

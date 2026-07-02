@@ -22,7 +22,10 @@ interface SerializedSeries {
   description: string | null;
   thumbnailUrl: string;
   backdropUrl: string | null;
+  trailerUrl: string | null;
   releaseDate: string | null;
+  tmdbId: number | null;
+  originalLanguage: string | null;
   tags: Tag[];
   seasonCount?: number;
 }

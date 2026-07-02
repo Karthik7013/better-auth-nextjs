@@ -36,7 +36,10 @@ interface SerializedSeries {
   description: string | null
   thumbnailUrl: string
   backdropUrl: string | null
+  trailerUrl: string | null
   releaseDate: string | null
+  tmdbId: number | null
+  originalLanguage: string | null
   tags: { id: number; name: string }[]
   seasonCount?: number
 }
@@ -79,8 +82,11 @@ export default function AdminSeriesPage() {
     description: editingSeries.description ?? "",
     thumbnailUrl: editingSeries.thumbnailUrl ?? "",
     backdropUrl: editingSeries.backdropUrl ?? "",
+    trailerUrl: editingSeries.trailerUrl ?? "",
     releaseDate: editingSeries.releaseDate ?? "",
     tagIds: editingSeries.tags.map((t) => t.id),
+    tmdbId: editingSeries.tmdbId ?? undefined,
+    originalLanguage: editingSeries.originalLanguage ?? "",
   } : undefined, [editingSeries])
 
   const limit = 20

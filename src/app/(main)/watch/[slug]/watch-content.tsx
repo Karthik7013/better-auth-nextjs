@@ -3,7 +3,7 @@
 import { useParams, useRouter, notFound } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import Image from "next/image";
+import { ShimmerImage } from "@/components/shimmer-image";
 import { ChevronLeft, Film, Clock, Calendar, Tag, RefreshCw } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,11 +22,12 @@ function LoadingState({ movie }: { movie?: { thumbnailUrl?: string | null; backd
     <div className="fixed inset-0 bg-black flex items-center justify-center">
       {movie?.backdropUrl || movie?.thumbnailUrl ? (
         <>
-          <Image
+          <ShimmerImage
             src={movie.backdropUrl || movie.thumbnailUrl!}
             alt=""
             fill
-            className="object-cover opacity-30"
+            imgClassName="object-cover opacity-30"
+            wrapperClassName="absolute inset-0"
             referrerPolicy="no-referrer"
           />
           <div className="absolute inset-0 bg-linear-to-t from-black via-black/60 to-black/80" />
@@ -100,11 +101,12 @@ export function WatchContent() {
       <div className="fixed inset-0 bg-black flex flex-col">
         {movie.backdropUrl || movie.thumbnailUrl ? (
           <>
-            <Image
+            <ShimmerImage
               src={movie.backdropUrl || movie.thumbnailUrl}
               alt=""
               fill
-              className="object-cover"
+              imgClassName="object-cover"
+              wrapperClassName="absolute inset-0"
               referrerPolicy="no-referrer"
             />
             <div className="absolute inset-0 bg-linear-to-t from-black via-black/70 to-black/60" />
@@ -116,11 +118,12 @@ export function WatchContent() {
         <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-6 p-8 text-center">
           {movie.thumbnailUrl ? (
             <div className="relative w-48 aspect-2/3 rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10">
-              <Image
+              <ShimmerImage
                 src={movie.thumbnailUrl}
                 alt={movie.title}
                 fill
-                className="object-cover"
+                imgClassName="object-cover"
+                wrapperClassName="absolute inset-0"
                 referrerPolicy="no-referrer"
               />
             </div>

@@ -214,3 +214,8 @@
 .animate-progress {
   animation: progress-fill 6s linear forwards;
 }
+
+@keyframes shimmer-slide {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}

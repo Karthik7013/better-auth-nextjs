@@ -43,9 +43,10 @@ function generateSlug(title: string): string {
 
 interface TmdbSearchProps {
   onImport: (data: TmdbImportResult) => void
+  mediaType?: "movie" | "tv"
 }
 
-export function TmdbSearch({ onImport }: TmdbSearchProps) {
+export function TmdbSearch({ onImport, mediaType = "movie" }: TmdbSearchProps) {
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<TmdbSearchResult[]>([])
 
@@ -54,7 +55,7 @@ export function TmdbSearch({ onImport }: TmdbSearchProps) {
       const res = await fetch("/api/admin/tmdb/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: q }),
+        body: JSON.stringify({ query: q, mediaType }),
       })
       if (!res.ok) throw new Error("Search failed")
       const data = await res.json()
@@ -63,14 +64,14 @@ export function TmdbSearch({ onImport }: TmdbSearchProps) {
     onSuccess: (data) => setResults(data),
   })
 
-  const { mutate: importMovie, isPending: importing } = useMutation({
-    mutationFn: async (movie: TmdbSearchResult) => {
-      const slug = generateSlug(movie.title)
-      const releaseDate = movie.release_date
+  const { mutate: importItem, isPending: importing } = useMutation({
+    mutationFn: async (item: TmdbSearchResult) => {
+      const slug = generateSlug(item.title)
+      const releaseDate = item.release_date
       const res = await fetch("/api/admin/tmdb/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tmdbId: movie.id, slug, releaseDate: releaseDate || undefined }),
+        body: JSON.stringify({ tmdbId: item.id, slug, releaseDate: releaseDate || undefined, mediaType }),
       })
       if (!res.ok) throw new Error("Import failed")
       return res.json() as Promise<TmdbImportResult>
@@ -141,7 +142,7 @@ export function TmdbSearch({ onImport }: TmdbSearchProps) {
                   size="sm"
                   variant="secondary"
                   disabled={importing}
-                  onClick={() => importMovie(movie)}
+                  onClick={() => importItem(movie)}
                   className="w-full"
                 >
                   {importing ? (

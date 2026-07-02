@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSession } from "@/lib/session";
-import { getTMDBMovieDetails, downloadAndUploadImage, getTMDBMovieTrailer } from "@/services/tmdb";
+import {
+  getTMDBMovieDetails, getTMDBTVDetails,
+  downloadAndUploadImage,
+  getTMDBMovieTrailer, getTMDBTVTrailer,
+} from "@/services/tmdb";
 
 export async function POST(request: NextRequest) {
   const session = await getCachedSession(request);
@@ -9,30 +13,59 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { tmdbId, slug, releaseDate } = await request.json();
+    const { tmdbId, slug, releaseDate, mediaType = "movie" } = await request.json();
     if (!tmdbId || typeof tmdbId !== "number") {
       return NextResponse.json({ error: "tmdbId is required" }, { status: 400 });
     }
 
-    const details = await getTMDBMovieDetails(tmdbId);
+    const isTV = mediaType === "tv";
+    const folder = isTV ? "series" : "movies";
+
+    let title: string;
+    let overview: string;
+    let release: string;
+    let duration: number | null;
+    let poster: string | null;
+    let backdrop: string | null;
+    let language: string;
+
+    if (isTV) {
+      const d = await getTMDBTVDetails(tmdbId);
+      title = d.name;
+      overview = d.overview;
+      release = d.first_air_date;
+      duration = null;
+      poster = d.poster_path;
+      backdrop = d.backdrop_path;
+      language = d.original_language;
+    } else {
+      const d = await getTMDBMovieDetails(tmdbId);
+      title = d.title;
+      overview = d.overview;
+      release = d.release_date;
+      duration = d.runtimeMinutes ? d.runtimeMinutes * 60 : null;
+      poster = d.poster_path;
+      backdrop = d.backdrop_path;
+      language = d.original_language;
+    }
 
     const year = slug && releaseDate ? new Date(releaseDate).getFullYear() : null;
-    const thumbnailKey = slug ? `movies/${year}/${slug}/thumbnails/01.jpg` : undefined;
-    const backdropKey = slug ? `movies/${year}/${slug}/backdrops/01.jpg` : undefined;
+    const thumbnailKey = slug && year ? `${folder}/${year}/${slug}/thumbnails/01.jpg` : undefined;
+    const backdropKey = slug && year ? `${folder}/${year}/${slug}/backdrops/01.jpg` : undefined;
 
     const [thumbnailUrl, backdropUrl, trailerUrl] = await Promise.all([
-      downloadAndUploadImage(details.poster_path, "thumbnails", thumbnailKey),
-      downloadAndUploadImage(details.backdrop_path, "backdrops", backdropKey),
-      getTMDBMovieTrailer(tmdbId),
+      downloadAndUploadImage(poster, "thumbnails", thumbnailKey),
+      downloadAndUploadImage(backdrop, "backdrops", backdropKey),
+      isTV ? getTMDBTVTrailer(tmdbId) : getTMDBMovieTrailer(tmdbId),
     ]);
 
     return NextResponse.json({
-      title: details.title,
-      overview: details.overview,
-      releaseDate: details.release_date,
-      originalLanguage: details.original_language,
-      tmdbId: details.id,
-      durationSeconds: details.runtimeMinutes ? details.runtimeMinutes * 60 : null,
+      title,
+      overview,
+      releaseDate: release,
+      originalLanguage: language,
+      tmdbId,
+      durationSeconds: duration,
       thumbnailUrl,
       backdropUrl,
       trailerUrl,
