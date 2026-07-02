@@ -3,9 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import SearchBar from "../explore/search-bar";
-import SearchModal from "@/components/search-modal";
 import { SeriesCard } from "@/components/series-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface SeriesResult {
   id: number;
@@ -21,7 +21,8 @@ interface Tag {
 
 export function SeriesContent() {
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const debouncedQ = useDebounce(q, 300);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const { data: allTags } = useQuery<Tag[]>({
@@ -44,9 +45,10 @@ export function SeriesContent() {
     isLoading,
     isError,
   } = useInfiniteQuery({
-    queryKey: ["series-list", tagParam],
+    queryKey: ["series-list", debouncedQ, tagParam],
     queryFn: async ({ pageParam = 1 }) => {
       const params = new URLSearchParams({ page: String(pageParam), limit: "12" });
+      if (debouncedQ) params.set("q", debouncedQ);
       if (tagParam) params.set("tags", tagParam);
       const res = await fetch(`/api/series?${params}`);
       if (!res.ok) throw new Error("Failed to fetch");
@@ -86,12 +88,12 @@ export function SeriesContent() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Series</h1>
-        <SearchBar onClick={() => setSearchOpen(true)} />
+      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md pb-4 -mx-4 px-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Series</h1>
+        </div>
+        <SearchBar value={q} onChange={setQ} />
       </div>
-
-      <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
       {allTags && allTags.length > 0 && (
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">

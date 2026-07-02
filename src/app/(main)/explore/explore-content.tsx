@@ -6,7 +6,6 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import SearchBar from "./search-bar";
 import TagFilter from "./tag-filter";
 import MovieGrid from "./movie-grid";
-import SearchModal from "@/components/search-modal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -76,7 +75,6 @@ export function ExploreContent() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">(
     () => (searchParams.get("dir") as "asc" | "desc") ?? "desc"
   );
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
   useScrollRestoration();
 
@@ -192,7 +190,7 @@ export function ExploreContent() {
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md pb-4 space-y-4 -mx-4 px-4">
         <div className="flex items-center gap-3">
           <div className="flex-1">
-            <SearchBar value={q} onChange={setQ} onModalOpen={() => setIsSearchOpen(true)} />
+            <SearchBar value={q} onChange={setQ} />
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl border border-border/50 bg-muted/50 px-3 text-sm text-muted-foreground hover:bg-muted transition-colors outline-none">
@@ -230,10 +228,6 @@ export function ExploreContent() {
         ref={sentinelRef}
       />
 
-      <SearchModal
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-      />
     </div>
   );
 }
