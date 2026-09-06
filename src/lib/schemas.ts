@@ -221,3 +221,21 @@ export const tmdbSearchApiSchema = z.object({
   query: z.string().min(1, "query is required."),
   mediaType: z.enum(["movie", "tv"]).default("movie"),
 })
+
+export const saveWatchProgressSchema = z.object({
+  movieId: z.number().int().positive("movieId must be a positive integer.").optional(),
+  episodeId: z.number().int().positive("episodeId must be a positive integer.").optional(),
+  progressSeconds: z.number().int().nonnegative("progressSeconds must be a non-negative integer."),
+  durationSeconds: z.number().int().positive("durationSeconds must be a positive integer."),
+}).refine((data) => data.movieId || data.episodeId, {
+  message: "Either movieId or episodeId is required.",
+  path: ["movieId"],
+});
+
+export const deleteWatchProgressSchema = z.object({
+  movieId: z.number().int().positive("movieId must be a positive integer.").optional(),
+  episodeId: z.number().int().positive("episodeId must be a positive integer.").optional(),
+}).refine((data) => data.movieId || data.episodeId, {
+  message: "Either movieId or episodeId is required.",
+  path: ["movieId"],
+});
