@@ -431,8 +431,7 @@ export const PromptInputActionAddAttachments = ({
   );
 
   return (
-    // @ts-expect-error - BaseUI event type mismatch with shadcn DropdownMenuItem
-    <DropdownMenuItem {...props} onSelect={handleSelect}>
+    <DropdownMenuItem {...props} onSelect={(e) => handleSelect(e as unknown as Event)}>
       <ImageIcon className="mr-2 size-4" /> {label}
     </DropdownMenuItem>
   );
@@ -481,8 +480,7 @@ export const PromptInputActionAddScreenshot = ({
   );
 
   return (
-    // @ts-expect-error - BaseUI event type mismatch with shadcn DropdownMenuItem
-    <DropdownMenuItem {...props} onSelect={handleSelect}>
+    <DropdownMenuItem {...props} onSelect={(e) => handleSelect(e as unknown as Event)}>
       <Monitor className="mr-2 size-4" />
       {label}
     </DropdownMenuItem>
@@ -1246,8 +1244,9 @@ export const PromptInputSubmit = ({
         onStop();
         return;
       }
-      // @ts-expect-error - InputGroupButton onClick type mismatch
-      onClick?.(e);
+      if (onClick) {
+        (onClick as React.MouseEventHandler<HTMLButtonElement>)(e);
+      }
     },
     [isGenerating, onStop, onClick]
   );
@@ -1329,10 +1328,14 @@ export const PromptInputHoverCard = ({
   openDelay = 0,
   closeDelay = 0,
   ...props
-}: PromptInputHoverCardProps) => (
-  // @ts-expect-error - HoverCard doesn't expose openDelay/closeDelay in its type
-  <HoverCard closeDelay={closeDelay} openDelay={openDelay} {...props} />
-);
+}: PromptInputHoverCardProps) => {
+  const hoverCardProps = {
+    ...props,
+    closeDelay,
+    openDelay,
+  } as React.ComponentProps<typeof HoverCard>;
+  return <HoverCard {...hoverCardProps} />;
+};
 
 export type PromptInputHoverCardTriggerProps = ComponentProps<
   typeof HoverCardTrigger

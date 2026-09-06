@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { ShimmerImage } from "@/components/shimmer-image";
@@ -22,7 +22,7 @@ export function SearchCommandDialog({
   const items = results ?? [];
 
   useEffect(() => {
-    if (!open) setQuery("");
+    if (!open) setQuery(""); // eslint-disable-line react-hooks/set-state-in-effect
   }, [open]);
 
   useEffect(() => {

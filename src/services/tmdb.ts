@@ -1,5 +1,6 @@
 import { uploadToIA } from "@/lib/upload-utils";
 import { logger } from "@/lib/logger";
+import { TMDB_TIMEOUT_MS, TMDB_RETRY_COUNT } from "@/lib/constants";
 
 const TMDB_API_KEY = (() => {
   const key = process.env.TMDB_API_KEY;
@@ -9,10 +10,10 @@ const TMDB_API_KEY = (() => {
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p";
 
-async function fetchWithRetry(url: string, init?: RequestInit, retries = 2): Promise<Response> {
+async function fetchWithRetry(url: string, init?: RequestInit, retries = TMDB_RETRY_COUNT): Promise<Response> {
   for (let i = 0; i <= retries; i++) {
     try {
-      const res = await fetch(url, { ...init, signal: AbortSignal.timeout(30000) });
+      const res = await fetch(url, { ...init, signal: AbortSignal.timeout(TMDB_TIMEOUT_MS) });
       if (res.status === 429 && i < retries) {
         const retryAfter = parseInt(res.headers.get("retry-after") || "1", 10);
         await new Promise((r) => setTimeout(r, retryAfter * 1000));

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, Compass, UserRound, Tv, Video, LogIn, Sparkles, LucideIcon } from "lucide-react";
+import { Home, Compass, UserRound, Tv, LogIn, Sparkles, LucideIcon } from "lucide-react";
 import { NavProvider, useNavContext } from "@/lib/nav-context";
 import { useSession } from "@/hooks/use-session";
 

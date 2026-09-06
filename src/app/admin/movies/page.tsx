@@ -19,6 +19,7 @@ import { MoviesTable } from "@/app/admin/movies-table"
 import { ItemCount } from "@/components/item-count"
 import dynamic from "next/dynamic"
 import type { Movie } from "@/types"
+import { ADMIN_MOVIES_LIMIT } from "@/lib/constants"
 
 const MovieDialog = dynamic(
   () => import("@/components/movie-dialog").then((m) => ({ default: m.MovieDialog })),
@@ -91,7 +92,7 @@ export default function AdminMoviesPage() {
     published: editingMovie.published ?? false,
   } : undefined, [editingMovie])
 
-  const limit = 20
+  const limit = ADMIN_MOVIES_LIMIT;
   const startItem = (page - 1) * limit + 1
   const endItem = Math.min(page * limit, total)
 
