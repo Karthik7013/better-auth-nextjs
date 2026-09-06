@@ -267,8 +267,8 @@ export default function LoginPage() {
 
           <p className="text-center text-xs text-muted-foreground mt-6 leading-relaxed">
             By continuing, you agree to our <br />
-            <Link href="#" className="underline hover:text-foreground">Terms of Service</Link> and{" "}
-            <Link href="#" className="underline hover:text-foreground">Privacy Policy</Link>.
+            <Link href="/terms" className="underline hover:text-foreground">Terms of Service</Link> and{" "}
+            <Link href="/privacy" className="underline hover:text-foreground">Privacy Policy</Link>.
           </p>
         </div>
 
