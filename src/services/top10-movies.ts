@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { movies } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { cacheGetOrSet, CACHE_TTL } from "@/lib/cache";
+import { TOP_10_LIMIT } from "@/lib/constants";
 
 export async function getTop10Movies() {
   return cacheGetOrSet("home:top10-movies", CACHE_TTL.SLOW, () =>
@@ -15,6 +16,6 @@ export async function getTop10Movies() {
       .from(movies)
       .where(eq(movies.published, true))
       .orderBy(desc(movies.createdAt))
-      .limit(10)
+      .limit(TOP_10_LIMIT)
   );
 }

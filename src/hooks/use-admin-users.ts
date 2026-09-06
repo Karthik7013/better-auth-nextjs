@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { logger } from "@/lib/logger";
 import { STALE } from "@/lib/stale-times";
+import { ADMIN_USERS_LIMIT } from "@/lib/constants";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { User } from "@/types";
 
@@ -29,7 +30,7 @@ export function useAdminUsers({ currentUserId }: UseAdminUsersOptions = {}) {
   const [banReason, setBanReason] = useState("");
   const [isBanning, setIsBanning] = useState(false);
 
-  const limit = 50;
+  const limit = ADMIN_USERS_LIMIT;
 
   const { data, isLoading: loading, isError, refetch: retry } = useQuery({
     queryKey: ["admin-users", page, debouncedSearch],

@@ -94,7 +94,10 @@ export function useAdminSeriesDetail() {
 
   const saveEpisodeMutation = useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
-      const seasonId = activeSeasonId!
+      const seasonId = activeSeasonId;
+      if (!seasonId) {
+        throw new Error("No season selected");
+      }
       if (editingEpisode) {
         await adminApi.episodes.update(seriesId, seasonId, editingEpisode.id, data);
       } else {
