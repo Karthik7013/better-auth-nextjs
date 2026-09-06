@@ -228,7 +228,7 @@ export const HeroCarousel = memo(function HeroCarousel({
                       }`}
                     style={{
                       animationDuration: i === activeIndex ? `${AUTOPLAY_MS}ms` : undefined,
-                      width: i < activeIndex ? '100%' : i === activeIndex ? undefined : '0%',
+                      transform: i < activeIndex ? 'scaleX(1)' : i === activeIndex ? undefined : 'scaleX(0)',
                       opacity: i < activeIndex ? 0.4 : i === activeIndex ? 1 : 0,
                     }}
                   />
