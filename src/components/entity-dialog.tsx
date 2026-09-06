@@ -9,7 +9,6 @@ import type { ZodType } from "zod";
 import { Loader2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -18,13 +17,10 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { UploadField } from "@/components/upload-field";
-import { Textarea } from "@/components/ui/textarea";
-import { generateSlug } from "@/lib/validation";
+import { EntityTmdbSearch } from "@/components/entity-tmdb-search";
+import { EntityBaseFields } from "./entity-base-fields";
 import { apiFetch } from "@/lib/api/client";
 import { logger } from "@/lib/logger";
-import { TagSelector } from "@/components/tag-selector";
-import { EntityTmdbSearch } from "@/components/entity-tmdb-search";
 import type { TmdbImportResult } from "@/hooks/use-tmdb-search";
 
 export interface EntityFormFields {
@@ -57,101 +53,6 @@ export interface EntityDialogProps {
   callbacks: { onSuccess: () => void; onBeforeSubmit?: (data: EntityFormFields) => Record<string, unknown> };
   tmdbMediaType?: "movie" | "tv";
   children?: (ctx: FormSlotContext) => React.ReactNode;
-}
-
-interface EntityBaseFieldsProps {
-  ctx: FormSlotContext;
-  entityName: string;
-  assetFolder: string;
-  slugManuallyEdited: boolean;
-  onSlugManuallyEdited: (v: boolean) => void;
-  selectedTagIds: number[];
-  onToggleTag: (tagId: number) => void;
-}
-
-function EntityBaseFields({
-  ctx,
-  entityName,
-  assetFolder,
-  slugManuallyEdited,
-  onSlugManuallyEdited,
-  selectedTagIds,
-  onToggleTag,
-}: EntityBaseFieldsProps) {
-  const { register, watch, setValue, errors } = ctx;
-
-  return (
-    <>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium">Title</label>
-          <Input
-            {...register("title")}
-            onChange={(e) => {
-              setValue("title", e.target.value, { shouldValidate: true });
-              if (!slugManuallyEdited) {
-                setValue("slug", generateSlug(e.target.value), { shouldValidate: false });
-              }
-            }}
-            placeholder={`${entityName} title`}
-          />
-          {errors.title && (
-            <p className="text-xs text-destructive">{errors.title.message as string}</p>
-          )}
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium">Slug</label>
-          <Input
-            {...register("slug")}
-            onChange={(e) => {
-              onSlugManuallyEdited(true);
-              setValue("slug", e.target.value, { shouldValidate: true });
-            }}
-            placeholder={`${entityName.toLowerCase()}-slug`}
-          />
-          {errors.slug && (
-            <p className="text-xs text-destructive">{errors.slug.message as string}</p>
-          )}
-        </div>
-      </div>
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium">Description</label>
-        <Textarea
-          {...register("description")}
-          placeholder={`${entityName} description`}
-          className="min-h-20"
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <UploadField
-            label="Thumbnail"
-            uploadKey={watch("slug") ? `${assetFolder}/${new Date().getFullYear()}/${watch("slug")}/thumbnails/01.jpg` : undefined}
-            folder="thumbnails"
-            value={watch("thumbnailUrl") ?? ""}
-            onChange={(url: string) => setValue("thumbnailUrl", url)}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <UploadField
-            label="Backdrop"
-            uploadKey={watch("slug") ? `${assetFolder}/${new Date().getFullYear()}/${watch("slug")}/backdrops/01.jpg` : undefined}
-            folder="backdrops"
-            value={watch("backdropUrl") ?? ""}
-            onChange={(url: string) => setValue("backdropUrl", url)}
-          />
-        </div>
-      </div>
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium">Release Date</label>
-        <Input type="date" {...register("releaseDate")} />
-      </div>
-      <TagSelector
-        selectedIds={selectedTagIds}
-        onToggle={onToggleTag}
-      />
-    </>
-  );
 }
 
 export function EntityDialog({
@@ -228,7 +129,7 @@ export function EntityDialog({
 
   function handleTmdbImport(data: TmdbImportResult) {
     setValue("title", data.title);
-    setValue("slug", generateSlug(data.title));
+    setValue("slug", data.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""));
     setValue("description", data.overview);
     setValue("releaseDate", data.releaseDate);
     setValue("originalLanguage", data.originalLanguage);
